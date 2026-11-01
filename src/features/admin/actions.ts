@@ -25,6 +25,91 @@ const userStatusSchema = z.object({
   status: z.enum(["ACTIVE", "SUSPENDED"]),
 });
 
+const adminAppealEditSchema = z.object({
+  userId: z.string().uuid(),
+  vendorId: z.string().uuid(),
+  name: z.string().trim().min(2).max(80),
+  vendorName: z.string().trim().min(2).max(100),
+  appealReason: z.string().trim().min(20).max(1000),
+});
+
+export async function editAdminUserAppealAction(
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const actor = await getSessionActor();
+  if (!actor || !canPerformAdminAction(actor)) {
+    return { status: "error", message: "Administrator access is required." };
+  }
+
+  const parsed = adminAppealEditSchema.safeParse({
+    userId: formData.get("userId"),
+    vendorId: formData.get("vendorId"),
+    name: formData.get("name"),
+    vendorName: formData.get("vendorName"),
+    appealReason: formData.get("appealReason"),
+  });
+  if (!parsed.success) {
+    return { status: "error", message: "Enter a valid name, store name, and appeal reason." };
+  }
+
+  try {
+    await getDatabase().$transaction(async (transaction) => {
+      const vendor = await transaction.vendor.findFirst({
+        where: {
+          id: parsed.data.vendorId,
+          ownerId: parsed.data.userId,
+          status: "REJECTED",
+          appealedAt: { not: null },
+        },
+        select: { id: true, name: true, appealReason: true },
+      });
+      const target = await transaction.user.findUnique({
+        where: { id: parsed.data.userId },
+        select: { id: true, role: true, name: true },
+      });
+      if (!vendor || !target || target.role === "ADMIN") throw new Error("protected-user");
+
+      await transaction.user.update({
+        where: { id: target.id },
+        data: { name: parsed.data.name },
+      });
+      await transaction.vendor.update({
+        where: { id: vendor.id },
+        data: { name: parsed.data.vendorName, appealReason: parsed.data.appealReason },
+      });
+      await recordAuditEvent(transaction, {
+        actorId: actor.id,
+        action: "USER_UPDATED",
+        targetType: "user",
+        targetId: target.id,
+        metadata: {
+          nameChanged: target.name !== parsed.data.name,
+          vendorNameChanged: vendor.name !== parsed.data.vendorName,
+          appealReasonChanged: vendor.appealReason !== parsed.data.appealReason,
+        },
+      });
+    });
+    revalidatePath("/admin/users");
+    revalidatePath("/admin/vendors");
+    revalidatePath("/vendor");
+    return { status: "success", message: "User and appeal details updated." };
+  } catch (error) {
+    if (error instanceof Error && error.message === "protected-user") {
+      return {
+        status: "error",
+        message: "Administrator accounts or invalid appeals cannot be edited.",
+      };
+    }
+    logger.error("admin.user_appeal_edit_failed", {
+      actorId: actor.id,
+      targetId: parsed.data.userId,
+      error,
+    });
+    return { status: "error", message: "The user and appeal details could not be updated." };
+  }
+}
+
 export async function updateUserStatusAction(
   _previous: FormState,
   formData: FormData,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { UserEditForm } from "@/components/admin/user-edit-form";
+import { UserAppealEditForm } from "@/components/admin/user-appeal-edit-form";
 import { UserStatusForm } from "@/components/admin/user-status-form";
 import { VendorAppealReviewActions } from "@/components/vendors/vendor-appeal-review-actions";
 import { PageShell } from "@/components/storefront/page-shell";
@@ -140,6 +141,13 @@ async function UsersContent({
                           <p className="mt-2 text-xs text-muted-foreground">
                             Submitted {formatDate(user.vendor.appealedAt)}
                           </p>
+                          <UserAppealEditForm
+                            userId={user.id}
+                            vendorId={user.vendor.id}
+                            name={user.name}
+                            vendorName={user.vendor.name}
+                            appealReason={user.vendor.appealReason ?? ""}
+                          />
                           <VendorAppealReviewActions vendorId={user.vendor.id} />
                         </section>
                       ) : null}
