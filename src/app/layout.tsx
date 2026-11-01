@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
+import { PwaRegistration } from "@/components/storefront/pwa-registration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,7 +69,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${displayFace.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <PwaRegistration />
+      </body>
     </html>
   );
 }

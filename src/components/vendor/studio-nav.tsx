@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, Plus, UserRound } from "lucide-react";
+import { LayoutGrid, PackageCheck, Plus, UserRound, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils/cn";
 
 const links = [
   { href: "/vendor", label: "Objects", icon: LayoutGrid, exact: true },
+  { href: "/vendor/orders", label: "Orders", icon: PackageCheck, exact: false },
+  { href: "/vendor/earnings", label: "Earnings", icon: Wallet, exact: false },
   { href: "/vendor/products/new", label: "New object", icon: Plus, exact: false },
   { href: "/vendor/profile", label: "Studio profile", icon: UserRound, exact: false },
 ];

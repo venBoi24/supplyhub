@@ -12,7 +12,7 @@ export function AnnouncementBar() {
           <span className="hidden truncate sm:inline">{DEMO_CATALOG_NOTICE}</span>
         </p>
         <p className="hidden shrink-0 font-mono text-[0.5625rem] tracking-[0.16em] text-primary-foreground/65 uppercase sm:block">
-          Phase 6 · Payments and reconciliation
+          Independent studios · Marketplace operations
         </p>
       </PageShell>
     </div>

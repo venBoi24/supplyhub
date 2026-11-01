@@ -3,6 +3,7 @@ import "server-only";
 import { connection } from "next/server";
 
 import type { CategoryStatus, ProductStatus } from "@/generated/prisma/enums";
+import { clampPage, DEFAULT_PAGE_SIZE, pageOffset } from "@/lib/utils/pagination";
 import { getDatabase } from "@/server/db/client";
 import { mediaUrlForKey } from "@/server/storage/keys";
 
@@ -40,35 +41,44 @@ export interface AdminCategorySummary {
   publishedCount: number;
 }
 
-const statusOrder: Record<ProductStatus, number> = {
-  PENDING_REVIEW: 0,
-  REJECTED: 1,
-  DRAFT: 2,
-  PUBLISHED: 3,
-  ARCHIVED: 4,
-};
-
-export async function listAdminProducts(status?: ProductStatus): Promise<AdminProductSummary[]> {
+export async function listAdminProducts(input: {
+  status?: ProductStatus;
+  search?: string;
+  page: number;
+}): Promise<{ products: AdminProductSummary[]; total: number; page: number }> {
   await connection();
-
-  const products = await getDatabase().product.findMany({
-    where: status ? { status } : undefined,
+  const database = getDatabase();
+  const where = {
+    ...(input.status ? { status: input.status } : {}),
+    ...(input.search
+      ? {
+          OR: [
+            { name: { contains: input.search, mode: "insensitive" as const } },
+            { sku: { contains: input.search, mode: "insensitive" as const } },
+            { vendor: { name: { contains: input.search, mode: "insensitive" as const } } },
+            { category: { name: { contains: input.search, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
+  const total = await database.product.count({ where });
+  const page = clampPage(input.page, total);
+  const products = await database.product.findMany({
+    where,
     include: {
       vendor: { select: { name: true, slug: true } },
       category: { select: { name: true, slug: true } },
       images: { orderBy: { sortOrder: "asc" } },
     },
     orderBy: { updatedAt: "desc" },
-    take: 200,
+    skip: pageOffset(page),
+    take: DEFAULT_PAGE_SIZE,
   });
 
-  return products
-    .sort(
-      (left, right) =>
-        statusOrder[left.status] - statusOrder[right.status] ||
-        right.updatedAt.getTime() - left.updatedAt.getTime(),
-    )
-    .map((product) => ({
+  return {
+    total,
+    page,
+    products: products.map((product) => ({
       id: product.id,
       name: product.name,
       slug: product.slug,
@@ -88,7 +98,8 @@ export async function listAdminProducts(status?: ProductStatus): Promise<AdminPr
         src: mediaUrlForKey(image.storageKey),
         alt: image.alt,
       })),
-    }));
+    })),
+  };
 }
 
 export async function getAdminProductCounts(): Promise<Record<ProductStatus, number>> {

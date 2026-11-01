@@ -74,8 +74,8 @@ async function VendorContent({
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
             {vendor.status === "APPROVED"
-              ? "Add objects, adjust stock, and submit drafts for review. Orders and payouts arrive in a later phase."
-              : "Listings, orders, and payouts will run from here once the next phases land. For now this workspace tracks your studio application."}
+              ? "Add objects, adjust stock, review your orders, and follow earnings and manual payout records."
+              : "Your studio application and its review status are shown here. Selling tools open after approval."}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

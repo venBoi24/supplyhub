@@ -1,0 +1,4 @@
+-- New audit actions for Phase 7 administration and fulfillment.
+ALTER TYPE "AuditAction" ADD VALUE IF NOT EXISTS 'USER_SUSPENDED';
+ALTER TYPE "AuditAction" ADD VALUE IF NOT EXISTS 'USER_REACTIVATED';
+ALTER TYPE "AuditAction" ADD VALUE IF NOT EXISTS 'ORDER_STATUS_UPDATED';

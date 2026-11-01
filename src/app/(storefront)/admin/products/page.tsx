@@ -6,7 +6,10 @@ import { Suspense } from "react";
 
 import { ProductControls } from "@/components/admin/product-controls";
 import { PageShell } from "@/components/storefront/page-shell";
+import { PagedNav } from "@/components/ui/paged-nav";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductStatusBadge } from "@/components/vendor/product-status-badge";
@@ -14,6 +17,8 @@ import { getAdminProductCounts, listAdminProducts } from "@/features/catalog/adm
 import { formatMoney } from "@/features/catalog/money";
 import type { ProductStatus } from "@/generated/prisma/enums";
 import { formatDate } from "@/lib/utils/format-date";
+import { pageCount, parsePage } from "@/lib/utils/pagination";
+import { paginationHref, parseSearchTerm } from "@/features/admin/filters";
 import { requireAdmin } from "@/server/auth/guards";
 
 export const metadata: Metadata = {
@@ -53,10 +58,13 @@ async function AdminProductsContent({
 }) {
   const [admin, query] = await Promise.all([requireAdmin(), searchParams]);
   const status = parseStatus(searchParamValue(query.status));
-  const [products, counts] = await Promise.all([
-    listAdminProducts(status),
+  const search = parseSearchTerm(query.q);
+  const page = parsePage(searchParamValue(query.page));
+  const [productResult, counts] = await Promise.all([
+    listAdminProducts({ status, search, page }),
     getAdminProductCounts(),
   ]);
+  const { products, total, page: currentPage } = productResult;
   const reviewed = searchParamValue(query.reviewed);
   const featuredUpdated = searchParamValue(query.featured) === "1";
 
@@ -119,7 +127,7 @@ async function AdminProductsContent({
 
       <nav aria-label="Filter by status" className="mt-8 flex flex-wrap items-center gap-2">
         <FilterLink
-          href="/admin/products"
+          href={paginationHref("/admin/products", { q: search }, 1)}
           active={status === undefined}
           label="All"
           count={
@@ -133,13 +141,36 @@ async function AdminProductsContent({
         {statuses.map((entry) => (
           <FilterLink
             key={entry.value}
-            href={`/admin/products?status=${entry.value}`}
+            href={paginationHref("/admin/products", { status: entry.value, q: search }, 1)}
             active={status === entry.value}
             label={entry.label}
             count={counts[entry.value]}
           />
         ))}
       </nav>
+
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+        <form action="/admin/products" className="flex flex-wrap items-end gap-3">
+          {status ? <input type="hidden" name="status" value={status} /> : null}
+          <label className="grid gap-2 text-sm">
+            Product, SKU, studio, or department
+            <Input name="q" defaultValue={search} maxLength={80} />
+          </label>
+          <Button type="submit" size="sm">
+            Search
+          </Button>
+        </form>
+        <Button asChild variant="secondary" size="sm">
+          <Link
+            href={`/api/admin/products/export?${new URLSearchParams({ ...(status ? { status } : {}), ...(search ? { q: search } : {}) }).toString()}`}
+          >
+            Export catalog
+          </Link>
+        </Button>
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">
+        {total.toLocaleString()} matching products.
+      </p>
 
       {products.length === 0 ? (
         <EmptyState
@@ -218,6 +249,12 @@ async function AdminProductsContent({
           ))}
         </ul>
       )}
+      <PagedNav
+        pathname="/admin/products"
+        params={{ status, q: search }}
+        page={currentPage}
+        pageCount={pageCount(total)}
+      />
     </PageShell>
   );
 }

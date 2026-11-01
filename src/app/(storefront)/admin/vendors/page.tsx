@@ -3,13 +3,19 @@ import { Store } from "lucide-react";
 import { Suspense } from "react";
 
 import { PageShell } from "@/components/storefront/page-shell";
+import { PagedNav } from "@/components/ui/paged-nav";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VendorReviewActions } from "@/components/vendors/vendor-review-actions";
 import { VendorStatusBadge } from "@/components/vendors/vendor-status-badge";
 import { listVendorApplications } from "@/features/vendors/queries";
 import type { VendorStatus } from "@/generated/prisma/enums";
+import { parseEnumParam, parseSearchTerm, searchParamValue } from "@/features/admin/filters";
+import { pageCount, parsePage } from "@/lib/utils/pagination";
 import { formatDate } from "@/lib/utils/format-date";
 import { requireAdmin } from "@/server/auth/guards";
 
@@ -19,9 +25,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function searchParamValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
+const statuses = [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "SUSPENDED",
+] as const satisfies readonly VendorStatus[];
 
 export default function AdminVendorsPage({ searchParams }: PageProps<"/admin/vendors">) {
   return (
@@ -37,16 +46,18 @@ async function AdminVendorsContent({
   searchParams: PageProps<"/admin/vendors">["searchParams"];
 }) {
   const admin = await requireAdmin();
-  const [params, applications] = await Promise.all([searchParams, listVendorApplications()]);
+  const params = await searchParams;
+  const status = parseEnumParam(params.status, statuses);
+  const search = parseSearchTerm(params.q);
+  const page = parsePage(searchParamValue(params.page));
+  const {
+    applications,
+    counts,
+    total,
+    page: currentPage,
+  } = await listVendorApplications({ page, status, search });
 
   const reviewed = searchParamValue(params.reviewed);
-  const counts = applications.reduce(
-    (totals, application) => {
-      totals[application.status] += 1;
-      return totals;
-    },
-    { PENDING: 0, APPROVED: 0, REJECTED: 0, SUSPENDED: 0 } satisfies Record<VendorStatus, number>,
-  );
   const pendingCount = counts.PENDING;
 
   return (
@@ -96,6 +107,33 @@ async function AdminVendorsContent({
           Application rejected. The owner can see your note in their studio workspace.
         </Notice>
       ) : null}
+
+      <form
+        action="/admin/vendors"
+        className="mt-8 grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_14rem_auto] sm:items-end"
+      >
+        <label className="grid gap-2 text-sm">
+          Studio, owner, or email
+          <Input name="q" defaultValue={search} maxLength={80} />
+        </label>
+        <label className="grid gap-2 text-sm">
+          Application status
+          <Select name="status" defaultValue={status ?? ""}>
+            <option value="">All statuses</option>
+            {statuses.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </Select>
+        </label>
+        <Button type="submit" size="sm">
+          Filter
+        </Button>
+      </form>
+      <p className="mt-4 text-xs text-muted-foreground">
+        {total.toLocaleString()} matching studios. Status totals above include all applications.
+      </p>
 
       {applications.length === 0 ? (
         <EmptyState
@@ -169,6 +207,12 @@ async function AdminVendorsContent({
           </ul>
         </div>
       )}
+      <PagedNav
+        pathname="/admin/vendors"
+        params={{ status, q: search }}
+        page={currentPage}
+        pageCount={pageCount(total)}
+      />
     </PageShell>
   );
 }

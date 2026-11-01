@@ -1,6 +1,15 @@
 "use client";
 
-import { Banknote, FolderTree, ShieldCheck, Store, Wallet } from "lucide-react";
+import {
+  Banknote,
+  ClipboardList,
+  FolderTree,
+  ShieldCheck,
+  ShoppingBag,
+  Store,
+  Users,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +17,9 @@ import { cn } from "@/lib/utils/cn";
 
 const links = [
   { href: "/admin/vendors", label: "Vendors", icon: Store },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/audit", label: "Audit log", icon: ClipboardList },
   { href: "/admin/products", label: "Catalog", icon: ShieldCheck },
   { href: "/admin/categories", label: "Departments", icon: FolderTree },
   { href: "/admin/payments", label: "Payments", icon: Wallet },
