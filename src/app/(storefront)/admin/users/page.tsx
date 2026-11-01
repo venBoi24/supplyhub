@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 import { UserEditForm } from "@/components/admin/user-edit-form";
 import { UserStatusForm } from "@/components/admin/user-status-form";
+import { VendorAppealReviewActions } from "@/components/vendors/vendor-appeal-review-actions";
 import { PageShell } from "@/components/storefront/page-shell";
 import { PagedNav } from "@/components/ui/paged-nav";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,21 @@ async function UsersContent({
                     <span className="text-xs text-muted-foreground">Protected</span>
                   ) : (
                     <div className="grid gap-3">
+                      {user.vendor?.appealedAt && !user.vendor.appealReviewedAt ? (
+                        <section className="min-w-64 rounded-lg border border-warning/40 bg-warning/5 p-3">
+                          <p className="text-xs font-semibold text-warning">
+                            Vendor appeal pending
+                          </p>
+                          <p className="mt-1 text-xs font-medium">{user.vendor.name}</p>
+                          <p className="mt-2 text-xs whitespace-pre-wrap text-muted-foreground">
+                            {user.vendor.appealReason}
+                          </p>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Submitted {formatDate(user.vendor.appealedAt)}
+                          </p>
+                          <VendorAppealReviewActions vendorId={user.vendor.id} />
+                        </section>
+                      ) : null}
                       <UserStatusForm userId={user.id} status={user.status} />
                       <UserEditForm userId={user.id} name={user.name} email={user.email} />
                     </div>

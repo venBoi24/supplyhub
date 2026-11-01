@@ -285,8 +285,12 @@ export async function reviewVendorAppealAction(
     if (update.count !== 1) return false;
     if (status === "APPROVED") {
       await transaction.user.updateMany({
-        where: { id: vendor.ownerId, role: "CUSTOMER" },
-        data: { role: "VENDOR" },
+        where: { id: vendor.ownerId, role: { in: ["CUSTOMER", "VENDOR"] } },
+        data: {
+          role: "VENDOR",
+          status: "ACTIVE",
+          sessionVersion: { increment: 1 },
+        },
       });
     }
     await recordAuditEvent(transaction, {
@@ -303,6 +307,7 @@ export async function reviewVendorAppealAction(
     return { status: "error", message: "This appeal has already been reviewed or is unavailable." };
   }
   revalidatePath("/admin/vendors");
+  revalidatePath("/admin/users");
   revalidatePath("/vendor");
   return {
     status: "success",

@@ -19,7 +19,7 @@ export function VendorAppealReviewActions({ vendorId }: { vendorId: string }) {
         <input type="hidden" name="decision" value="approve" />
         <FormMessage state={approveState} />
         <SubmitButton size="sm" pendingLabel="Approving…">
-          Approve appeal
+          Approve appeal & unlock account
         </SubmitButton>
       </form>
       <form action={rejectAction} className="space-y-3">

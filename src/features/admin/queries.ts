@@ -82,6 +82,16 @@ export async function listAdminUsers(input: {
       status: true,
       emailVerifiedAt: true,
       createdAt: true,
+      vendor: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          appealReason: true,
+          appealedAt: true,
+          appealReviewedAt: true,
+        },
+      },
     },
   });
   return { total, users, page };
