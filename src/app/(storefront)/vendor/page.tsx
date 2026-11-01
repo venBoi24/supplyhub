@@ -58,6 +58,7 @@ async function VendorContent({
   const sent = searchParamValue(params.sent) === "1";
   const archived = searchParamValue(params.archived) === "1";
   const deleted = searchParamValue(params.deleted) === "1";
+  const appealRequested = searchParamValue(params.appeal) === "1";
   const dashboard =
     vendor.status === "APPROVED"
       ? await Promise.all([listVendorProducts(vendor.id), getStudioProductStats(vendor.id)])
@@ -101,6 +102,12 @@ async function VendorContent({
         <Notice tone="success" className="mt-8">
           Application submitted. A SupplyHub administrator will review it before your workspace
           opens.
+        </Notice>
+      ) : null}
+
+      {appealRequested && vendor.status === "REJECTED" ? (
+        <Notice tone="info" className="mt-8">
+          Your studio application was rejected. Review the decision and submit your appeal below.
         </Notice>
       ) : null}
 
@@ -255,7 +262,10 @@ async function VendorContent({
       ) : null}
 
       {vendor.status === "REJECTED" ? (
-        <section className="mt-8 rounded-xl border border-border bg-surface p-6 sm:p-8">
+        <section
+          id="appeal"
+          className="mt-8 scroll-mt-8 rounded-xl border border-border bg-surface p-6 sm:p-8"
+        >
           <Notice tone="danger">This studio application was not approved.</Notice>
           <h2 className="mt-6 font-display text-2xl font-medium tracking-[-0.02em]">
             What happens next

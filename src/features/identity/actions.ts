@@ -7,6 +7,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { mergeGuestCartIntoUserCart } from "@/features/cart/service";
 import { logger } from "@/lib/logging/logger";
 import { safeNextPath } from "@/lib/security/safe-redirect";
+import { getPostSignInDestination } from "@/features/identity/sign-in-destination";
 import { consumeAccountToken, issueAccountToken } from "@/server/auth/account-tokens";
 import { signIn, signOut } from "@/server/auth/config";
 import { hashPassword } from "@/server/auth/password";
@@ -75,14 +76,14 @@ export async function signInAction(
 
   const account = await getDatabase().user.findUnique({
     where: { email: parsed.data.email },
-    select: { id: true },
+    select: { id: true, vendor: { select: { status: true } } },
   });
 
   if (account) {
     await mergeGuestCartIntoUserCart(account.id);
   }
 
-  redirect(safeNextPath(parsed.data.next, "/account"));
+  redirect(getPostSignInDestination(parsed.data.next, account?.vendor?.status));
 }
 
 export async function signUpAction(

@@ -60,6 +60,13 @@ async function SignInContent({
 
       <SignInForm next={next} />
 
+      <div className="mt-6 space-y-2 text-sm text-muted-foreground">
+        <p>Studio application rejected? Sign in to review the decision and submit an appeal.</p>
+        <p>
+          Email not verified? Sign in, then request a new verification link from your account page.
+        </p>
+      </div>
+
       <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
         New to SupplyHub?{" "}
         <Link

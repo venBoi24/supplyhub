@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+test("sign-in explains how rejected applicants and unverified users can continue", async ({
+  page,
+}) => {
+  await page.goto("/sign-in");
+  await expect(page.getByText(/studio application rejected\?/i)).toBeVisible();
+  await expect(page.getByText(/email not verified\?/i)).toBeVisible();
+});
+
 test("guest can browse the storefront and open the catalog", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /objects with a maker's name/i })).toBeVisible();
