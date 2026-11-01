@@ -54,6 +54,7 @@ const serverEnvSchema = z
     DATABASE_URL: postgresUrl,
     NEXT_PUBLIC_SITE_URL: httpUrl.default("http://localhost:3000"),
     AUTH_SECRET: z.string().min(32, "must be at least 32 characters"),
+    AUTH_URL: optionalHttpUrl,
     STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
     S3_ENDPOINT: optionalHttpUrl,
     S3_REGION: optionalText,

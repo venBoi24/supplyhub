@@ -22,7 +22,9 @@ const env = getServerEnv();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: env.AUTH_SECRET,
-  trustHost: env.NODE_ENV !== "production",
+  // An explicit false would override Auth.js detection of Vercel/AUTH_URL and reject every
+  // production request with UntrustedHost.
+  trustHost: env.NODE_ENV !== "production" || Boolean(env.AUTH_URL) || Boolean(process.env.VERCEL),
   session: {
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60,

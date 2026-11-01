@@ -245,7 +245,8 @@ deploy && next build`, and the Prisma config resolves the session pooler key on 
 
 Set these Vercel environment variables (Production and Preview): the three Supabase keys,
 `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL` (the deployed origin), and the LynxPay live keys once
-available. Local `DATABASE_URL`, `TEST_DATABASE_URL`, and the local `prisma dev` server are not
+available. `AUTH_URL` is optional on Vercel because Auth.js trusts the platform host there; set it
+to the canonical origin if you serve the app from a custom domain through another proxy. Local `DATABASE_URL`, `TEST_DATABASE_URL`, and the local `prisma dev` server are not
 used in production.
 
 Vercel's filesystem is ephemeral, so `.local/uploads` does not persist. Before enabling studio
