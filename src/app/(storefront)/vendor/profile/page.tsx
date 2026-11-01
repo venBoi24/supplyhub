@@ -84,6 +84,11 @@ async function ProfileContent({
         <StudioProfileForm
           defaults={{
             location: vendor.location ?? "",
+            city: vendor.city ?? "",
+            street: vendor.street ?? "",
+            address: vendor.address ?? "",
+            latitude: vendor.latitude?.toString() ?? "",
+            longitude: vendor.longitude?.toString() ?? "",
             discipline: vendor.discipline ?? "",
             story: vendor.story ?? vendor.description ?? "",
             monogram: vendor.monogram ?? initialsFor(vendor.name),

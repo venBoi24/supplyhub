@@ -33,7 +33,11 @@ export async function updateVendorProfileForUserAction(
     name: formValue(formData, "name"),
   });
   const details = studioProfileSchema.safeParse({
-    location: formValue(formData, "location"),
+    city: formValue(formData, "city"),
+    street: formValue(formData, "street"),
+    address: formValue(formData, "address"),
+    latitude: formValue(formData, "latitude"),
+    longitude: formValue(formData, "longitude"),
     discipline: formValue(formData, "discipline"),
     story: formValue(formData, "story"),
     monogram: formValue(formData, "monogram"),
@@ -61,7 +65,12 @@ export async function updateVendorProfileForUserAction(
       await transaction.vendor.update({
         where: { id: vendor.id },
         data: {
-          location: details.data.location,
+          location: [details.data.address, details.data.street, details.data.city].join(", "),
+          city: details.data.city,
+          street: details.data.street,
+          address: details.data.address,
+          latitude: details.data.latitude?.toFixed(7) ?? null,
+          longitude: details.data.longitude?.toFixed(7) ?? null,
           discipline: details.data.discipline,
           story: details.data.story,
           monogram: details.data.monogram || profile.data.name.slice(0, 2).toUpperCase(),
@@ -82,6 +91,7 @@ export async function updateVendorProfileForUserAction(
     revalidatePath(`/admin/users/${profile.data.userId}/inventory`);
     revalidatePath("/vendor");
     revalidatePath("/vendors");
+    revalidatePath("/", "layout");
     return { status: "success", message: "Vendor profile and map location saved." };
   } catch (error) {
     if (error instanceof Error && error.message === "invalid-target") {

@@ -159,37 +159,60 @@ export const imageAltSchema = z.preprocess(
     .max(160, { error: "Use 160 characters or fewer." }),
 );
 
-export const studioProfileSchema = z.object({
-  location: z.preprocess(
-    trimmed,
-    z
-      .string({ error: "Enter a studio location." })
-      .min(2, { error: "Use at least 2 characters." })
-      .max(80, { error: "Use 80 characters or fewer." }),
-  ),
-  discipline: z.preprocess(
-    trimmed,
-    z
-      .string({ error: "Describe your discipline." })
-      .min(2, { error: "Use at least 2 characters." })
-      .max(60, { error: "Use 60 characters or fewer." }),
-  ),
-  story: z.preprocess(
-    trimmed,
-    z
-      .string({ error: "Tell customers about your studio." })
-      .min(20, { error: "Use at least 20 characters." })
-      .max(1000, { error: "Use 1000 characters or fewer." }),
-  ),
-  monogram: z.preprocess(
-    (value) => (typeof value === "string" ? value.trim().toUpperCase() : value),
-    z
-      .string()
-      .max(3, { error: "Use up to 3 letters." })
-      .regex(/^[A-Z]{0,3}$/, { error: "Use letters only." })
-      .default(""),
-  ),
-});
+export const studioProfileSchema = z
+  .object({
+    city: z.preprocess(
+      trimmed,
+      z
+        .string({ error: "Enter a city or town." })
+        .min(2, { error: "Use at least 2 characters." })
+        .max(80, { error: "Use 80 characters or fewer." }),
+    ),
+    street: z.preprocess(trimmed, z.string({ error: "Enter a street." }).min(2).max(120)),
+    address: z.preprocess(
+      trimmed,
+      z.string({ error: "Enter an address or building number." }).min(2).max(160),
+    ),
+    latitude: z.preprocess(
+      (value) => (value === "" || value === null || value === undefined ? null : Number(value)),
+      z.number().min(-90).max(90).nullable(),
+    ),
+    longitude: z.preprocess(
+      (value) => (value === "" || value === null || value === undefined ? null : Number(value)),
+      z.number().min(-180).max(180).nullable(),
+    ),
+    discipline: z.preprocess(
+      trimmed,
+      z
+        .string({ error: "Describe your discipline." })
+        .min(2, { error: "Use at least 2 characters." })
+        .max(60, { error: "Use 60 characters or fewer." }),
+    ),
+    story: z.preprocess(
+      trimmed,
+      z
+        .string({ error: "Tell customers about your studio." })
+        .min(20, { error: "Use at least 20 characters." })
+        .max(1000, { error: "Use 1000 characters or fewer." }),
+    ),
+    monogram: z.preprocess(
+      (value) => (typeof value === "string" ? value.trim().toUpperCase() : value),
+      z
+        .string()
+        .max(3, { error: "Use up to 3 letters." })
+        .regex(/^[A-Z]{0,3}$/, { error: "Use letters only." })
+        .default(""),
+    ),
+  })
+  .superRefine((value, context) => {
+    if ((value.latitude === null) !== (value.longitude === null)) {
+      context.addIssue({
+        code: "custom",
+        path: [value.latitude === null ? "latitude" : "longitude"],
+        message: "Use device location to save both map coordinates, or clear both coordinates.",
+      });
+    }
+  });
 
 export const categoryInputSchema = z.object({
   name: z.preprocess(

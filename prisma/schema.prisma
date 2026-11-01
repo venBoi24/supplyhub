@@ -181,14 +181,19 @@ model Vendor {
   description       String?
   monogram          String?
   location          String?
+  city              String?
+  street            String?
+  address           String?
+  latitude          Decimal?           @db.Decimal(10, 7)
+  longitude         Decimal?           @db.Decimal(10, 7)
   discipline        String?
   story             String?
   status            VendorStatus       @default(PENDING)
   reviewNote        String?            @map("review_note")
   appealReason      String?            @map("appeal_reason")
-  appealedAt        DateTime?           @map("appealed_at") @db.Timestamptz(6)
-  appealReviewedAt  DateTime?           @map("appeal_reviewed_at") @db.Timestamptz(6)
-  appealReviewNote  String?             @map("appeal_review_note")
+  appealedAt        DateTime?          @map("appealed_at") @db.Timestamptz(6)
+  appealReviewedAt  DateTime?          @map("appeal_reviewed_at") @db.Timestamptz(6)
+  appealReviewNote  String?            @map("appeal_review_note")
   reviewedAt        DateTime?          @map("reviewed_at") @db.Timestamptz(6)
   reviewedById      String?            @map("reviewed_by_id") @db.Uuid
   reviewedBy        User?              @relation("VendorReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)

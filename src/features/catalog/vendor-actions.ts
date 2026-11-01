@@ -456,7 +456,11 @@ export async function updateStudioProfileAction(
   const { actor, vendorId } = await requireStudio();
 
   const parsed = studioProfileSchema.safeParse({
-    location: formValue(formData, "location"),
+    city: formValue(formData, "city"),
+    street: formValue(formData, "street"),
+    address: formValue(formData, "address"),
+    latitude: formValue(formData, "latitude"),
+    longitude: formValue(formData, "longitude"),
     discipline: formValue(formData, "discipline"),
     story: formValue(formData, "story"),
     monogram: formValue(formData, "monogram"),
@@ -469,7 +473,12 @@ export async function updateStudioProfileAction(
   await getDatabase().vendor.update({
     where: { id: vendorId },
     data: {
-      location: parsed.data.location,
+      location: [parsed.data.address, parsed.data.street, parsed.data.city].join(", "),
+      city: parsed.data.city,
+      street: parsed.data.street,
+      address: parsed.data.address,
+      latitude: parsed.data.latitude?.toFixed(7) ?? null,
+      longitude: parsed.data.longitude?.toFixed(7) ?? null,
       discipline: parsed.data.discipline,
       story: parsed.data.story,
       monogram: parsed.data.monogram || initialsFor(actor.name),

@@ -20,6 +20,8 @@ export interface Vendor {
   name: string;
   monogram: string;
   location: string;
+  latitude?: number | null;
+  longitude?: number | null;
   discipline: string;
   story: string;
 }

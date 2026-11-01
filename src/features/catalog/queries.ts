@@ -60,6 +60,11 @@ function mapVendor(vendor: {
   slug: string;
   monogram: string | null;
   location: string | null;
+  city: string | null;
+  street: string | null;
+  address: string | null;
+  latitude: Prisma.Decimal | null;
+  longitude: Prisma.Decimal | null;
   discipline: string | null;
   story: string | null;
   description: string | null;
@@ -68,7 +73,12 @@ function mapVendor(vendor: {
     slug: vendor.slug,
     name: vendor.name,
     monogram: vendor.monogram?.trim() || initialsFor(vendor.name),
-    location: vendor.location?.trim() || "Independent studio",
+    location:
+      vendor.location?.trim() ||
+      [vendor.address, vendor.street, vendor.city].filter(Boolean).join(", ") ||
+      "Independent studio",
+    latitude: vendor.latitude?.toNumber() ?? null,
+    longitude: vendor.longitude?.toNumber() ?? null,
     discipline: vendor.discipline?.trim() || "Independent studio",
     story: vendor.story?.trim() || vendor.description?.trim() || "",
   };
@@ -265,6 +275,11 @@ export async function listVendorSummaries(): Promise<VendorSummary[]> {
       slug: true,
       monogram: true,
       location: true,
+      city: true,
+      street: true,
+      address: true,
+      latitude: true,
+      longitude: true,
       discipline: true,
       story: true,
       description: true,

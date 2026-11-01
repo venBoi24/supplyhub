@@ -18,6 +18,11 @@ export function AdminVendorProfileForm({
   vendor: {
     id: string;
     location: string;
+    city: string;
+    street: string;
+    address: string;
+    latitude: string;
+    longitude: string;
     discipline: string;
     story: string;
     monogram: string;
@@ -41,7 +46,15 @@ export function AdminVendorProfileForm({
           required
         />
       </Field>
-      <LocationMapField defaultValue={vendor.location} error={errors?.location} />
+      <LocationMapField
+        defaultValue={vendor.location}
+        defaultCity={vendor.city}
+        defaultStreet={vendor.street}
+        defaultAddress={vendor.address}
+        defaultLatitude={vendor.latitude}
+        defaultLongitude={vendor.longitude}
+        errors={errors}
+      />
       <Field label="What they sell" htmlFor="managed-discipline" error={errors?.discipline}>
         <Input
           id="managed-discipline"

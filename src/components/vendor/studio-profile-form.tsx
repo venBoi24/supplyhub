@@ -15,6 +15,11 @@ export function StudioProfileForm({
 }: {
   defaults: {
     location: string;
+    city: string;
+    street: string;
+    address: string;
+    latitude: string;
+    longitude: string;
     discipline: string;
     story: string;
     monogram: string;
@@ -47,7 +52,15 @@ export function StudioProfileForm({
         </Field>
       </div>
 
-      <LocationMapField defaultValue={defaults.location} error={errors?.location} />
+      <LocationMapField
+        defaultValue={defaults.location}
+        defaultCity={defaults.city}
+        defaultStreet={defaults.street}
+        defaultAddress={defaults.address}
+        defaultLatitude={defaults.latitude}
+        defaultLongitude={defaults.longitude}
+        errors={errors}
+      />
 
       <Field label="Discipline" htmlFor="studio-discipline" error={errors?.discipline}>
         <Input

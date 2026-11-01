@@ -10,6 +10,36 @@ import {
   vendorAppealSchema,
   vendorReviewSchema,
 } from "@/features/identity/validation";
+import { studioProfileSchema } from "@/features/catalog/validation";
+
+describe("studioProfileSchema", () => {
+  const location = {
+    city: "Dar es Salaam",
+    street: "Samora Avenue",
+    address: "Plot 12, Mlimani Tower",
+    latitude: "-6.8161",
+    longitude: "39.2803",
+    discipline: "Ceramics",
+    story: "A small studio making thoughtful objects by hand.",
+    monogram: "SM",
+  };
+
+  it("accepts a complete address and optional device coordinates", () => {
+    expect(studioProfileSchema.parse(location)).toMatchObject({
+      city: "Dar es Salaam",
+      latitude: -6.8161,
+      longitude: 39.2803,
+    });
+  });
+
+  it("requires city, street, address, and paired valid coordinates", () => {
+    expect(studioProfileSchema.safeParse({ ...location, street: "" }).success).toBe(false);
+    expect(
+      studioProfileSchema.safeParse({ ...location, latitude: "", longitude: "39.2" }).success,
+    ).toBe(false);
+    expect(studioProfileSchema.safeParse({ ...location, latitude: "91" }).success).toBe(false);
+  });
+});
 
 describe("emailField", () => {
   it("trims and lowercases addresses", () => {

@@ -146,7 +146,11 @@ async function VendorContent({
         </div>
         <iframe
           title={`Google Maps showing ${vendor.location}`}
-          src={`https://maps.google.com/maps?q=${encodeURIComponent(vendor.location)}&output=embed`}
+          src={`https://maps.google.com/maps?q=${encodeURIComponent(
+            typeof vendor.latitude === "number" && typeof vendor.longitude === "number"
+              ? `${vendor.latitude},${vendor.longitude}`
+              : vendor.location,
+          )}&output=embed`}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           className="mt-4 h-64 w-full rounded-lg border border-border"
