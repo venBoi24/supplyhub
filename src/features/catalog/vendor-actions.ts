@@ -1,0 +1,751 @@
+"use server";
+
+import { randomUUID } from "node:crypto";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
+import { Prisma } from "@/generated/prisma/client";
+import { logger } from "@/lib/logging/logger";
+import { initialsFor } from "@/lib/utils/initials";
+import { recordAuditEvent } from "@/server/audit/audit-log";
+import { getSessionActor } from "@/server/auth/session";
+import { getDatabase } from "@/server/db/client";
+import { MAX_IMAGE_BYTES, validateImageUpload } from "@/server/storage/image-validation";
+import { getStorage } from "@/server/storage/object-storage";
+
+import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
+
+import { DEFAULT_CURRENCY, MAX_PRODUCT_IMAGES } from "./constants";
+import { applyStockAdjustment } from "./inventory";
+import { centsToDecimalString } from "./money";
+import { buildSearchText } from "./search";
+import {
+  imageAltSchema,
+  inventoryAdjustmentSchema,
+  productInputSchema,
+  studioProfileSchema,
+} from "./validation";
+
+const uuidSchema = z.uuid();
+
+function asUuid(value: string): string | null {
+  return uuidSchema.safeParse(value).success ? value : null;
+}
+
+function revalidateCatalog(): void {
+  revalidatePath("/", "layout");
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
+function uniqueFieldErrors(error: unknown): FormState {
+  const target = isUniqueConstraintError(error)
+    ? String((error as Prisma.PrismaClientKnownRequestError).meta?.target ?? "")
+    : "";
+
+  if (target.includes("sku")) {
+    return {
+      status: "error",
+      fieldErrors: { sku: "Another object in your studio already uses that SKU." },
+    };
+  }
+
+  if (target.includes("slug")) {
+    return {
+      status: "error",
+      fieldErrors: { slug: "That handle is already in use. Choose another one." },
+    };
+  }
+
+  return { status: "error", message: "That change conflicts with an existing record." };
+}
+
+async function requireStudio() {
+  const actor = await getSessionActor();
+
+  if (!actor) {
+    redirect("/sign-in?next=%2Fvendor");
+  }
+
+  if (actor.role === "ADMIN") {
+    redirect("/admin/products");
+  }
+
+  if (actor.role !== "VENDOR" || !actor.vendor || actor.vendor.status !== "APPROVED") {
+    redirect("/vendor");
+  }
+
+  return { actor, vendorId: actor.vendor.id };
+}
+
+function productFields(input: ReturnType<typeof productInputSchema.parse>) {
+  return {
+    name: input.name,
+    slug: input.slug,
+    categoryId: input.categoryId,
+    sku: input.sku,
+    price: centsToDecimalString(input.priceCents),
+    compareAtPrice:
+      input.compareAtPriceCents !== undefined
+        ? centsToDecimalString(input.compareAtPriceCents)
+        : null,
+    currency: DEFAULT_CURRENCY,
+    summary: input.summary,
+    description: input.description,
+    makerNote: input.makerNote,
+    materials: input.materials,
+    dimensions: input.dimensions,
+    care: input.care,
+    searchText: buildSearchText(input),
+  };
+}
+
+export async function saveProductAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+  const rawProductId = formValue(formData, "productId");
+  const productId = rawProductId ? asUuid(rawProductId) : null;
+
+  if (rawProductId && !productId) {
+    return { status: "error", message: "That object reference is invalid." };
+  }
+
+  const parsed = productInputSchema.safeParse({
+    name: formValue(formData, "name"),
+    slug: formValue(formData, "slug"),
+    categoryId: formValue(formData, "categoryId"),
+    sku: formValue(formData, "sku"),
+    priceCents: formValue(formData, "price"),
+    compareAtPriceCents: formValue(formData, "compareAtPrice"),
+    summary: formValue(formData, "summary"),
+    description: formValue(formData, "description"),
+    makerNote: formValue(formData, "makerNote"),
+    materials: formValue(formData, "materials"),
+    dimensions: formValue(formData, "dimensions"),
+    care: formValue(formData, "care"),
+    initialStock: formValue(formData, "initialStock"),
+  });
+
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
+  }
+
+  const database = getDatabase();
+  const category = await database.category.findFirst({
+    where: { id: parsed.data.categoryId, status: "ACTIVE" },
+    select: { id: true },
+  });
+
+  if (!category) {
+    return {
+      status: "error",
+      fieldErrors: { categoryId: "Choose an active department." },
+    };
+  }
+
+  const data = productFields(parsed.data);
+
+  try {
+    if (!productId) {
+      const created = await database.$transaction(async (transaction) => {
+        const product = await transaction.product.create({
+          data: {
+            ...data,
+            vendorId,
+            stock: parsed.data.initialStock,
+            status: "DRAFT",
+          },
+          select: { id: true },
+        });
+
+        if (parsed.data.initialStock > 0) {
+          await transaction.inventoryMovement.create({
+            data: {
+              productId: product.id,
+              actorId: actor.id,
+              delta: parsed.data.initialStock,
+              reason: "INITIAL",
+              resultingStock: parsed.data.initialStock,
+              note: "Initial stock recorded when the object was created.",
+            },
+          });
+        }
+
+        await recordAuditEvent(transaction, {
+          actorId: actor.id,
+          action: "PRODUCT_CREATED",
+          targetType: "product",
+          targetId: product.id,
+          metadata: { slug: product.id, status: "DRAFT" },
+        });
+
+        return product;
+      });
+
+      logger.info("product.created", { actorId: actor.id, productId: created.id });
+      revalidateCatalog();
+      redirect(`/vendor/products/${created.id}?saved=1`);
+    }
+
+    const existing = await database.product.findFirst({
+      where: { id: productId, vendorId },
+      select: { id: true, status: true },
+    });
+
+    if (!existing) {
+      return { status: "error", message: "That object could not be found in your studio." };
+    }
+
+    if (existing.status === "PENDING_REVIEW") {
+      return {
+        status: "error",
+        message: "This object is waiting for review. Stock can still be adjusted below.",
+      };
+    }
+
+    if (existing.status === "ARCHIVED") {
+      return { status: "error", message: "Archived objects cannot be edited." };
+    }
+
+    const update: Prisma.ProductUpdateManyMutationInput = { ...data };
+
+    if (existing.status === "REJECTED") {
+      update.status = "DRAFT";
+      update.reviewNote = null;
+    }
+
+    const updated = await database.product.updateMany({
+      where: { id: existing.id, vendorId },
+      data: update,
+    });
+
+    if (updated.count !== 1) {
+      return {
+        status: "error",
+        message: "That object changed while you were editing. Reload and retry.",
+      };
+    }
+
+    logger.info("product.updated", { actorId: actor.id, productId: existing.id });
+    revalidateCatalog();
+    redirect(`/vendor/products/${existing.id}?saved=1`);
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return uniqueFieldErrors(error);
+    }
+
+    throw error;
+  }
+}
+
+export async function submitProductAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+  const productId = asUuid(formValue(formData, "productId"));
+
+  if (!productId) {
+    return { status: "error", message: "That object reference is invalid." };
+  }
+
+  const database = getDatabase();
+  const product = await database.product.findFirst({
+    where: { id: productId, vendorId },
+    select: {
+      id: true,
+      status: true,
+      category: { select: { status: true } },
+      _count: { select: { images: { where: { status: "APPROVED" } } } },
+    },
+  });
+
+  if (!product) {
+    return { status: "error", message: "That object could not be found in your studio." };
+  }
+
+  if (product.status !== "DRAFT" && product.status !== "REJECTED") {
+    return { status: "error", message: "Only drafts or rejected objects can be submitted." };
+  }
+
+  if (product.category.status !== "ACTIVE") {
+    return { status: "error", message: "Choose an active department before submitting." };
+  }
+
+  if (product._count.images === 0) {
+    return { status: "error", message: "Add at least one image before submitting for review." };
+  }
+
+  const updated = await database.product.updateMany({
+    where: { id: product.id, vendorId, status: product.status },
+    data: {
+      status: "PENDING_REVIEW",
+      submittedAt: new Date(),
+      reviewNote: null,
+      reviewedAt: null,
+      reviewedById: null,
+    },
+  });
+
+  if (updated.count !== 1) {
+    return { status: "error", message: "That object already changed status. Reload and retry." };
+  }
+
+  await database.$transaction((transaction) =>
+    recordAuditEvent(transaction, {
+      actorId: actor.id,
+      action: "PRODUCT_SUBMITTED",
+      targetType: "product",
+      targetId: product.id,
+      metadata: { previousStatus: product.status, newStatus: "PENDING_REVIEW" },
+    }),
+  );
+
+  logger.info("product.submitted", { actorId: actor.id, productId: product.id });
+  revalidateCatalog();
+  redirect("/vendor?sent=1");
+}
+
+export async function archiveProductAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+  const productId = asUuid(formValue(formData, "productId"));
+
+  if (!productId) {
+    return { status: "error", message: "That object reference is invalid." };
+  }
+
+  const database = getDatabase();
+  const product = await database.product.findFirst({
+    where: { id: productId, vendorId },
+    select: { id: true, status: true },
+  });
+
+  if (!product) {
+    return { status: "error", message: "That object could not be found in your studio." };
+  }
+
+  if (product.status === "ARCHIVED") {
+    return { status: "success", message: "This object is already archived." };
+  }
+
+  const updated = await database.product.updateMany({
+    where: { id: product.id, vendorId, status: product.status },
+    data: { status: "ARCHIVED", archivedAt: new Date(), featured: false },
+  });
+
+  if (updated.count !== 1) {
+    return { status: "error", message: "That object already changed status. Reload and retry." };
+  }
+
+  await database.$transaction((transaction) =>
+    recordAuditEvent(transaction, {
+      actorId: actor.id,
+      action: "PRODUCT_ARCHIVED",
+      targetType: "product",
+      targetId: product.id,
+      metadata: { previousStatus: product.status, newStatus: "ARCHIVED" },
+    }),
+  );
+
+  logger.info("product.archived", { actorId: actor.id, productId: product.id });
+  revalidateCatalog();
+  redirect("/vendor?archived=1");
+}
+
+export async function deleteProductAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+  const productId = asUuid(formValue(formData, "productId"));
+
+  if (!productId) {
+    return { status: "error", message: "That object reference is invalid." };
+  }
+
+  const database = getDatabase();
+  const product = await database.product.findFirst({
+    where: { id: productId, vendorId },
+    select: {
+      id: true,
+      status: true,
+      images: { select: { storageKey: true } },
+    },
+  });
+
+  if (!product) {
+    return { status: "error", message: "That object could not be found in your studio." };
+  }
+
+  if (product.status !== "DRAFT" && product.status !== "REJECTED") {
+    return {
+      status: "error",
+      message: "Only unpublished drafts or rejected objects can be deleted. Archive it instead.",
+    };
+  }
+
+  const deleted = await database.product.deleteMany({
+    where: { id: product.id, vendorId, status: product.status },
+  });
+
+  if (deleted.count !== 1) {
+    return { status: "error", message: "That object already changed status. Reload and retry." };
+  }
+
+  const storage = getStorage();
+  await Promise.all(
+    product.images.map((image) =>
+      storage.delete(image.storageKey).catch((error: unknown) => {
+        logger.warn("product.image_delete_failed", { productId: product.id, error });
+      }),
+    ),
+  );
+
+  logger.info("product.deleted", { actorId: actor.id, productId: product.id });
+  revalidateCatalog();
+  redirect("/vendor?deleted=1");
+}
+
+export async function updateStudioProfileAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+
+  const parsed = studioProfileSchema.safeParse({
+    location: formValue(formData, "location"),
+    discipline: formValue(formData, "discipline"),
+    story: formValue(formData, "story"),
+    monogram: formValue(formData, "monogram"),
+  });
+
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
+  }
+
+  await getDatabase().vendor.update({
+    where: { id: vendorId },
+    data: {
+      location: parsed.data.location,
+      discipline: parsed.data.discipline,
+      story: parsed.data.story,
+      monogram: parsed.data.monogram || initialsFor(actor.name),
+    },
+  });
+
+  logger.info("vendor.profile_updated", { actorId: actor.id, vendorId });
+  revalidateCatalog();
+  redirect("/vendor/profile?saved=1");
+}
+
+export async function adjustInventoryAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+
+  const parsed = inventoryAdjustmentSchema.safeParse({
+    productId: formValue(formData, "productId"),
+    mode: formValue(formData, "mode"),
+    quantity: formValue(formData, "quantity"),
+    reason: formValue(formData, "reason"),
+    note: formValue(formData, "note"),
+  });
+
+  if (!parsed.success) {
+    return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
+  }
+
+  const database = getDatabase();
+
+  try {
+    const message = await database.$transaction(async (transaction) => {
+      const product = await transaction.product.findFirst({
+        where: { id: parsed.data.productId, vendorId },
+        select: { id: true, stock: true, status: true },
+      });
+
+      if (!product) {
+        throw new StockChangeError("That object could not be found in your studio.");
+      }
+
+      if (product.status === "ARCHIVED") {
+        throw new StockChangeError("Archived objects cannot change stock.");
+      }
+
+      const result = applyStockAdjustment(product.stock, {
+        mode: parsed.data.mode,
+        quantity: parsed.data.quantity,
+      });
+
+      if (!result.ok) {
+        throw new StockChangeError(result.error);
+      }
+
+      const updated = await transaction.product.updateMany({
+        where: { id: product.id, vendorId, stock: product.stock },
+        data: { stock: result.nextStock },
+      });
+
+      if (updated.count !== 1) {
+        throw new StockChangeError(
+          "Stock changed while you were editing. Reload the page and try again.",
+        );
+      }
+
+      await transaction.inventoryMovement.create({
+        data: {
+          productId: product.id,
+          actorId: actor.id,
+          delta: result.delta,
+          reason: parsed.data.reason,
+          resultingStock: result.nextStock,
+          note: parsed.data.note || null,
+        },
+      });
+
+      return `Stock updated from ${result.previousStock} to ${result.nextStock}.`;
+    });
+
+    logger.info("inventory.adjusted", {
+      actorId: actor.id,
+      productId: parsed.data.productId,
+      reason: parsed.data.reason,
+    });
+    revalidateCatalog();
+    return { status: "success", message };
+  } catch (error) {
+    if (error instanceof StockChangeError) {
+      return { status: "error", message: error.message };
+    }
+
+    throw error;
+  }
+}
+
+class StockChangeError extends Error {}
+
+export async function uploadProductImageAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+  const productId = asUuid(formValue(formData, "productId"));
+
+  if (!productId) {
+    return { status: "error", message: "That object reference is invalid." };
+  }
+
+  const alt = imageAltSchema.safeParse(formValue(formData, "alt"));
+
+  if (!alt.success) {
+    return { status: "error", fieldErrors: firstFieldErrors(alt.error) };
+  }
+
+  const file = formData.get("image");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { status: "error", fieldErrors: { image: "Choose an image file." } };
+  }
+
+  if (file.size > MAX_IMAGE_BYTES) {
+    return { status: "error", fieldErrors: { image: "Images must be 5 MB or smaller." } };
+  }
+
+  const database = getDatabase();
+  const product = await database.product.findFirst({
+    where: { id: productId, vendorId },
+    select: {
+      id: true,
+      status: true,
+      _count: { select: { images: true } },
+    },
+  });
+
+  if (!product) {
+    return { status: "error", message: "That object could not be found in your studio." };
+  }
+
+  if (product.status === "PENDING_REVIEW") {
+    return { status: "error", message: "Wait for the review before changing images." };
+  }
+
+  if (product.status === "ARCHIVED") {
+    return { status: "error", message: "Archived objects cannot change images." };
+  }
+
+  if (product._count.images >= MAX_PRODUCT_IMAGES) {
+    return {
+      status: "error",
+      fieldErrors: { image: `Each object can have ${MAX_PRODUCT_IMAGES} images.` },
+    };
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const validation = validateImageUpload({
+    bytes,
+    declaredType: file.type,
+    declaredSize: file.size,
+  });
+
+  if (!validation.ok) {
+    return { status: "error", fieldErrors: { image: validation.error } };
+  }
+
+  const key = `products/${product.id}/${randomUUID()}.${validation.image.extension}`;
+  const storage = getStorage();
+
+  await storage.put(key, bytes, validation.image.contentType);
+
+  try {
+    const highest = await database.productImage.aggregate({
+      where: { productId: product.id },
+      _max: { sortOrder: true },
+    });
+
+    await database.productImage.create({
+      data: {
+        productId: product.id,
+        storageKey: key,
+        alt: alt.data,
+        contentType: validation.image.contentType,
+        byteSize: validation.image.byteSize,
+        sortOrder: (highest._max.sortOrder ?? -1) + 1,
+        status: "APPROVED",
+      },
+    });
+  } catch (error) {
+    await storage.delete(key).catch(() => undefined);
+    throw error;
+  }
+
+  logger.info("product.image_uploaded", { actorId: actor.id, productId: product.id });
+  revalidateCatalog();
+  return { status: "success", message: "Image uploaded." };
+}
+
+export async function deleteProductImageAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { actor, vendorId } = await requireStudio();
+  const imageId = asUuid(formValue(formData, "imageId"));
+
+  if (!imageId) {
+    return { status: "error", message: "That image reference is invalid." };
+  }
+
+  const database = getDatabase();
+  const image = await database.productImage.findFirst({
+    where: { id: imageId, product: { vendorId } },
+    select: {
+      id: true,
+      storageKey: true,
+      productId: true,
+      product: {
+        select: {
+          status: true,
+          _count: { select: { images: true } },
+        },
+      },
+    },
+  });
+
+  if (!image) {
+    return { status: "error", message: "That image could not be found in your studio." };
+  }
+
+  if (image.product.status === "PENDING_REVIEW") {
+    return { status: "error", message: "Wait for the review before changing images." };
+  }
+
+  if (image.product.status === "PUBLISHED" && image.product._count.images <= 1) {
+    return {
+      status: "error",
+      message: "A published object needs at least one image. Archive it or add another first.",
+    };
+  }
+
+  const deleted = await database.productImage.deleteMany({
+    where: { id: image.id, product: { vendorId } },
+  });
+
+  if (deleted.count !== 1) {
+    return { status: "error", message: "That image already changed. Reload and retry." };
+  }
+
+  await getStorage()
+    .delete(image.storageKey)
+    .catch((error: unknown) => {
+      logger.warn("product.image_delete_failed", { productId: image.productId, error });
+    });
+
+  logger.info("product.image_deleted", { actorId: actor.id, productId: image.productId });
+  revalidateCatalog();
+  return { status: "success", message: "Image removed." };
+}
+
+export async function moveProductImageAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const { vendorId } = await requireStudio();
+  const imageId = asUuid(formValue(formData, "imageId"));
+  const direction = formValue(formData, "direction");
+
+  if (!imageId || (direction !== "up" && direction !== "down")) {
+    return { status: "error", message: "That image reference is invalid." };
+  }
+
+  const database = getDatabase();
+  const image = await database.productImage.findFirst({
+    where: { id: imageId, product: { vendorId } },
+    select: { id: true, productId: true, product: { select: { status: true } } },
+  });
+
+  if (!image) {
+    return { status: "error", message: "That image could not be found in your studio." };
+  }
+
+  if (image.product.status === "PENDING_REVIEW" || image.product.status === "ARCHIVED") {
+    return { status: "error", message: "Images cannot be reordered right now." };
+  }
+
+  const images = await database.productImage.findMany({
+    where: { productId: image.productId },
+    select: { id: true, sortOrder: true },
+    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+  });
+
+  const index = images.findIndex((item) => item.id === image.id);
+  const neighbourIndex = direction === "up" ? index - 1 : index + 1;
+  const current = images[index];
+  const neighbour = images[neighbourIndex];
+
+  if (!current || !neighbour) {
+    return { status: "success", message: "Image order unchanged." };
+  }
+
+  await database.$transaction([
+    database.productImage.update({
+      where: { id: current.id },
+      data: { sortOrder: neighbour.sortOrder },
+    }),
+    database.productImage.update({
+      where: { id: neighbour.id },
+      data: { sortOrder: current.sortOrder },
+    }),
+  ]);
+
+  revalidateCatalog();
+  return { status: "success", message: "Image order updated." };
+}
