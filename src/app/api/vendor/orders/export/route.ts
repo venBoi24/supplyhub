@@ -46,12 +46,14 @@ export async function GET(request: Request) {
       currency: true,
       createdAt: true,
       order: { select: { orderNumber: true } },
-      items: { select: { productName: true, sku: true, quantity: true } },
+      items: {
+        select: { productName: true, sku: true, quantity: true, lineTotal: true, currency: true },
+      },
     },
   });
 
   const csv = buildCsv(
-    ["Order", "Status", "Product", "SKU", "Quantity", "Subtotal", "Currency", "Created at"],
+    ["Order", "Status", "Product", "SKU", "Quantity", "Line total", "Currency", "Created at"],
     orders.flatMap((order) =>
       order.items.map((item) => [
         order.order.orderNumber,
@@ -59,8 +61,8 @@ export async function GET(request: Request) {
         item.productName,
         item.sku,
         item.quantity,
-        formatMoney(decimalToCents(order.subtotal), order.currency),
-        order.currency,
+        formatMoney(decimalToCents(item.lineTotal), item.currency),
+        item.currency,
         order.createdAt.toISOString(),
       ]),
     ),
