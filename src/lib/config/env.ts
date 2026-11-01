@@ -108,36 +108,6 @@ const serverEnvSchema = z
           "must not use a loopback host in production; set DATABASE_URL or a Supabase pooler key",
       });
     }
-
-    if (value.NODE_ENV !== "production" || value.PAYMENT_PROVIDER !== "lynxpay") {
-      return;
-    }
-
-    const apiKey = value.LYNXPAY_API_KEY ?? value.lynpay_api_key;
-
-    if (!apiKey || !apiKey.startsWith("lynx_live_sk_")) {
-      context.addIssue({
-        code: "custom",
-        path: ["LYNXPAY_API_KEY"],
-        message: "must be a live LynxPay key in production",
-      });
-    }
-
-    if (!value.LYNXPAY_SIGNING_SECRET) {
-      context.addIssue({
-        code: "custom",
-        path: ["LYNXPAY_SIGNING_SECRET"],
-        message: "is required in production",
-      });
-    }
-
-    if (!value.LYNXPAY_WEBHOOK_SECRET && !value.lynxpay_webhook_api_key) {
-      context.addIssue({
-        code: "custom",
-        path: ["LYNXPAY_WEBHOOK_SECRET"],
-        message: "is required in production so webhooks can be verified",
-      });
-    }
   });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

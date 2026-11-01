@@ -196,8 +196,10 @@ COMMISSION_RULE_VERSION="configurable-default-v1"
 
 Use sandbox keys only; live credentials belong in a deployment secret store. In development,
 leaving `LYNXPAY_API_KEY` and `LYNXPAY_SIGNING_SECRET` unset falls back to LynxPay's published
-sandbox credentials, which only reach the simulation environment; production refuses to start
-without real keys. The `LYNXPAY_WEBHOOK_SECRET` has no default: without it the webhook endpoint
+sandbox credentials, which only reach the simulation environment. Production accepts only a key
+starting with `lynx_live_sk_`; without live credentials the storefront, accounts, and orders still
+work, but starting a payment or refund fails with a configuration error. The
+`LYNXPAY_WEBHOOK_SECRET` has no default: without it the webhook endpoint
 returns 503 and orders can only advance through a server-side status check. Register
 `https://<your-host>/api/webhooks/lynxpay` in the LynxPay dashboard and use the same signing secret
 in `LYNXPAY_WEBHOOK_SECRET`.
@@ -245,9 +247,11 @@ deploy && next build`, and the Prisma config resolves the session pooler key on 
 
 Set these Vercel environment variables (Production and Preview): the three Supabase keys,
 `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL` (the deployed origin), and the LynxPay live keys once
-available. `AUTH_URL` is optional on Vercel because Auth.js trusts the platform host there; set it
-to the canonical origin if you serve the app from a custom domain through another proxy. Local `DATABASE_URL`, `TEST_DATABASE_URL`, and the local `prisma dev` server are not
-used in production.
+available. Payment credentials are validated when a payment starts, not at build time, so a
+deployment without them still serves the marketplace. `AUTH_URL` is optional on Vercel because
+Auth.js trusts the platform host there; set it to the canonical origin if you serve the app from a
+custom domain through another proxy. Local `DATABASE_URL`, `TEST_DATABASE_URL`, and the local
+`prisma dev` server are not used in production.
 
 Vercel's filesystem is ephemeral, so `.local/uploads` does not persist. Before enabling studio
 uploads or seeding the hosted catalog, configure an S3-compatible bucket (the storage adapter

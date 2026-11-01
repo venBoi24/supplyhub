@@ -39,6 +39,12 @@ export function getLynxPayConfig(): LynxPayConfig {
     );
   }
 
+  if (isProduction && !apiKey.startsWith("lynx_live_sk_")) {
+    throw new PaymentConfigurationError(
+      "LynxPay is not configured with a live API key. Sandbox keys are disabled in production.",
+    );
+  }
+
   return {
     apiKey,
     signingSecret,

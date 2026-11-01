@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { recordAndApplyPaymentEvent } from "@/features/payments/events";
 import { logger } from "@/lib/logging/logger";
 import { getDatabase } from "@/server/db/client";
-import { getLynxPayConfig } from "@/server/payments/config";
+import {
+  getLynxPayConfig,
+  PaymentConfigurationError,
+  type LynxPayConfig,
+} from "@/server/payments/config";
 import { lynxPayPaymentSchema, toGatewayPayment } from "@/server/payments/lynxpay/schema";
 import { verifyLynxPayWebhook, webhookDeliveryId } from "@/server/payments/lynxpay/webhook";
 
@@ -15,7 +19,21 @@ function tooLarge(request: Request): boolean {
 }
 
 export async function POST(request: Request) {
-  const config = getLynxPayConfig();
+  let config: LynxPayConfig;
+
+  try {
+    config = getLynxPayConfig();
+  } catch (error) {
+    if (error instanceof PaymentConfigurationError) {
+      logger.warn("payment.webhook_not_configured");
+      return NextResponse.json(
+        { error: "Webhook verification is not configured." },
+        { status: 503 },
+      );
+    }
+
+    throw error;
+  }
 
   if (!config.webhookSecret) {
     logger.warn("payment.webhook_not_configured");
