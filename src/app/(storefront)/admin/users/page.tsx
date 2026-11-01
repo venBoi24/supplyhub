@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { UserEditForm } from "@/components/admin/user-edit-form";
 import { UserStatusForm } from "@/components/admin/user-status-form";
 import { PageShell } from "@/components/storefront/page-shell";
 import { PagedNav } from "@/components/ui/paged-nav";
@@ -105,7 +106,7 @@ async function UsersContent({
               <th className="p-4">Status</th>
               <th className="p-4">Email verified</th>
               <th className="p-4">Joined</th>
-              <th className="p-4">Action</th>
+              <th className="p-4">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -125,7 +126,10 @@ async function UsersContent({
                   {user.role === "ADMIN" ? (
                     <span className="text-xs text-muted-foreground">Protected</span>
                   ) : (
-                    <UserStatusForm userId={user.id} status={user.status} />
+                    <div className="grid gap-3">
+                      <UserStatusForm userId={user.id} status={user.status} />
+                      <UserEditForm userId={user.id} name={user.name} email={user.email} />
+                    </div>
                   )}
                 </td>
               </tr>

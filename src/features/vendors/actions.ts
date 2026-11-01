@@ -13,7 +13,12 @@ import { AUTH_RATE_LIMITS } from "@/server/security/auth-rate-limits";
 import { consumeRateLimits } from "@/server/security/rate-limit";
 
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
-import { vendorApplicationSchema, vendorReviewSchema } from "@/features/identity/validation";
+import {
+  vendorApplicationSchema,
+  vendorAppealReviewSchema,
+  vendorAppealSchema,
+  vendorReviewSchema,
+} from "@/features/identity/validation";
 
 function isUniqueConstraintError(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
@@ -189,4 +194,118 @@ export async function reviewVendorApplicationAction(
   revalidatePath("/admin/vendors");
   revalidatePath("/vendor");
   redirect(`/admin/vendors?reviewed=${nextStatus.toLowerCase()}`);
+}
+
+export async function submitVendorAppealAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const actor = await getSessionActor();
+  if (!actor) redirect("/sign-in?next=/vendor");
+  if (actor.status !== "ACTIVE") {
+    return { status: "error", message: "An active account is required to submit an appeal." };
+  }
+
+  const parsed = vendorAppealSchema.safeParse({ reason: formValue(formData, "reason") });
+  if (!parsed.success) return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
+
+  const submitted = await getDatabase().$transaction(async (transaction) => {
+    const vendor = await transaction.vendor.findFirst({
+      where: { ownerId: actor.id, status: "REJECTED", appealedAt: null },
+      select: { id: true },
+    });
+    if (!vendor) return false;
+    const update = await transaction.vendor.updateMany({
+      where: { id: vendor.id, status: "REJECTED", appealedAt: null },
+      data: { appealReason: parsed.data.reason, appealedAt: new Date() },
+    });
+    if (update.count !== 1) return false;
+    await recordAuditEvent(transaction, {
+      actorId: actor.id,
+      action: "VENDOR_APPEAL_SUBMITTED",
+      targetType: "vendor",
+      targetId: vendor.id,
+    });
+    return true;
+  });
+  if (!submitted) {
+    return {
+      status: "error",
+      message: "An appeal can only be submitted once for a rejected application.",
+    };
+  }
+  revalidatePath("/vendor");
+  revalidatePath("/admin/vendors");
+  return { status: "success", message: "Your appeal was sent for administrator review." };
+}
+
+export async function reviewVendorAppealAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const actor = await getSessionActor();
+  if (!actor || !canReviewVendorApplication(actor)) {
+    return { status: "error", message: "Administrator access is required." };
+  }
+
+  const parsed = vendorAppealReviewSchema.safeParse({
+    vendorId: formValue(formData, "vendorId"),
+    decision: formValue(formData, "decision"),
+    note: formValue(formData, "note"),
+  });
+  if (!parsed.success) return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
+
+  const status = parsed.data.decision === "approve" ? "APPROVED" : "REJECTED";
+  const resolved = await getDatabase().$transaction(async (transaction) => {
+    const vendor = await transaction.vendor.findFirst({
+      where: {
+        id: parsed.data.vendorId,
+        status: "REJECTED",
+        appealedAt: { not: null },
+        appealReviewedAt: null,
+      },
+      select: { id: true, ownerId: true },
+    });
+    if (!vendor) return false;
+
+    const update = await transaction.vendor.updateMany({
+      where: {
+        id: vendor.id,
+        status: "REJECTED",
+        appealedAt: { not: null },
+        appealReviewedAt: null,
+      },
+      data: {
+        status,
+        appealReviewedAt: new Date(),
+        appealReviewNote: parsed.data.note || null,
+        ...(status === "APPROVED" ? { reviewedAt: new Date(), reviewedById: actor.id } : {}),
+      },
+    });
+    if (update.count !== 1) return false;
+    if (status === "APPROVED") {
+      await transaction.user.updateMany({
+        where: { id: vendor.ownerId, role: "CUSTOMER" },
+        data: { role: "VENDOR" },
+      });
+    }
+    await recordAuditEvent(transaction, {
+      actorId: actor.id,
+      action: "VENDOR_APPEAL_REVIEWED",
+      targetType: "vendor",
+      targetId: vendor.id,
+      metadata: { decision: status },
+    });
+    return true;
+  });
+
+  if (!resolved) {
+    return { status: "error", message: "This appeal has already been reviewed or is unavailable." };
+  }
+  revalidatePath("/admin/vendors");
+  revalidatePath("/vendor");
+  return {
+    status: "success",
+    message: parsed.data.decision === "approve" ? "Appeal approved." : "Appeal declined.",
+  };
 }

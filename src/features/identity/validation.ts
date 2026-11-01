@@ -99,6 +99,32 @@ export const vendorReviewSchema = z
     }
   });
 
+export const vendorAppealSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(20, {
+      error: "Explain why you believe the rejection should be reviewed (at least 20 characters).",
+    })
+    .max(1000, { error: "Use 1000 characters or fewer." }),
+});
+
+export const vendorAppealReviewSchema = z
+  .object({
+    vendorId: z.uuid(),
+    decision: z.enum(["approve", "reject"]),
+    note: z.string().trim().max(500).default(""),
+  })
+  .superRefine((value, context) => {
+    if (value.decision === "reject" && value.note.length < 3) {
+      context.addIssue({
+        code: "custom",
+        path: ["note"],
+        message: "Add a short reason for declining this appeal.",
+      });
+    }
+  });
+
 export type SignInInput = z.infer<typeof signInSchema>;
 export type SignUpInput = z.infer<typeof signUpSchema>;
 export type VendorApplicationInput = z.infer<typeof vendorApplicationSchema>;

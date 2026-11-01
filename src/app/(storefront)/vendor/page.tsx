@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProductStatusBadge } from "@/components/vendor/product-status-badge";
 import { StudioNav } from "@/components/vendor/studio-nav";
 import { VendorStatusBadge } from "@/components/vendors/vendor-status-badge";
+import { VendorAppealForm } from "@/components/vendors/vendor-appeal-form";
 import { formatMoney } from "@/features/catalog/money";
 import { getStudioProductStats, listVendorProducts } from "@/features/catalog/vendor-queries";
 import { getVendorForOwner } from "@/features/vendors/queries";
@@ -274,6 +275,23 @@ async function VendorContent({
               </p>
             ) : null}
           </div>
+          {vendor.appealedAt ? (
+            <div className="mt-6 border-t border-border pt-6">
+              <p className="eyebrow text-muted-foreground">Appeal submitted</p>
+              <p className="mt-2 text-sm leading-6 whitespace-pre-line">{vendor.appealReason}</p>
+              {vendor.appealReviewedAt ? (
+                <p className="mt-3 text-sm leading-6" role="status">
+                  {vendor.appealReviewNote || "Your appeal was reviewed and the rejection stands."}
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground" role="status">
+                  Your appeal is awaiting review.
+                </p>
+              )}
+            </div>
+          ) : (
+            <VendorAppealForm />
+          )}
         </section>
       ) : null}
 

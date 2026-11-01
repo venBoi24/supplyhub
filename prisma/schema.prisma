@@ -139,7 +139,11 @@ enum AuditAction {
   PAYOUT_RECONCILED
   USER_SUSPENDED
   USER_REACTIVATED
+  USER_UPDATED
+  USER_DELETED
   ORDER_STATUS_UPDATED
+  VENDOR_APPEAL_SUBMITTED
+  VENDOR_APPEAL_REVIEWED
 }
 
 model User {
@@ -181,6 +185,10 @@ model Vendor {
   story             String?
   status            VendorStatus       @default(PENDING)
   reviewNote        String?            @map("review_note")
+  appealReason      String?            @map("appeal_reason")
+  appealedAt        DateTime?           @map("appealed_at") @db.Timestamptz(6)
+  appealReviewedAt  DateTime?           @map("appeal_reviewed_at") @db.Timestamptz(6)
+  appealReviewNote  String?             @map("appeal_review_note")
   reviewedAt        DateTime?          @map("reviewed_at") @db.Timestamptz(6)
   reviewedById      String?            @map("reviewed_by_id") @db.Uuid
   reviewedBy        User?              @relation("VendorReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)

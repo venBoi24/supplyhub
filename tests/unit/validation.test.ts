@@ -6,6 +6,8 @@ import {
   signInSchema,
   signUpSchema,
   vendorApplicationSchema,
+  vendorAppealReviewSchema,
+  vendorAppealSchema,
   vendorReviewSchema,
 } from "@/features/identity/validation";
 
@@ -156,5 +158,31 @@ describe("vendorReviewSchema", () => {
     expect(
       vendorReviewSchema.safeParse({ vendorId: "not-a-uuid", decision: "approve" }).success,
     ).toBe(false);
+  });
+});
+
+describe("vendor appeal schemas", () => {
+  const vendorId = "6f1e6a0a-8a6e-4a0b-9d2f-2b9f0b8c1d2e";
+
+  it("requires a substantive appeal reason", () => {
+    expect(vendorAppealSchema.safeParse({ reason: "Please reconsider." }).success).toBe(false);
+    expect(
+      vendorAppealSchema.safeParse({
+        reason: "I have added the missing business registration details.",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("requires a note when an administrator declines an appeal", () => {
+    expect(vendorAppealReviewSchema.safeParse({ vendorId, decision: "reject" }).success).toBe(
+      false,
+    );
+    expect(
+      vendorAppealReviewSchema.safeParse({
+        vendorId,
+        decision: "reject",
+        note: "The original requirements remain unmet.",
+      }).success,
+    ).toBe(true);
   });
 });

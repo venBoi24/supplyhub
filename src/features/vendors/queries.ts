@@ -17,6 +17,10 @@ const vendorSummarySelect = {
   story: true,
   status: true,
   reviewNote: true,
+  appealReason: true,
+  appealedAt: true,
+  appealReviewedAt: true,
+  appealReviewNote: true,
   reviewedAt: true,
   createdAt: true,
 } as const;

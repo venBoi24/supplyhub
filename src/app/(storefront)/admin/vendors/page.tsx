@@ -11,6 +11,7 @@ import { Notice } from "@/components/ui/notice";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VendorReviewActions } from "@/components/vendors/vendor-review-actions";
+import { VendorAppealReviewActions } from "@/components/vendors/vendor-appeal-review-actions";
 import { VendorStatusBadge } from "@/components/vendors/vendor-status-badge";
 import { listVendorApplications } from "@/features/vendors/queries";
 import type { VendorStatus } from "@/generated/prisma/enums";
@@ -198,6 +199,24 @@ async function AdminVendorsContent({
                           <span className="text-muted-foreground">Note: </span>
                           {application.reviewNote}
                         </p>
+                      ) : null}
+                      {application.appealedAt && application.appealReason ? (
+                        <section className="mt-4 rounded-lg bg-surface-muted p-4">
+                          <p className="eyebrow text-muted-foreground">Applicant appeal</p>
+                          <p className="mt-2 leading-6 whitespace-pre-line">
+                            {application.appealReason}
+                          </p>
+                          {application.appealReviewedAt ? (
+                            <p className="mt-3 text-xs text-muted-foreground">
+                              Appeal reviewed {formatDate(application.appealReviewedAt)}
+                              {application.appealReviewNote
+                                ? ` · ${application.appealReviewNote}`
+                                : ""}
+                            </p>
+                          ) : (
+                            <VendorAppealReviewActions vendorId={application.id} />
+                          )}
+                        </section>
                       ) : null}
                     </div>
                   )}
