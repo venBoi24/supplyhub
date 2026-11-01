@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/forms/submit-button";
 import { Field, Textarea } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
+import { LocationMapField } from "@/components/vendor/location-map-field";
 import { updateStudioProfileAction } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
 
@@ -27,19 +28,6 @@ export function StudioProfileForm({
       <FormMessage state={state} />
 
       <div className="grid gap-5 sm:grid-cols-[1fr_7rem]">
-        <Field label="Location" htmlFor="studio-location" error={errors?.location}>
-          <Input
-            id="studio-location"
-            name="location"
-            defaultValue={defaults.location}
-            required
-            maxLength={80}
-            placeholder="Portland, Oregon"
-            aria-invalid={errors?.location ? true : undefined}
-            aria-describedby={errors?.location ? "studio-location-error" : undefined}
-          />
-        </Field>
-
         <Field
           label="Monogram"
           htmlFor="studio-monogram"
@@ -58,6 +46,8 @@ export function StudioProfileForm({
           />
         </Field>
       </div>
+
+      <LocationMapField defaultValue={defaults.location} error={errors?.location} />
 
       <Field label="Discipline" htmlFor="studio-discipline" error={errors?.discipline}>
         <Input

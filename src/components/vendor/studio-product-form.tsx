@@ -30,9 +30,11 @@ export interface StudioProductFormValues {
 export function StudioProductForm({
   categories,
   product,
+  adminVendorId,
 }: {
   categories: Array<{ id: string; name: string }>;
   product?: StudioProductFormValues;
+  adminVendorId?: string;
 }) {
   const [state, action] = useActionState(saveProductAction, initialFormState);
   const errors = state.fieldErrors;
@@ -42,6 +44,7 @@ export function StudioProductForm({
   return (
     <form action={action} className="space-y-8">
       {product?.id ? <input type="hidden" name="productId" value={product.id} /> : null}
+      {adminVendorId ? <input type="hidden" name="adminVendorId" value={adminVendorId} /> : null}
 
       <FormMessage state={state} />
 

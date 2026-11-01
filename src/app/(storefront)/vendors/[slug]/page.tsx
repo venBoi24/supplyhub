@@ -129,6 +129,30 @@ async function VendorContent({
         ) : null}
       </div>
 
+      <section className="mt-8 rounded-xl border border-border bg-surface p-4 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="eyebrow text-muted-foreground">Studio location</p>
+            <h2 className="mt-2 font-display text-xl font-medium">{vendor.location}</h2>
+          </div>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendor.location)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm font-medium text-accent underline underline-offset-4"
+          >
+            Open in Google Maps
+          </a>
+        </div>
+        <iframe
+          title={`Google Maps showing ${vendor.location}`}
+          src={`https://maps.google.com/maps?q=${encodeURIComponent(vendor.location)}&output=embed`}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="mt-4 h-64 w-full rounded-lg border border-border"
+        />
+      </section>
+
       <div className="flex flex-wrap items-center justify-between gap-3 py-4">
         <p className="text-xs text-muted-foreground">
           {results.total} {results.total === 1 ? "object" : "objects"} from {vendor.name}

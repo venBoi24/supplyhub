@@ -37,11 +37,13 @@ export function InventoryPanel({
   stock,
   movements,
   canAdjust,
+  adminVendorId,
 }: {
   productId: string;
   stock: number;
   movements: StudioMovement[];
   canAdjust: boolean;
+  adminVendorId?: string;
 }) {
   const [state, action] = useActionState(adjustInventoryAction, initialFormState);
   const errors = state.fieldErrors;
@@ -66,6 +68,9 @@ export function InventoryPanel({
       {canAdjust ? (
         <form action={action} className="space-y-4 border-t border-border pt-5">
           <input type="hidden" name="productId" value={productId} />
+          {adminVendorId ? (
+            <input type="hidden" name="adminVendorId" value={adminVendorId} />
+          ) : null}
           <FormMessage state={state} />
 
           <div className="grid gap-4 sm:grid-cols-2">

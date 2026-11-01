@@ -18,11 +18,13 @@ export function ProductLifecycleActions({
   status,
   publicHref,
   imageCount,
+  adminVendorId,
 }: {
   productId: string;
   status: ProductStatus;
   publicHref: string;
   imageCount: number;
+  adminVendorId?: string;
 }) {
   const [submitState, submitAction] = useActionState(submitProductAction, initialFormState);
   const [archiveState, archiveAction] = useActionState(archiveProductAction, initialFormState);
@@ -41,6 +43,9 @@ export function ProductLifecycleActions({
       {canSubmit ? (
         <form action={submitAction} className="space-y-2">
           <input type="hidden" name="productId" value={productId} />
+          {adminVendorId ? (
+            <input type="hidden" name="adminVendorId" value={adminVendorId} />
+          ) : null}
           <FormMessage state={submitState} />
           <SubmitButton pendingLabel="Submitting…" disabled={imageCount === 0}>
             Submit for review
@@ -63,6 +68,9 @@ export function ProductLifecycleActions({
       {canArchive ? (
         <form action={archiveAction} className="space-y-2">
           <input type="hidden" name="productId" value={productId} />
+          {adminVendorId ? (
+            <input type="hidden" name="adminVendorId" value={adminVendorId} />
+          ) : null}
           <FormMessage state={archiveState} />
           <SubmitButton
             pendingLabel="Archiving…"
@@ -85,6 +93,9 @@ export function ProductLifecycleActions({
           }}
         >
           <input type="hidden" name="productId" value={productId} />
+          {adminVendorId ? (
+            <input type="hidden" name="adminVendorId" value={adminVendorId} />
+          ) : null}
           <FormMessage state={deleteState} />
           <SubmitButton
             pendingLabel="Deleting…"

@@ -129,6 +129,13 @@ async function UsersContent({
                     <span className="text-xs text-muted-foreground">Protected</span>
                   ) : (
                     <div className="grid gap-3">
+                      {user.vendor ? (
+                        <Button asChild variant="secondary" size="sm">
+                          <Link href={`/admin/users/${user.id}/inventory`}>
+                            Manage store & inventory
+                          </Link>
+                        </Button>
+                      ) : null}
                       {user.vendor?.appealedAt && !user.vendor.appealReviewedAt ? (
                         <section className="min-w-64 rounded-lg border border-warning/40 bg-warning/5 p-3">
                           <p className="text-xs font-semibold text-warning">

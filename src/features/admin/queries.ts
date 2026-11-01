@@ -86,7 +86,11 @@ export async function listAdminUsers(input: {
         select: {
           id: true,
           name: true,
+          slug: true,
           status: true,
+          location: true,
+          discipline: true,
+          story: true,
           appealReason: true,
           appealedAt: true,
           appealReviewedAt: true,

@@ -27,11 +27,13 @@ export function ProductImagesPanel({
   images,
   canEdit,
   limitReached,
+  adminVendorId,
 }: {
   productId: string;
   images: StudioImage[];
   canEdit: boolean;
   limitReached: boolean;
+  adminVendorId?: string;
 }) {
   const [state, action] = useActionState(uploadProductImageAction, initialFormState);
   const errors = state.fieldErrors;
@@ -54,6 +56,7 @@ export function ProductImagesPanel({
                 canEdit={canEdit}
                 isFirst={index === 0}
                 isLast={index === images.length - 1}
+                adminVendorId={adminVendorId}
               />
             </li>
           ))}
@@ -67,6 +70,9 @@ export function ProductImagesPanel({
       {canEdit && !limitReached ? (
         <form action={action} className="space-y-4 border-t border-border pt-5">
           <input type="hidden" name="productId" value={productId} />
+          {adminVendorId ? (
+            <input type="hidden" name="adminVendorId" value={adminVendorId} />
+          ) : null}
           <FormMessage state={state} />
 
           <Field
@@ -119,11 +125,13 @@ function ImageRow({
   canEdit,
   isFirst,
   isLast,
+  adminVendorId,
 }: {
   image: StudioImage;
   canEdit: boolean;
   isFirst: boolean;
   isLast: boolean;
+  adminVendorId?: string;
 }) {
   const [deleteState, deleteAction] = useActionState(deleteProductImageAction, initialFormState);
   const [moveState, moveAction] = useActionState(moveProductImageAction, initialFormState);
@@ -151,6 +159,9 @@ function ImageRow({
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <form action={moveAction}>
               <input type="hidden" name="imageId" value={image.id} />
+              {adminVendorId ? (
+                <input type="hidden" name="adminVendorId" value={adminVendorId} />
+              ) : null}
               <input type="hidden" name="direction" value="up" />
               <button
                 type="submit"
@@ -163,6 +174,9 @@ function ImageRow({
             </form>
             <form action={moveAction}>
               <input type="hidden" name="imageId" value={image.id} />
+              {adminVendorId ? (
+                <input type="hidden" name="adminVendorId" value={adminVendorId} />
+              ) : null}
               <input type="hidden" name="direction" value="down" />
               <button
                 type="submit"
@@ -175,6 +189,9 @@ function ImageRow({
             </form>
             <form action={deleteAction}>
               <input type="hidden" name="imageId" value={image.id} />
+              {adminVendorId ? (
+                <input type="hidden" name="adminVendorId" value={adminVendorId} />
+              ) : null}
               <button
                 type="submit"
                 className="inline-flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"

@@ -10,6 +10,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { logger } from "@/lib/logging/logger";
 import { initialsFor } from "@/lib/utils/initials";
 import { recordAuditEvent } from "@/server/audit/audit-log";
+import { canPerformAdminAction } from "@/server/auth/policies";
 import { getSessionActor } from "@/server/auth/session";
 import { getDatabase } from "@/server/db/client";
 import { MAX_IMAGE_BYTES, validateImageUpload } from "@/server/storage/image-validation";
@@ -82,6 +83,24 @@ async function requireStudio() {
   return { actor, vendorId: actor.vendor.id };
 }
 
+async function requireManagedStudio(formData: FormData) {
+  const requestedVendorId = formValue(formData, "adminVendorId");
+  if (requestedVendorId) {
+    const actor = await getSessionActor();
+    const vendorId = asUuid(requestedVendorId);
+    if (!actor || !canPerformAdminAction(actor) || !vendorId) {
+      return null;
+    }
+    const vendor = await getDatabase().vendor.findUnique({
+      where: { id: vendorId },
+      select: { id: true },
+    });
+    return vendor ? { actor, vendorId, adminManaged: true as const } : null;
+  }
+  const access = await requireStudio();
+  return { ...access, adminManaged: false as const };
+}
+
 function productFields(input: ReturnType<typeof productInputSchema.parse>) {
   return {
     name: input.name,
@@ -108,7 +127,9 @@ export async function saveProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { actor, vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { actor, vendorId, adminManaged } = access;
   const rawProductId = formValue(formData, "productId");
   const productId = rawProductId ? asUuid(rawProductId) : null;
 
@@ -190,6 +211,9 @@ export async function saveProductAction(
 
       logger.info("product.created", { actorId: actor.id, productId: created.id });
       revalidateCatalog();
+      if (adminManaged) {
+        return { status: "success", message: "Product draft created for this vendor." };
+      }
       redirect(`/vendor/products/${created.id}?saved=1`);
     }
 
@@ -234,6 +258,7 @@ export async function saveProductAction(
 
     logger.info("product.updated", { actorId: actor.id, productId: existing.id });
     revalidateCatalog();
+    if (adminManaged) return { status: "success", message: "Product details saved." };
     redirect(`/vendor/products/${existing.id}?saved=1`);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
@@ -248,7 +273,9 @@ export async function submitProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { actor, vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
@@ -309,6 +336,7 @@ export async function submitProductAction(
 
   logger.info("product.submitted", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
+  if (adminManaged) return { status: "success", message: "Product sent for review." };
   redirect("/vendor?sent=1");
 }
 
@@ -316,7 +344,9 @@ export async function archiveProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { actor, vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
@@ -358,6 +388,7 @@ export async function archiveProductAction(
 
   logger.info("product.archived", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
+  if (adminManaged) return { status: "success", message: "Product archived." };
   redirect("/vendor?archived=1");
 }
 
@@ -365,7 +396,9 @@ export async function deleteProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { actor, vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
@@ -412,6 +445,7 @@ export async function deleteProductAction(
 
   logger.info("product.deleted", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
+  if (adminManaged) return { status: "success", message: "Product draft deleted." };
   redirect("/vendor?deleted=1");
 }
 
@@ -451,7 +485,9 @@ export async function adjustInventoryAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { actor, vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { actor, vendorId } = access;
 
   const parsed = inventoryAdjustmentSchema.safeParse({
     productId: formValue(formData, "productId"),
@@ -538,7 +574,9 @@ export async function uploadProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { actor, vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { actor, vendorId } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
@@ -637,7 +675,9 @@ export async function deleteProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { actor, vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { actor, vendorId } = access;
   const imageId = asUuid(formValue(formData, "imageId"));
 
   if (!imageId) {
@@ -698,7 +738,9 @@ export async function moveProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const { vendorId } = await requireStudio();
+  const access = await requireManagedStudio(formData);
+  if (!access) return { status: "error", message: "Administrator access is required." };
+  const { vendorId } = access;
   const imageId = asUuid(formValue(formData, "imageId"));
   const direction = formValue(formData, "direction");
 
