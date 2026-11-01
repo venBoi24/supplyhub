@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
+import { PackageCheck } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { OrderStatusForm } from "@/components/vendor/order-status-form";
 import { StudioNav } from "@/components/vendor/studio-nav";
 import { PageShell } from "@/components/storefront/page-shell";
@@ -10,7 +13,6 @@ import { listVendorOrders } from "@/features/checkout/vendor-operations";
 import { ORDER_STATUS_LABELS } from "@/features/checkout/status";
 import { requireApprovedVendor } from "@/server/auth/guards";
 import { formatDate } from "@/lib/utils/format-date";
-import { PackageCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Studio orders",
@@ -39,8 +41,11 @@ async function VendorOrdersContent() {
         Orders are limited to your studio. Move each paid order through processing, shipped, and
         delivered as work progresses.
       </p>
-      <div className="mt-6">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <StudioNav />
+        <Button asChild variant="secondary">
+          <Link href="/api/vendor/orders/export">Export CSV</Link>
+        </Button>
       </div>
       {orders.length === 0 ? (
         <EmptyState
