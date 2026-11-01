@@ -165,12 +165,29 @@ export async function deleteAdminUserAction(
         select: {
           id: true,
           role: true,
-          vendor: { select: { id: true } },
+          vendor: {
+            select: {
+              id: true,
+              _count: {
+                select: {
+                  products: true,
+                  vendorOrders: true,
+                  payouts: true,
+                  commissionEntries: true,
+                },
+              },
+            },
+          },
           _count: { select: { orders: true } },
         },
       });
       if (!target || target.role === "ADMIN") throw new Error("protected-user");
-      if (target.vendor || target._count.orders > 0) throw new Error("account-has-records");
+      if (
+        target._count.orders > 0 ||
+        (target.vendor && Object.values(target.vendor._count).some((count) => count > 0))
+      ) {
+        throw new Error("account-has-records");
+      }
 
       await recordAuditEvent(transaction, {
         actorId: actor.id,
@@ -179,6 +196,9 @@ export async function deleteAdminUserAction(
         targetId: target.id,
         metadata: { role: target.role },
       });
+      if (target.vendor) {
+        await transaction.vendor.delete({ where: { id: target.vendor.id } });
+      }
       await transaction.user.delete({ where: { id: target.id } });
     });
     revalidatePath("/admin/users");
@@ -191,7 +211,7 @@ export async function deleteAdminUserAction(
       return {
         status: "error",
         message:
-          "Accounts with vendor applications or orders cannot be deleted. Suspend them instead.",
+          "Accounts with orders, products, vendor sales, or payout records cannot be deleted. Suspend them instead.",
       };
     }
     logger.error("admin.user_delete_failed", {
