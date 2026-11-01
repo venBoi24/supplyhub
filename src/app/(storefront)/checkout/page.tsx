@@ -95,10 +95,7 @@ async function CheckoutContent() {
           aria-labelledby="delivery-heading"
           className="rounded-xl border border-border bg-surface p-6 sm:p-8"
         >
-          <h2
-            id="delivery-heading"
-            className="font-display text-xl font-medium tracking-[-0.02em]"
-          >
+          <h2 id="delivery-heading" className="font-display text-xl font-medium tracking-[-0.02em]">
             Delivery details
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -163,8 +160,8 @@ async function CheckoutContent() {
 
           <p className="mt-5 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
             <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-            Sandbox checkout: no payment is taken and shipping or tax is not calculated in this
-            phase.
+            LynxPay sandbox checkout: payment is collected in Tanzanian shillings on the next step.
+            Shipping and tax are not calculated in this phase.
           </p>
         </aside>
       </div>

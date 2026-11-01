@@ -3,11 +3,13 @@ import { describe, expect, it } from "vitest";
 import type { Actor } from "@/server/auth/actor";
 import {
   canApplyForVendor,
+  canCheckout,
   canManageVendor,
   canPerformAdminAction,
   canReviewVendorApplication,
   canUpdateVendorOrder,
   canViewAccount,
+  canViewCustomerOrder,
   canViewOrder,
   canViewVendorApplication,
   isActiveActor,
@@ -201,5 +203,30 @@ describe("canUpdateVendorOrder", () => {
     expect(canUpdateVendorOrder(approvedVendor, { vendorId: "vendor-2" })).toBe(false);
     expect(canUpdateVendorOrder(pendingOwner, { vendorId: "vendor-pending" })).toBe(false);
     expect(canUpdateVendorOrder(admin, { vendorId: "vendor-2" })).toBe(true);
+  });
+});
+
+describe("canCheckout", () => {
+  it("allows active customers only", () => {
+    expect(canCheckout(customer)).toBe(true);
+    expect(canCheckout(approvedVendor)).toBe(false);
+    expect(canCheckout(admin)).toBe(false);
+    expect(canCheckout(suspendedVendor)).toBe(false);
+    expect(canCheckout(null)).toBe(false);
+  });
+});
+
+describe("canViewCustomerOrder", () => {
+  it("allows the owner and admins", () => {
+    expect(canViewCustomerOrder(customer, customer.id)).toBe(true);
+    expect(canViewCustomerOrder(admin, customer.id)).toBe(true);
+  });
+
+  it("denies other customers, vendors, suspended accounts, and guests", () => {
+    expect(canViewCustomerOrder({ ...customer, id: "user-other" }, customer.id)).toBe(false);
+    expect(canViewCustomerOrder(approvedVendor, customer.id)).toBe(false);
+    expect(canViewCustomerOrder(suspendedVendor, suspendedVendor.id)).toBe(false);
+    expect(canViewCustomerOrder(suspendedAdmin, customer.id)).toBe(false);
+    expect(canViewCustomerOrder(null, customer.id)).toBe(false);
   });
 });

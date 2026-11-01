@@ -21,7 +21,11 @@ export function CartLineControls({ productId, quantity, maxQuantity }: CartLineC
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="productId" value={productId} />
       <div className="flex flex-wrap items-center gap-2">
-        <QuantityStepper name="quantity" defaultValue={quantity} max={Math.max(quantity, maxQuantity)} />
+        <QuantityStepper
+          name="quantity"
+          defaultValue={quantity}
+          max={Math.max(quantity, maxQuantity)}
+        />
         <Button type="submit" variant="secondary" size="sm">
           Update
         </Button>

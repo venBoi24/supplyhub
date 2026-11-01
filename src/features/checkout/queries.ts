@@ -45,9 +45,7 @@ function mapItem(item: OrderDetailRow["vendorOrders"][number]["items"][number]):
   };
 }
 
-function mapVendorOrder(
-  vendorOrder: OrderDetailRow["vendorOrders"][number],
-): VendorOrderView {
+function mapVendorOrder(vendorOrder: OrderDetailRow["vendorOrders"][number]): VendorOrderView {
   return {
     id: vendorOrder.id,
     vendorName: vendorOrder.vendor.name,

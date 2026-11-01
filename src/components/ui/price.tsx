@@ -18,7 +18,7 @@ export interface PriceProps {
 export function Price({
   amountCents,
   compareAtPriceCents,
-  currency = "USD",
+  currency = "TZS",
   size = "md",
   className,
 }: PriceProps) {

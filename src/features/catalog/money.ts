@@ -28,6 +28,18 @@ export function centsToDecimalString(cents: number): string {
   return `${whole}.${String(fraction).padStart(2, "0")}`;
 }
 
+/**
+ * Ledger reversals are stored as negative amounts. Keep the sign explicit and build the
+ * decimal string with integer arithmetic.
+ */
+export function centsToSignedDecimalString(cents: number): string {
+  if (!Number.isInteger(cents)) {
+    throw new Error("Money must be expressed as an integer number of cents.");
+  }
+
+  return `${cents < 0 ? "-" : ""}${centsToDecimalString(Math.abs(cents))}`;
+}
+
 export function decimalToCents(value: { toString(): string }): number {
   const [whole = "0", fraction = ""] = value.toString().split(".");
   const sign = whole.startsWith("-") ? -1 : 1;
@@ -38,7 +50,7 @@ export function decimalToCents(value: { toString(): string }): number {
 
 export function formatMoney(
   amountCents: number,
-  currency: string = "USD",
+  currency: string = "TZS",
   locale: string = "en-US",
 ): string {
   const hasFraction = amountCents % 100 !== 0;

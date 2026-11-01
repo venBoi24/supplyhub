@@ -12,4 +12,8 @@ export const AUTH_RATE_LIMITS = {
   resendByUser: { limit: 3, windowMs: 60 * 60 * 1000 },
   vendorApplyByUser: { limit: 5, windowMs: 60 * 60 * 1000 },
   checkoutByUser: { limit: 10, windowMs: 10 * 60 * 1000 },
+  paymentByUser: { limit: 12, windowMs: 10 * 60 * 1000 },
+  paymentStatusByUser: { limit: 120, windowMs: 10 * 60 * 1000 },
+  refundByAdmin: { limit: 20, windowMs: 10 * 60 * 1000 },
+  payoutByAdmin: { limit: 20, windowMs: 10 * 60 * 1000 },
 } satisfies Record<string, RateLimitRule>;

@@ -5,7 +5,11 @@ import { emailField } from "@/features/identity/validation";
 const optionalText = (max: number) =>
   z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-    z.string().trim().max(max, { error: `Use ${max} characters or fewer.` }).optional(),
+    z
+      .string()
+      .trim()
+      .max(max, { error: `Use ${max} characters or fewer.` })
+      .optional(),
   );
 
 export const checkoutAddressSchema = z.object({
@@ -48,9 +52,7 @@ export const checkoutAddressSchema = z.object({
     .regex(/^[A-Za-z0-9][A-Za-z0-9 -]*$/, { error: "Use letters, numbers, spaces, and hyphens." }),
   countryCode: z.preprocess(
     (value) => (typeof value === "string" ? value.trim().toUpperCase() : value),
-    z
-      .string()
-      .regex(/^[A-Z]{2}$/, { error: "Use a two-letter country code." }),
+    z.string().regex(/^[A-Z]{2}$/, { error: "Use a two-letter country code." }),
   ),
 });
 

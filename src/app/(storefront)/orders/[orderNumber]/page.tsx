@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Box, MapPin } from "lucide-react";
+import { ArrowLeft, Box, CreditCard, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { PaymentPanel } from "@/components/payments/payment-panel";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/features/catalog/money";
 import { getOrderForViewer } from "@/features/checkout/queries";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from "@/features/checkout/status";
-import type { CustomerOrderDetail } from "@/features/checkout/types";
-import { formatDateTime } from "@/lib/utils/format-date";
+import { paymentMethodLabel } from "@/features/payments/methods";
+import { getOrderPaymentView } from "@/features/payments/queries";
+import {
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_TONES,
+  REFUND_STATUS_LABELS,
+} from "@/features/payments/status";
+import { formatDate, formatDateTime } from "@/lib/utils/format-date";
 import { requireActor } from "@/server/auth/guards";
 
 export const metadata: Metadata = {
   title: "Order",
-  description: "Your SupplyHub order confirmation and reservation details.",
+  description: "Your SupplyHub order, payment, and reservation details.",
   robots: { index: false, follow: false },
 };
 
@@ -44,13 +51,18 @@ async function OrderContent({
 }) {
   const [{ orderNumber }, query] = await Promise.all([params, searchParams]);
   const actor = await requireActor(`/orders/${orderNumber}`);
-  const order = await getOrderForViewer(actor, orderNumber);
+  const [order, paymentView] = await Promise.all([
+    getOrderForViewer(actor, orderNumber),
+    getOrderPaymentView(actor, orderNumber),
+  ]);
 
   if (!order) {
     notFound();
   }
 
   const placed = searchParamValue(query.placed) === "1";
+  const paymentReturned = searchParamValue(query.payment) === "return";
+  const latestPayment = paymentView?.latestPayment ?? null;
 
   return (
     <PageShell className="pt-10 sm:pt-14">
@@ -90,15 +102,20 @@ async function OrderContent({
             {order.reservationExpiresAt
               ? ` until ${formatDateTime(order.reservationExpiresAt)}`
               : ""}
-            .
+            . Pay below through LynxPay to confirm the order.
           </Notice>
         ) : null}
-        {order.status === "AWAITING_PAYMENT" ? (
-          <Notice tone="info">
-            Payment is not connected in this phase, so this order stays awaiting payment.
-            {order.reservationExpiresAt
-              ? ` The stock reservation expires ${formatDateTime(order.reservationExpiresAt)} and is released automatically.`
-              : ""}
+        {order.status === "AWAITING_PAYMENT" && paymentView && !paymentView.canPay ? (
+          <Notice tone="warning">
+            Payment cannot be started for this order. If the reservation has passed, place a new
+            order to reserve the objects again.
+          </Notice>
+        ) : null}
+        {order.status === "PAID" ? (
+          <Notice tone="success">
+            Payment received
+            {latestPayment?.completedAt ? ` at ${formatDateTime(latestPayment.completedAt)}` : ""}.
+            The order is confirmed.
           </Notice>
         ) : null}
         {order.status === "EXPIRED" ? (
@@ -111,6 +128,21 @@ async function OrderContent({
           <Notice tone="danger">This order was cancelled.</Notice>
         ) : null}
       </div>
+
+      {order.status === "AWAITING_PAYMENT" && paymentView ? (
+        <div className="mt-8">
+          <PaymentPanel
+            orderNumber={order.orderNumber}
+            totalCents={order.totalCents}
+            currency={order.currency}
+            latestPayment={latestPayment}
+            canPay={paymentView.canPay}
+            defaultPhone={order.address.contactPhone}
+            reservationExpiresAt={order.reservationExpiresAt}
+            paymentReturned={paymentReturned}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12">
         <div className="space-y-6">
@@ -191,6 +223,89 @@ async function OrderContent({
         </div>
 
         <aside className="space-y-6">
+          {latestPayment && order.status !== "AWAITING_PAYMENT" ? (
+            <section className="rounded-xl border border-border bg-surface p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="size-4 text-muted-foreground" aria-hidden="true" />
+                  <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Payment</h2>
+                </div>
+                <Badge tone={PAYMENT_STATUS_TONES[latestPayment.status]}>
+                  {PAYMENT_STATUS_LABELS[latestPayment.status]}
+                </Badge>
+              </div>
+              <dl className="mt-4 space-y-3 text-sm">
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted-foreground">Method</dt>
+                  <dd>{paymentMethodLabel(latestPayment.method)}</dd>
+                </div>
+                {latestPayment.completedAt ? (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-muted-foreground">Confirmed</dt>
+                    <dd>{formatDateTime(latestPayment.completedAt)}</dd>
+                  </div>
+                ) : null}
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted-foreground">Merchant total</dt>
+                  <dd className="tabular-nums">
+                    {formatMoney(latestPayment.netCents, latestPayment.currency)}
+                  </dd>
+                </div>
+                {latestPayment.feeCents > 0 ? (
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-muted-foreground">Customer-paid fee</dt>
+                    <dd className="tabular-nums">
+                      {formatMoney(latestPayment.feeCents, latestPayment.currency)}
+                    </dd>
+                  </div>
+                ) : null}
+                {latestPayment.providerReference ? (
+                  <div className="border-t border-border pt-3">
+                    <dt className="eyebrow text-muted-foreground">LynxPay reference</dt>
+                    <dd className="mt-1 font-mono text-xs break-all">
+                      {latestPayment.providerReference}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+
+              {paymentView && paymentView.refundedCents > 0 ? (
+                <p className="mt-4 border-t border-border pt-3 text-sm">
+                  <span className="text-muted-foreground">Refunded </span>
+                  <span className="font-medium tabular-nums">
+                    {formatMoney(paymentView.refundedCents, latestPayment.currency)}
+                  </span>
+                </p>
+              ) : null}
+
+              {paymentView && paymentView.refunds.length > 0 ? (
+                <div className="mt-4 border-t border-border pt-3">
+                  <p className="eyebrow text-muted-foreground">Refund history</p>
+                  <ul className="mt-2 space-y-2 text-xs leading-5">
+                    {paymentView.refunds.map((refund) => (
+                      <li key={refund.id} className="flex items-baseline justify-between gap-3">
+                        <span className="min-w-0 text-muted-foreground">
+                          {refund.reason} · {REFUND_STATUS_LABELS[refund.status]} ·{" "}
+                          {formatDate(refund.createdAt)}
+                        </span>
+                        <span className="shrink-0 tabular-nums">
+                          {formatMoney(refund.amountCents, latestPayment.currency)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {latestPayment.failureMessage &&
+              (latestPayment.status === "DISPUTED" || latestPayment.status === "FAILED") ? (
+                <Notice tone="danger" className="mt-4">
+                  {latestPayment.failureMessage}
+                </Notice>
+              ) : null}
+            </section>
+          ) : null}
+
           <section className="rounded-xl border border-border bg-surface p-6">
             <div className="flex items-center gap-2">
               <MapPin className="size-4 text-muted-foreground" aria-hidden="true" />

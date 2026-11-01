@@ -1,13 +1,14 @@
 /**
  * Currency is a configurable default, not settled business policy. docs/01-product-vision.md
- * still lists marketplace currency, tax, and commission as unresolved.
+ * still lists marketplace currency, tax, and commission as unresolved. The demo catalog trades in
+ * Tanzanian shillings so it can settle through LynxPay, which is TZS-only.
  */
-export const DEFAULT_CURRENCY = "USD";
+export const DEFAULT_CURRENCY = "TZS";
 
 export const MAX_PRODUCT_IMAGES = 6;
 
 export const DEMO_CATALOG_NOTICE =
-  "Preview catalog — demo products, studios, and orders. Payment is not connected.";
+  "Preview catalog — demo products, studios, and orders. LynxPay sandbox payments.";
 
 export const HERO_IMAGE = {
   src: "/images/demo/hero.jpg",

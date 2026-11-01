@@ -15,11 +15,7 @@ export interface CheckoutFormProps {
   reservationMinutes: number;
 }
 
-export function CheckoutForm({
-  defaultName,
-  defaultEmail,
-  reservationMinutes,
-}: CheckoutFormProps) {
+export function CheckoutForm({ defaultName, defaultEmail, reservationMinutes }: CheckoutFormProps) {
   const [state, formAction] = useActionState(placeOrderAction, initialFormState);
   const errors = state.fieldErrors ?? {};
 
@@ -148,9 +144,9 @@ export function CheckoutForm({
           Place order
         </SubmitButton>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          Payment is not connected in this phase. The order is recorded as awaiting payment, and
-          its stock reservation is released automatically after {reservationMinutes} minutes if
-          payment never arrives. Shipping and tax are not calculated.
+          Payment is collected through LynxPay on the order page in Tanzanian shillings. The order
+          holds its stock reservation for {reservationMinutes} minutes while you pay. Shipping and
+          tax are not calculated.
         </p>
       </div>
     </form>

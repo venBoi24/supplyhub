@@ -32,9 +32,7 @@ function problemText(line: CartLine): string | null {
     case "unavailable":
       return "No longer available";
     case "insufficient-stock":
-      return line.availableQuantity === 0
-        ? "Sold out"
-        : `Only ${line.availableQuantity} available`;
+      return line.availableQuantity === 0 ? "Sold out" : `Only ${line.availableQuantity} available`;
     case "currency-mismatch":
       return "Priced in another currency";
     default:
@@ -50,11 +48,7 @@ export default function CartPage({ searchParams }: PageProps<"/cart">) {
   );
 }
 
-async function CartContent({
-  searchParams,
-}: {
-  searchParams: PageProps<"/cart">["searchParams"];
-}) {
+async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">["searchParams"] }) {
   const [params, view, actor] = await Promise.all([searchParams, getCartView(), getSessionActor()]);
   const updated = searchParamValue(params.updated) === "1";
   const removed = searchParamValue(params.removed) === "1";
@@ -137,10 +131,7 @@ async function CartContent({
         {!actor ? (
           <Notice tone="info">
             This cart is saved on this device for 30 days.{" "}
-            <Link
-              href="/sign-in?next=%2Fcart"
-              className="font-medium underline underline-offset-4"
-            >
+            <Link href="/sign-in?next=%2Fcart" className="font-medium underline underline-offset-4">
               Sign in
             </Link>{" "}
             to keep it with your account and check out.
@@ -250,7 +241,9 @@ async function CartContent({
           <dl className="mt-5 space-y-3 border-b border-border pb-5 text-sm">
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-muted-foreground">Subtotal</dt>
-              <dd className="font-medium tabular-nums">{formatMoney(view.subtotalCents, view.currency)}</dd>
+              <dd className="font-medium tabular-nums">
+                {formatMoney(view.subtotalCents, view.currency)}
+              </dd>
             </div>
             <div className="flex items-baseline justify-between gap-4">
               <dt className="text-muted-foreground">Shipping</dt>
@@ -290,8 +283,8 @@ async function CartContent({
           </div>
 
           <p className="mt-4 text-xs leading-5 text-muted-foreground">
-            Shipping, tax, and payment are not connected in this phase. Checkout reserves stock and
-            records an unpaid order.
+            Shipping and tax are not calculated in this phase. Checkout reserves stock, then LynxPay
+            confirms payment in Tanzanian shillings.
           </p>
         </aside>
       </div>

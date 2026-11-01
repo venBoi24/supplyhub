@@ -114,7 +114,7 @@ export function StudioProductForm({
             />
           </Field>
 
-          <Field label="Price" htmlFor={`${prefix}-price`} hint="USD" error={errors?.priceCents}>
+          <Field label="Price" htmlFor={`${prefix}-price`} hint="TZS" error={errors?.priceCents}>
             <Input
               id={`${prefix}-price`}
               name="price"

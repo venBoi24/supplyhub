@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderTree, ShieldCheck, Store } from "lucide-react";
+import { Banknote, FolderTree, ShieldCheck, Store, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,6 +10,8 @@ const links = [
   { href: "/admin/vendors", label: "Vendors", icon: Store },
   { href: "/admin/products", label: "Catalog", icon: ShieldCheck },
   { href: "/admin/categories", label: "Departments", icon: FolderTree },
+  { href: "/admin/payments", label: "Payments", icon: Wallet },
+  { href: "/admin/payouts", label: "Payouts", icon: Banknote },
 ];
 
 export function AdminNav() {

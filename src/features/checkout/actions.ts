@@ -88,9 +88,7 @@ export async function placeOrderAction(
       return {
         status: "error",
         message:
-          error.details.length > 0
-            ? `${error.message} ${error.details.join(" ")}`
-            : error.message,
+          error.details.length > 0 ? `${error.message} ${error.details.join(" ")}` : error.message,
       };
     }
 

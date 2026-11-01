@@ -5,26 +5,26 @@ import { Price } from "@/components/ui/price";
 
 describe("Price", () => {
   it("renders a plain price with an accessible label", () => {
-    render(<Price amountCents={6800} />);
+    render(<Price amountCents={185000} />);
 
     expect(screen.getByText("Price:")).toBeInTheDocument();
-    expect(screen.getByText("$68")).toBeInTheDocument();
+    expect(screen.getByText("TZS 1,850")).toBeInTheDocument();
     expect(screen.queryByText("Original price:")).not.toBeInTheDocument();
   });
 
   it("renders a sale price alongside the original", () => {
-    render(<Price amountCents={12000} compareAtPriceCents={14500} />);
+    render(<Price amountCents={320000} compareAtPriceCents={385000} />);
 
     expect(screen.getByText("Sale price:")).toBeInTheDocument();
-    expect(screen.getByText("$120")).toBeInTheDocument();
-    expect(screen.getByText("Original price: $145")).toBeInTheDocument();
-    expect(screen.getByText("$145")).toBeInTheDocument();
+    expect(screen.getByText("TZS 3,200")).toBeInTheDocument();
+    expect(screen.getByText("Original price: TZS 3,850")).toBeInTheDocument();
+    expect(screen.getByText("TZS 3,850")).toBeInTheDocument();
   });
 
   it("ignores a compare-at price that is not a real discount", () => {
-    render(<Price amountCents={12000} compareAtPriceCents={9000} />);
+    render(<Price amountCents={320000} compareAtPriceCents={250000} />);
 
     expect(screen.getByText("Price:")).toBeInTheDocument();
-    expect(screen.queryByText("$90")).not.toBeInTheDocument();
+    expect(screen.queryByText("TZS 2,500")).not.toBeInTheDocument();
   });
 });

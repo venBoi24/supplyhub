@@ -225,7 +225,10 @@ export async function findCurrentCart(): Promise<{ id: string } | null> {
  * are generated here rather than during rendering because cookies can only be written from
  * server actions or route handlers.
  */
-export async function getOrCreateCartForMutation(): Promise<{ cartId: string; actor: Actor | null }> {
+export async function getOrCreateCartForMutation(): Promise<{
+  cartId: string;
+  actor: Actor | null;
+}> {
   const actor = await getSessionActor();
   const database = getDatabase();
 

@@ -68,6 +68,51 @@ enum OrderStatus {
   EXPIRED
 }
 
+enum PaymentProvider {
+  LYNXPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  EXPIRED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  DISPUTED
+}
+
+enum PaymentEventOutcome {
+  APPLIED
+  DUPLICATE
+  IGNORED
+  MISMATCH
+  UNKNOWN_ORDER
+  ERROR
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum CommissionEntryType {
+  VENDOR_EARNING
+  PLATFORM_COMMISSION
+  PROVIDER_FEE
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PROCESSING
+  PAID
+  RECONCILED
+  FAILED
+}
+
 enum AuditAction {
   VENDOR_APPLICATION_SUBMITTED
   VENDOR_APPROVED
@@ -84,6 +129,14 @@ enum AuditAction {
   ORDER_PLACED
   ORDER_CANCELLED
   ORDER_EXPIRED
+  PAYMENT_INITIATED
+  PAYMENT_SUCCEEDED
+  PAYMENT_FAILED
+  PAYMENT_MISMATCH
+  PAYMENT_REFUNDED
+  PAYOUT_CREATED
+  PAYOUT_PAID
+  PAYOUT_RECONCILED
 }
 
 model User {
@@ -103,6 +156,8 @@ model User {
   auditEvents        AuditLog[]          @relation("AuditActor")
   cart               Cart?
   orders             Order[]             @relation("CustomerOrders")
+  requestedRefunds   Refund[]            @relation("RefundRequester")
+  createdPayouts     Payout[]            @relation("PayoutCreator")
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -111,25 +166,27 @@ model User {
 }
 
 model Vendor {
-  id           String        @id @default(uuid()) @db.Uuid
-  ownerId      String        @unique @map("owner_id") @db.Uuid
-  owner        User          @relation("VendorOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  name         String
-  slug         String        @unique
-  description  String?
-  monogram     String?
-  location     String?
-  discipline   String?
-  story        String?
-  status       VendorStatus  @default(PENDING)
-  reviewNote   String?       @map("review_note")
-  reviewedAt   DateTime?     @map("reviewed_at") @db.Timestamptz(6)
-  reviewedById String?       @map("reviewed_by_id") @db.Uuid
-  reviewedBy   User?         @relation("VendorReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
-  products     Product[]
-  vendorOrders VendorOrder[]
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                String             @id @default(uuid()) @db.Uuid
+  ownerId           String             @unique @map("owner_id") @db.Uuid
+  owner             User               @relation("VendorOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  name              String
+  slug              String             @unique
+  description       String?
+  monogram          String?
+  location          String?
+  discipline        String?
+  story             String?
+  status            VendorStatus       @default(PENDING)
+  reviewNote        String?            @map("review_note")
+  reviewedAt        DateTime?          @map("reviewed_at") @db.Timestamptz(6)
+  reviewedById      String?            @map("reviewed_by_id") @db.Uuid
+  reviewedBy        User?              @relation("VendorReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  products          Product[]
+  vendorOrders      VendorOrder[]
+  commissionEntries CommissionLedger[]
+  payouts           Payout[]
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([status])
   @@index([status, createdAt])
@@ -174,7 +231,7 @@ model Product {
   searchText         String              @default("") @map("search_text")
   price              Decimal             @db.Decimal(12, 2)
   compareAtPrice     Decimal?            @map("compare_at_price") @db.Decimal(12, 2)
-  currency           String              @default("USD") @db.VarChar(3)
+  currency           String              @default("TZS") @db.VarChar(3)
   stock              Int                 @default(0)
   status             ProductStatus       @default(DRAFT)
   featured           Boolean             @default(false)
@@ -262,34 +319,37 @@ model CartItem {
 }
 
 model Order {
-  id                   String        @id @default(uuid()) @db.Uuid
-  orderNumber          String        @unique @map("order_number")
-  customerId           String        @map("customer_id") @db.Uuid
-  customer             User          @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
-  status               OrderStatus   @default(AWAITING_PAYMENT)
-  currency             String        @db.VarChar(3)
-  subtotal             Decimal       @db.Decimal(12, 2)
-  shippingTotal        Decimal       @default(0) @map("shipping_total") @db.Decimal(12, 2)
-  taxTotal             Decimal       @default(0) @map("tax_total") @db.Decimal(12, 2)
-  discountTotal        Decimal       @default(0) @map("discount_total") @db.Decimal(12, 2)
-  total                Decimal       @db.Decimal(12, 2)
-  recipientName        String        @map("recipient_name")
-  contactEmail         String        @map("contact_email")
-  contactPhone         String?       @map("contact_phone")
-  addressLine1         String        @map("address_line1")
-  addressLine2         String?       @map("address_line2")
+  id                   String             @id @default(uuid()) @db.Uuid
+  orderNumber          String             @unique @map("order_number")
+  customerId           String             @map("customer_id") @db.Uuid
+  customer             User               @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  status               OrderStatus        @default(AWAITING_PAYMENT)
+  currency             String             @db.VarChar(3)
+  subtotal             Decimal            @db.Decimal(12, 2)
+  shippingTotal        Decimal            @default(0) @map("shipping_total") @db.Decimal(12, 2)
+  taxTotal             Decimal            @default(0) @map("tax_total") @db.Decimal(12, 2)
+  discountTotal        Decimal            @default(0) @map("discount_total") @db.Decimal(12, 2)
+  total                Decimal            @db.Decimal(12, 2)
+  recipientName        String             @map("recipient_name")
+  contactEmail         String             @map("contact_email")
+  contactPhone         String?            @map("contact_phone")
+  addressLine1         String             @map("address_line1")
+  addressLine2         String?            @map("address_line2")
   city                 String
   region               String
-  postalCode           String        @map("postal_code")
-  countryCode          String        @map("country_code") @db.VarChar(2)
-  reservationExpiresAt DateTime?     @map("reservation_expires_at") @db.Timestamptz(6)
-  placedAt             DateTime      @default(now()) @map("placed_at") @db.Timestamptz(6)
-  paidAt               DateTime?     @map("paid_at") @db.Timestamptz(6)
-  cancelledAt          DateTime?     @map("cancelled_at") @db.Timestamptz(6)
+  postalCode           String             @map("postal_code")
+  countryCode          String             @map("country_code") @db.VarChar(2)
+  reservationExpiresAt DateTime?          @map("reservation_expires_at") @db.Timestamptz(6)
+  placedAt             DateTime           @default(now()) @map("placed_at") @db.Timestamptz(6)
+  paidAt               DateTime?          @map("paid_at") @db.Timestamptz(6)
+  cancelledAt          DateTime?          @map("cancelled_at") @db.Timestamptz(6)
   vendorOrders         VendorOrder[]
   items                OrderItem[]
-  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  payments             Payment[]
+  refunds              Refund[]
+  commissionEntries    CommissionLedger[]
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([customerId, createdAt])
   @@index([status, reservationExpiresAt])
@@ -297,17 +357,18 @@ model Order {
 }
 
 model VendorOrder {
-  id        String      @id @default(uuid()) @db.Uuid
-  orderId   String      @map("order_id") @db.Uuid
-  order     Order       @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  vendorId  String      @map("vendor_id") @db.Uuid
-  vendor    Vendor      @relation(fields: [vendorId], references: [id], onDelete: Restrict)
-  status    OrderStatus @default(AWAITING_PAYMENT)
-  currency  String      @db.VarChar(3)
-  subtotal  Decimal     @db.Decimal(12, 2)
-  items     OrderItem[]
-  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                String             @id @default(uuid()) @db.Uuid
+  orderId           String             @map("order_id") @db.Uuid
+  order             Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  vendorId          String             @map("vendor_id") @db.Uuid
+  vendor            Vendor             @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  status            OrderStatus        @default(AWAITING_PAYMENT)
+  currency          String             @db.VarChar(3)
+  subtotal          Decimal            @db.Decimal(12, 2)
+  items             OrderItem[]
+  commissionEntries CommissionLedger[]
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@unique([orderId, vendorId])
   @@index([vendorId, status, createdAt])
@@ -335,6 +396,148 @@ model OrderItem {
   @@index([orderId])
   @@index([vendorOrderId])
   @@map("order_items")
+}
+
+model Payment {
+  id                String             @id @default(uuid()) @db.Uuid
+  orderId           String             @map("order_id") @db.Uuid
+  order             Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  provider          PaymentProvider    @default(LYNXPAY)
+  attempt           Int
+  status            PaymentStatus      @default(PENDING)
+  amount            Decimal            @db.Decimal(12, 2)
+  feeAmount         Decimal            @default(0) @map("fee_amount") @db.Decimal(12, 2)
+  netAmount         Decimal            @default(0) @map("net_amount") @db.Decimal(12, 2)
+  currency          String             @db.VarChar(3)
+  paymentMethod     String?            @map("payment_method") @db.VarChar(32)
+  customerPhone     String?            @map("customer_phone") @db.VarChar(20)
+  idempotencyKey    String             @unique @map("idempotency_key") @db.VarChar(128)
+  providerPaymentId String?            @unique @map("provider_payment_id") @db.VarChar(128)
+  providerReference String?            @map("provider_reference") @db.VarChar(128)
+  checkoutUrl       String?            @map("checkout_url") @db.Text
+  failureCode       String?            @map("failure_code") @db.VarChar(64)
+  failureMessage    String?            @map("failure_message") @db.Text
+  initiatedAt       DateTime           @default(now()) @map("initiated_at") @db.Timestamptz(6)
+  completedAt       DateTime?          @map("completed_at") @db.Timestamptz(6)
+  failedAt          DateTime?          @map("failed_at") @db.Timestamptz(6)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  refunds           Refund[]
+  ledgerEntries     CommissionLedger[]
+
+  @@unique([orderId, attempt])
+  @@index([orderId, status])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+model PaymentEvent {
+  id                String              @id @default(uuid()) @db.Uuid
+  provider          PaymentProvider     @default(LYNXPAY)
+  deliveryId        String              @map("delivery_id") @db.VarChar(128)
+  eventType         String              @map("event_type") @db.VarChar(64)
+  providerPaymentId String?             @map("provider_payment_id") @db.VarChar(128)
+  externalId        String?             @map("external_id") @db.VarChar(128)
+  status            PaymentStatus?
+  outcome           PaymentEventOutcome
+  payload           Json
+  receivedAt        DateTime            @default(now()) @map("received_at") @db.Timestamptz(6)
+  processedAt       DateTime?           @map("processed_at") @db.Timestamptz(6)
+  errorMessage      String?             @map("error_message") @db.Text
+
+  @@unique([provider, deliveryId])
+  @@index([providerPaymentId])
+  @@index([outcome, receivedAt])
+  @@map("payment_events")
+}
+
+model Refund {
+  id               String             @id @default(uuid()) @db.Uuid
+  paymentId        String             @map("payment_id") @db.Uuid
+  payment          Payment            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  orderId          String             @map("order_id") @db.Uuid
+  order            Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  amount           Decimal            @db.Decimal(12, 2)
+  currency         String             @db.VarChar(3)
+  reason           String             @db.VarChar(200)
+  status           RefundStatus       @default(PENDING)
+  providerRefundId String?            @unique @map("provider_refund_id") @db.VarChar(128)
+  requestedById    String?            @map("requested_by_id") @db.Uuid
+  requestedBy      User?              @relation("RefundRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  failureMessage   String?            @map("failure_message") @db.Text
+  processedAt      DateTime?          @map("processed_at") @db.Timestamptz(6)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ledgerEntries    CommissionLedger[]
+
+  @@index([paymentId, status])
+  @@index([orderId])
+  @@map("refunds")
+}
+
+model CommissionRule {
+  id            String             @id @default(uuid()) @db.Uuid
+  version       String             @unique @db.VarChar(64)
+  basisPoints   Int                @map("basis_points")
+  description   String             @default("")
+  effectiveFrom DateTime           @default(now()) @map("effective_from") @db.Timestamptz(6)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  ledgerEntries CommissionLedger[]
+
+  @@map("commission_rules")
+}
+
+model CommissionLedger {
+  id               String              @id @default(uuid()) @db.Uuid
+  paymentId        String?             @map("payment_id") @db.Uuid
+  payment          Payment?            @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  refundId         String?             @map("refund_id") @db.Uuid
+  refund           Refund?             @relation(fields: [refundId], references: [id], onDelete: Restrict)
+  orderId          String              @map("order_id") @db.Uuid
+  order            Order               @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  vendorOrderId    String?             @map("vendor_order_id") @db.Uuid
+  vendorOrder      VendorOrder?        @relation(fields: [vendorOrderId], references: [id], onDelete: Restrict)
+  vendorId         String?             @map("vendor_id") @db.Uuid
+  vendor           Vendor?             @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  commissionRuleId String?             @map("commission_rule_id") @db.Uuid
+  commissionRule   CommissionRule?     @relation(fields: [commissionRuleId], references: [id], onDelete: Restrict)
+  type             CommissionEntryType
+  amount           Decimal             @db.Decimal(12, 2)
+  currency         String              @db.VarChar(3)
+  basisPoints      Int?                @map("basis_points")
+  entryKey         String              @unique @map("entry_key") @db.VarChar(160)
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([vendorId, createdAt])
+  @@index([type, createdAt])
+  @@map("commission_ledger")
+}
+
+model Payout {
+  id             String       @id @default(uuid()) @db.Uuid
+  vendorId       String       @map("vendor_id") @db.Uuid
+  vendor         Vendor       @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  status         PayoutStatus @default(PENDING)
+  amount         Decimal      @db.Decimal(12, 2)
+  currency       String       @db.VarChar(3)
+  reference      String?      @unique @db.VarChar(64)
+  note           String?
+  periodStart    DateTime     @map("period_start") @db.Timestamptz(6)
+  periodEnd      DateTime     @map("period_end") @db.Timestamptz(6)
+  createdById    String?      @map("created_by_id") @db.Uuid
+  createdBy      User?        @relation("PayoutCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedAt     DateTime?    @map("approved_at") @db.Timestamptz(6)
+  paidAt         DateTime?    @map("paid_at") @db.Timestamptz(6)
+  reconciledAt   DateTime?    @map("reconciled_at") @db.Timestamptz(6)
+  failureMessage String?      @map("failure_message") @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([vendorId, status])
+  @@index([status, createdAt])
+  @@map("payouts")
 }
 
 model AccountToken {

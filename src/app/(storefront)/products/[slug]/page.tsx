@@ -186,8 +186,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
                   <ShareButton className="h-12" />
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Checkout reserves stock and records an order. Payment is not connected in this
-                  phase.
+                  Checkout reserves stock and opens LynxPay payment in Tanzanian shillings.
                 </p>
               </>
             )}

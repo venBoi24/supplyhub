@@ -12,10 +12,7 @@ import type { PlacedOrder } from "./types";
 import type { CheckoutAddressInput } from "./validation";
 
 export type CheckoutErrorCode =
-  | "cart-empty"
-  | "unavailable-items"
-  | "currency-mismatch"
-  | "invalid-request";
+  "cart-empty" | "unavailable-items" | "currency-mismatch" | "invalid-request";
 
 export class CheckoutError extends Error {
   constructor(
@@ -102,10 +99,7 @@ export async function placeOrder(
   throw new CheckoutError("invalid-request", "The order could not be placed. Try again.");
 }
 
-async function runCheckout(
-  database: PrismaClient,
-  input: PlaceOrderInput,
-): Promise<PlacedOrder> {
+async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Promise<PlacedOrder> {
   const now = new Date();
   const reservationExpiresAt = new Date(now.getTime() + input.reservationMinutes * 60_000);
 
