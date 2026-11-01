@@ -45,6 +45,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
+  serverExternalPackages: ["nodemailer"],
   experimental: {
     // Product images are validated and capped at 5 MB; leave headroom for multipart overhead.
     serverActions: { bodySizeLimit: "6mb" },

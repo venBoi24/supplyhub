@@ -48,6 +48,11 @@ const basisPoints = z.preprocess(
   z.coerce.number().int().min(0).max(10_000).default(1_000),
 );
 
+const smtpPort = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.coerce.number().int().min(1).max(65_535).default(587),
+);
+
 const serverEnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -55,6 +60,12 @@ const serverEnvSchema = z
     NEXT_PUBLIC_SITE_URL: httpUrl.default("http://localhost:3000"),
     AUTH_SECRET: z.string().min(32, "must be at least 32 characters"),
     AUTH_URL: optionalHttpUrl,
+    SMTP_HOST: optionalText,
+    SMTP_PORT: smtpPort,
+    SMTP_SECURE: booleanFlag,
+    SMTP_USER: optionalText,
+    SMTP_PASSWORD: optionalText,
+    EMAIL_FROM: optionalText,
     STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
     S3_ENDPOINT: optionalHttpUrl,
     S3_REGION: optionalText,

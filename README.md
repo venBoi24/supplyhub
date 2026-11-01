@@ -126,8 +126,9 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
   hashes. Resetting a password increments `sessionVersion`, ending every other session.
 - Sign-up and sign-in are rate limited per email and per address. Limits are held in process
   memory, so a multi-instance deployment needs a shared store.
-- Email delivery is a development-only file outbox at `.local/mail-outbox/`; no production email
-  provider is configured yet.
+- Email delivery uses SMTP through Nodemailer when `SMTP_HOST`, `SMTP_USER`, and `SMTP_PASSWORD`
+  are set. Without SMTP, development writes to `.local/mail-outbox/` and production logs
+  `email.delivery_unconfigured` without sending.
 - Server-only policy functions in `src/server/auth/policies.ts` decide vendor, account, admin, and
   order access; page guards redirect to sign-in or `/account?denied=…`.
 - Vendor applications move `PENDING → APPROVED | REJECTED`; approval promotes the owner to
@@ -205,8 +206,11 @@ returns 503 and orders can only advance through a server-side status check. Regi
 in `LYNXPAY_WEBHOOK_SECRET`.
 
 Open `http://localhost:3000`. Health status is available at `GET /api/health`. Verification and
-password-reset emails are written to `.local/mail-outbox/` in development; open the newest file to
-follow the link.
+password-reset emails are sent over SMTP when the `SMTP_*` variables are set; otherwise they are
+written to `.local/mail-outbox/` in development. Open the newest file to follow the link. Port 465
+uses implicit TLS; other ports use STARTTLS when the server offers it. A Gmail account needs an app
+password, not the account password. Verification links use `NEXT_PUBLIC_SITE_URL`, falling back to
+`AUTH_URL` and then the Vercel deployment origin when it is left at localhost.
 
 To run the PostgreSQL integration gates, point `TEST_DATABASE_URL` at a migrated database before
 `npm run test`. CI starts a PostgreSQL 17 service and applies migrations before running the suite.
@@ -247,11 +251,13 @@ deploy && next build`, and the Prisma config resolves the session pooler key on 
 
 Set these Vercel environment variables (Production and Preview): the three Supabase keys,
 `AUTH_SECRET`, `NEXT_PUBLIC_SITE_URL` (the deployed origin), and the LynxPay live keys once
-available. Payment credentials are validated when a payment starts, not at build time, so a
-deployment without them still serves the marketplace. `AUTH_URL` is optional on Vercel because
-Auth.js trusts the platform host there; set it to the canonical origin if you serve the app from a
-custom domain through another proxy. Local `DATABASE_URL`, `TEST_DATABASE_URL`, and the local
-`prisma dev` server are not used in production.
+available. For account verification and password recovery, add `SMTP_HOST`, `SMTP_USER`,
+`SMTP_PASSWORD`, and optionally `SMTP_PORT`, `SMTP_SECURE`, and `EMAIL_FROM`. Payment credentials
+are validated when a payment starts, not at build time, so a deployment without them still serves
+the marketplace. `AUTH_URL` is optional on Vercel because Auth.js trusts the platform host there;
+set it to the canonical origin if you serve the app from a custom domain through another proxy.
+Local `DATABASE_URL`, `TEST_DATABASE_URL`, and the local `prisma dev` server are not used in
+production.
 
 Vercel's filesystem is ephemeral, so `.local/uploads` does not persist. Before enabling studio
 uploads or seeding the hosted catalog, configure an S3-compatible bucket (the storage adapter
@@ -326,9 +332,12 @@ docs/                  Product, architecture, security, and phase specifications
   role changes immediate while avoiding a session table in this phase.
 - **Authentication rate limits are in process memory.** They slow down credential stuffing in a
   single instance; a horizontally scaled deployment must move them to a shared store.
-- **Account email is file-based in development.** Verification and reset messages are written to
-  `.local/mail-outbox/` with owner-only permissions. Production delivery remains unconfigured and
-  is a deployment blocker for self-service recovery.
+- **Account email uses SMTP with a development outbox fallback.** Verification and reset messages
+  are sent through Nodemailer when `SMTP_*` credentials are configured. Without them, development
+  writes owner-only files to `.local/mail-outbox/`, while production logs the missing configuration
+  and sends nothing. Nodemailer 10 is pinned through npm `overrides`: Auth.js's optional email
+  provider still declares a peer range of `^7 || ^8`, but the project does not use that provider and
+  the older releases carry published advisories.
 - **Catalog prices are integer cents in application code and `numeric` in PostgreSQL.** The Prisma
   schema stores `Decimal(12, 2)` with an explicit currency, and catalogue logic converts to integer
   cents before arithmetic so no floating point touches a price.
