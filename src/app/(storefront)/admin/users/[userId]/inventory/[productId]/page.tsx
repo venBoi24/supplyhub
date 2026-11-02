@@ -72,18 +72,10 @@ export default async function AdminManagedProductPage({
                     name: product.name,
                     slug: product.slug,
                     categoryId: product.categoryId,
-                    sku: product.sku,
                     price: centsToDecimalString(product.priceCents),
-                    compareAtPrice:
-                      product.compareAtPriceCents !== null
-                        ? centsToDecimalString(product.compareAtPriceCents)
-                        : "",
-                    summary: product.summary,
                     description: product.description,
                     makerNote: product.makerNote,
                     materials: product.materials,
-                    dimensions: product.dimensions,
-                    care: product.care,
                   }}
                 />
               </div>

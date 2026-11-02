@@ -123,7 +123,17 @@ export default async function AdminUserInventoryPage({
           </p>
         ) : (
           <div className="mt-6">
-            <StudioProductForm categories={categories} adminVendorId={user.vendor.id} />
+            <StudioProductForm
+              categories={categories}
+              adminVendorId={user.vendor.id}
+              location={{
+                city: user.vendor.city ?? "",
+                street: user.vendor.street ?? "",
+                address: user.vendor.address ?? "",
+                latitude: user.vendor.latitude?.toString() ?? "",
+                longitude: user.vendor.longitude?.toString() ?? "",
+              }}
+            />
           </div>
         )}
       </section>

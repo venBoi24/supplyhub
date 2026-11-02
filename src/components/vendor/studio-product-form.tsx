@@ -7,6 +7,7 @@ import { Field, Textarea } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { LocationMapField } from "@/components/vendor/location-map-field";
 import { saveProductAction } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
 
@@ -15,26 +16,31 @@ export interface StudioProductFormValues {
   name?: string;
   slug?: string;
   categoryId?: string;
-  sku?: string;
   price?: string;
-  compareAtPrice?: string;
-  summary?: string;
   description?: string;
   makerNote?: string;
   materials?: string[];
-  dimensions?: string;
-  care?: string;
   initialStock?: number;
+}
+
+export interface StudioLocationValues {
+  city: string;
+  street: string;
+  address: string;
+  latitude: string;
+  longitude: string;
 }
 
 export function StudioProductForm({
   categories,
   product,
   adminVendorId,
+  location,
 }: {
   categories: Array<{ id: string; name: string }>;
   product?: StudioProductFormValues;
   adminVendorId?: string;
+  location?: StudioLocationValues;
 }) {
   const [state, action] = useActionState(saveProductAction, initialFormState);
   const errors = state.fieldErrors;
@@ -104,19 +110,6 @@ export function StudioProductForm({
         </div>
 
         <div className="grid gap-5 sm:grid-cols-3">
-          <Field label="SKU" htmlFor={`${prefix}-sku`} error={errors?.sku}>
-            <Input
-              id={`${prefix}-sku`}
-              name="sku"
-              defaultValue={product?.sku}
-              required
-              spellCheck={false}
-              placeholder="SH-CARAFE-01"
-              aria-invalid={errors?.sku ? true : undefined}
-              aria-describedby={errors?.sku ? `${prefix}-sku-error` : undefined}
-            />
-          </Field>
-
           <Field label="Price" htmlFor={`${prefix}-price`} hint="TZS" error={errors?.priceCents}>
             <Input
               id={`${prefix}-price`}
@@ -127,23 +120,6 @@ export function StudioProductForm({
               placeholder="68.00"
               aria-invalid={errors?.priceCents ? true : undefined}
               aria-describedby={errors?.priceCents ? `${prefix}-price-error` : undefined}
-            />
-          </Field>
-
-          <Field
-            label="Compare at"
-            htmlFor={`${prefix}-compare`}
-            hint="Optional"
-            error={errors?.compareAtPriceCents}
-          >
-            <Input
-              id={`${prefix}-compare`}
-              name="compareAtPrice"
-              defaultValue={product?.compareAtPrice}
-              inputMode="decimal"
-              placeholder="84.00"
-              aria-invalid={errors?.compareAtPriceCents ? true : undefined}
-              aria-describedby={errors?.compareAtPriceCents ? `${prefix}-compare-error` : undefined}
             />
           </Field>
         </div>
@@ -172,24 +148,6 @@ export function StudioProductForm({
 
       <fieldset className="space-y-5 border-t border-border pt-8">
         <legend className="eyebrow text-muted-foreground">The story</legend>
-
-        <Field
-          label="Summary"
-          htmlFor={`${prefix}-summary`}
-          hint="10–280 characters"
-          error={errors?.summary}
-        >
-          <Textarea
-            id={`${prefix}-summary`}
-            name="summary"
-            defaultValue={product?.summary}
-            required
-            maxLength={280}
-            className="min-h-20"
-            aria-invalid={errors?.summary ? true : undefined}
-            aria-describedby={errors?.summary ? `${prefix}-summary-error` : undefined}
-          />
-        </Field>
 
         <Field
           label="Description"
@@ -244,38 +202,64 @@ export function StudioProductForm({
             aria-describedby={errors?.materials ? `${prefix}-materials-error` : undefined}
           />
         </Field>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Dimensions" htmlFor={`${prefix}-dimensions`} error={errors?.dimensions}>
-            <Input
-              id={`${prefix}-dimensions`}
-              name="dimensions"
-              defaultValue={product?.dimensions}
-              maxLength={160}
-              aria-invalid={errors?.dimensions ? true : undefined}
-              aria-describedby={errors?.dimensions ? `${prefix}-dimensions-error` : undefined}
-            />
-          </Field>
-
-          <Field label="Care" htmlFor={`${prefix}-care`} error={errors?.care}>
-            <Input
-              id={`${prefix}-care`}
-              name="care"
-              defaultValue={product?.care}
-              maxLength={400}
-              aria-invalid={errors?.care ? true : undefined}
-              aria-describedby={errors?.care ? `${prefix}-care-error` : undefined}
-            />
-          </Field>
-        </div>
       </fieldset>
+
+      {!editing ? (
+        <fieldset className="space-y-5 border-t border-border pt-8">
+          <legend className="eyebrow text-muted-foreground">Studio location</legend>
+          <p className="text-sm text-muted-foreground">
+            Enter your city, street, and address, or allow location access to place a Google Maps
+            pin.
+          </p>
+          <LocationMapField
+            defaultValue={[location?.address, location?.street, location?.city]
+              .filter(Boolean)
+              .join(", ")}
+            defaultCity={location?.city ?? ""}
+            defaultStreet={location?.street ?? ""}
+            defaultAddress={location?.address ?? ""}
+            defaultLatitude={location?.latitude ?? ""}
+            defaultLongitude={location?.longitude ?? ""}
+            errors={errors}
+          />
+        </fieldset>
+      ) : null}
+
+      {!editing ? (
+        <fieldset className="space-y-5 border-t border-border pt-8">
+          <legend className="eyebrow text-muted-foreground">Product photo</legend>
+          <p className="text-sm text-muted-foreground">
+            Add a JPEG, PNG, or WebP cover image up to 5 MB. You can add more photos after creating
+            the draft.
+          </p>
+          <Field label="Image file" htmlFor="new-image" error={errors?.image}>
+            <Input
+              id="new-image"
+              name="image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              required
+              className="h-auto py-2.5"
+            />
+          </Field>
+          <Field label="Describe the image" htmlFor="new-image-alt" error={errors?.alt}>
+            <Input
+              id="new-image-alt"
+              name="alt"
+              required
+              maxLength={160}
+              placeholder="A clear description of the product photo"
+            />
+          </Field>
+        </fieldset>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-6">
         <SubmitButton pendingLabel={editing ? "Saving…" : "Creating…"} className="w-auto">
           {editing ? "Save changes" : "Create draft"}
         </SubmitButton>
         <p className="text-xs leading-5 text-muted-foreground">
-          New objects start as drafts. Add at least one image before submitting for review.
+          New objects start as drafts. Add a cover image now; more images can be added after saving.
         </p>
       </div>
     </form>

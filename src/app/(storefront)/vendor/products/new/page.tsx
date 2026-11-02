@@ -9,6 +9,7 @@ import { StudioNav } from "@/components/vendor/studio-nav";
 import { StudioProductForm } from "@/components/vendor/studio-product-form";
 import { listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
 import { requireApprovedVendor } from "@/server/auth/guards";
+import { getDatabase } from "@/server/db/client";
 
 export const metadata: Metadata = {
   title: "New object",
@@ -25,8 +26,14 @@ export default function NewStudioProductPage() {
 }
 
 async function NewProductContent() {
-  await requireApprovedVendor("/vendor/products/new");
-  const categories = await listStudioCategoryOptions();
+  const [{ vendorId }, categories] = await Promise.all([
+    requireApprovedVendor("/vendor/products/new"),
+    listStudioCategoryOptions(),
+  ]);
+  const studio = await getDatabase().vendor.findUnique({
+    where: { id: vendorId },
+    select: { city: true, street: true, address: true, latitude: true, longitude: true },
+  });
 
   return (
     <PageShell className="pt-10 sm:pt-14">
@@ -60,7 +67,16 @@ async function NewProductContent() {
         </p>
       ) : (
         <div className="mt-8 max-w-3xl rounded-xl border border-border bg-surface p-6 sm:p-8">
-          <StudioProductForm categories={categories} />
+          <StudioProductForm
+            categories={categories}
+            location={{
+              city: studio?.city ?? "",
+              street: studio?.street ?? "",
+              address: studio?.address ?? "",
+              latitude: studio?.latitude?.toString() ?? "",
+              longitude: studio?.longitude?.toString() ?? "",
+            }}
+          />
         </div>
       )}
     </PageShell>

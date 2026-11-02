@@ -102,23 +102,21 @@ async function requireManagedStudio(formData: FormData) {
 }
 
 function productFields(input: ReturnType<typeof productInputSchema.parse>) {
+  const summary = input.description.slice(0, 277).trimEnd();
   return {
     name: input.name,
     slug: input.slug,
     categoryId: input.categoryId,
     sku: input.sku,
     price: centsToDecimalString(input.priceCents),
-    compareAtPrice:
-      input.compareAtPriceCents !== undefined
-        ? centsToDecimalString(input.compareAtPriceCents)
-        : null,
+    compareAtPrice: null,
     currency: DEFAULT_CURRENCY,
-    summary: input.summary,
+    summary: summary.length < input.description.length ? `${summary}…` : summary,
     description: input.description,
     makerNote: input.makerNote,
     materials: input.materials,
-    dimensions: input.dimensions,
-    care: input.care,
+    dimensions: "",
+    care: "",
     searchText: buildSearchText(input),
   };
 }
@@ -141,20 +139,58 @@ export async function saveProductAction(
     name: formValue(formData, "name"),
     slug: formValue(formData, "slug"),
     categoryId: formValue(formData, "categoryId"),
-    sku: formValue(formData, "sku"),
+    sku: `SH-${randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase()}`,
     priceCents: formValue(formData, "price"),
-    compareAtPriceCents: formValue(formData, "compareAtPrice"),
-    summary: formValue(formData, "summary"),
+    compareAtPriceCents: "",
+    summary: formValue(formData, "description").slice(0, 280),
     description: formValue(formData, "description"),
     makerNote: formValue(formData, "makerNote"),
     materials: formValue(formData, "materials"),
-    dimensions: formValue(formData, "dimensions"),
-    care: formValue(formData, "care"),
+    dimensions: "",
+    care: "",
     initialStock: formValue(formData, "initialStock"),
   });
 
   if (!parsed.success) {
     return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
+  }
+
+  const upload = formData.get("image");
+  const altResult = imageAltSchema.safeParse(formValue(formData, "alt"));
+  let imagePayload: {
+    bytes: Uint8Array;
+    contentType: string;
+    byteSize: number;
+    alt: string;
+  } | null = null;
+  if (!productId) {
+    if (!(upload instanceof File) || upload.size === 0) {
+      return { status: "error", fieldErrors: { image: "Choose a cover photo." } };
+    }
+    if (upload.size > MAX_IMAGE_BYTES) {
+      return { status: "error", fieldErrors: { image: "Images must be 5 MB or smaller." } };
+    }
+    if (!altResult.success) {
+      return {
+        status: "error",
+        fieldErrors: { alt: altResult.error.issues[0]?.message ?? "Describe the image." },
+      };
+    }
+    const bytes = new Uint8Array(await upload.arrayBuffer());
+    const validation = validateImageUpload({
+      bytes,
+      declaredType: upload.type,
+      declaredSize: upload.size,
+    });
+    if (!validation.ok) {
+      return { status: "error", fieldErrors: { image: validation.error } };
+    }
+    imagePayload = {
+      bytes,
+      contentType: validation.image.contentType,
+      byteSize: validation.image.byteSize,
+      alt: altResult.data,
+    };
   }
 
   const database = getDatabase();
@@ -171,43 +207,118 @@ export async function saveProductAction(
   }
 
   const data = productFields(parsed.data);
+  const hasLocation = ["city", "street", "address"].some((key) => formValue(formData, key));
+  const location = hasLocation
+    ? z
+        .object({
+          city: z.string().trim().min(2).max(80),
+          street: z.string().trim().min(2).max(120),
+          address: z.string().trim().min(2).max(160),
+          latitude: z.preprocess(
+            (value) => (value === "" ? null : Number(value)),
+            z.number().min(-90).max(90).nullable(),
+          ),
+          longitude: z.preprocess(
+            (value) => (value === "" ? null : Number(value)),
+            z.number().min(-180).max(180).nullable(),
+          ),
+        })
+        .safeParse({
+          city: formValue(formData, "city"),
+          street: formValue(formData, "street"),
+          address: formValue(formData, "address"),
+          latitude: formValue(formData, "latitude"),
+          longitude: formValue(formData, "longitude"),
+        })
+    : null;
+
+  if (location && !location.success) {
+    return {
+      status: "error",
+      message: "Enter a valid city, street, and address for the studio location.",
+    };
+  }
 
   try {
     if (!productId) {
-      const created = await database.$transaction(async (transaction) => {
-        const product = await transaction.product.create({
-          data: {
-            ...data,
-            vendorId,
-            stock: parsed.data.initialStock,
-            status: "DRAFT",
-          },
-          select: { id: true },
-        });
+      const createdProductId = randomUUID();
+      const storageKey = `products/${createdProductId}/${randomUUID()}.${imagePayload?.contentType === "image/jpeg" ? "jpg" : imagePayload?.contentType === "image/png" ? "png" : "webp"}`;
+      try {
+        if (!imagePayload) return { status: "error", message: "Choose a cover photo." };
+        await getStorage().put(storageKey, imagePayload.bytes, imagePayload.contentType);
+      } catch {
+        return { status: "error", message: "The photo could not be uploaded. Please try again." };
+      }
+      const created = await database
+        .$transaction(async (transaction) => {
+          const product = await transaction.product.create({
+            data: {
+              id: createdProductId,
+              ...data,
+              vendorId,
+              stock: parsed.data.initialStock,
+              status: "DRAFT",
+            },
+            select: { id: true },
+          });
 
-        if (parsed.data.initialStock > 0) {
-          await transaction.inventoryMovement.create({
+          if (location?.success) {
+            await transaction.vendor.update({
+              where: { id: vendorId },
+              data: {
+                city: location.data.city,
+                street: location.data.street,
+                address: location.data.address,
+                location: [location.data.address, location.data.street, location.data.city].join(
+                  ", ",
+                ),
+                latitude: location.data.latitude?.toFixed(7) ?? null,
+                longitude: location.data.longitude?.toFixed(7) ?? null,
+              },
+            });
+          }
+
+          await transaction.productImage.create({
             data: {
               productId: product.id,
-              actorId: actor.id,
-              delta: parsed.data.initialStock,
-              reason: "INITIAL",
-              resultingStock: parsed.data.initialStock,
-              note: "Initial stock recorded when the object was created.",
+              storageKey,
+              alt: imagePayload.alt,
+              contentType: imagePayload.contentType,
+              byteSize: imagePayload.byteSize,
+              sortOrder: 0,
+              status: "APPROVED",
             },
           });
-        }
 
-        await recordAuditEvent(transaction, {
-          actorId: actor.id,
-          action: "PRODUCT_CREATED",
-          targetType: "product",
-          targetId: product.id,
-          metadata: { slug: product.id, status: "DRAFT" },
+          if (parsed.data.initialStock > 0) {
+            await transaction.inventoryMovement.create({
+              data: {
+                productId: product.id,
+                actorId: actor.id,
+                delta: parsed.data.initialStock,
+                reason: "INITIAL",
+                resultingStock: parsed.data.initialStock,
+                note: "Initial stock recorded when the object was created.",
+              },
+            });
+          }
+
+          await recordAuditEvent(transaction, {
+            actorId: actor.id,
+            action: "PRODUCT_CREATED",
+            targetType: "product",
+            targetId: product.id,
+            metadata: { slug: product.id, status: "DRAFT" },
+          });
+
+          return product;
+        })
+        .catch(async (error: unknown) => {
+          await getStorage()
+            .delete(storageKey)
+            .catch(() => undefined);
+          throw error;
         });
-
-        return product;
-      });
 
       logger.info("product.created", { actorId: actor.id, productId: created.id });
       revalidateCatalog();
