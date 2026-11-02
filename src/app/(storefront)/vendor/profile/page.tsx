@@ -95,6 +95,7 @@ async function ProfileContent({
             latitude: vendor.latitude?.toString() ?? "",
             longitude: vendor.longitude?.toString() ?? "",
             discipline: vendor.discipline ?? "",
+            contactPhone: vendor.contactPhone ?? "",
             departmentIds: vendor.departments.map((department) => department.categoryId),
             story: vendor.story ?? vendor.description ?? "",
             monogram: vendor.monogram ?? initialsFor(vendor.name),

@@ -134,6 +134,17 @@ async function VendorContent({
           <div>
             <p className="eyebrow text-muted-foreground">Studio location</p>
             <h2 className="mt-2 font-display text-xl font-medium">{vendor.location}</h2>
+            {vendor.contactPhone ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Contact this studio:{" "}
+                <a
+                  href={`tel:${vendor.contactPhone}`}
+                  className="font-medium text-accent underline underline-offset-4"
+                >
+                  {vendor.contactPhone}
+                </a>
+              </p>
+            ) : null}
           </div>
           <a
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vendor.location)}`}

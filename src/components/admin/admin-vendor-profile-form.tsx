@@ -30,6 +30,7 @@ export function AdminVendorProfileForm({
     latitude: string;
     longitude: string;
     discipline: string;
+    contactPhone: string;
     departmentIds: string[];
     story: string;
     monogram: string;
@@ -77,6 +78,21 @@ export function AdminVendorProfileForm({
         selectedIds={vendor.departmentIds}
         error={errors?.departmentIds}
       />
+      <Field
+        label="Public contact phone"
+        htmlFor="managed-contact-phone"
+        error={errors?.contactPhone}
+      >
+        <Input
+          id="managed-contact-phone"
+          name="contactPhone"
+          type="tel"
+          autoComplete="tel"
+          defaultValue={vendor.contactPhone}
+          required
+          placeholder="+255 754 123 456"
+        />
+      </Field>
       <div className="grid gap-5 sm:grid-cols-[7rem_1fr]">
         <Field
           label="Monogram"

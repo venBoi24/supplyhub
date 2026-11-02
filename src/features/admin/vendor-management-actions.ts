@@ -33,6 +33,7 @@ export async function updateVendorProfileForUserAction(
     name: formValue(formData, "name"),
   });
   const details = studioProfileSchema.safeParse({
+    contactPhone: formValue(formData, "contactPhone"),
     departmentIds: formData
       .getAll("departmentIds")
       .filter((value): value is string => typeof value === "string"),
@@ -81,6 +82,7 @@ export async function updateVendorProfileForUserAction(
           latitude: details.data.latitude?.toFixed(7) ?? null,
           longitude: details.data.longitude?.toFixed(7) ?? null,
           discipline: details.data.discipline,
+          contactPhone: details.data.contactPhone,
           story: details.data.story,
           monogram: details.data.monogram || profile.data.name.slice(0, 2).toUpperCase(),
           departments: {

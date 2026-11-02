@@ -17,6 +17,34 @@ export const passwordField = z
   .min(12, { error: "Use at least 12 characters." })
   .max(128, { error: "Use 128 characters or fewer." });
 
+export const phoneNumberSchema = z
+  .string()
+  .trim()
+  .min(7, { error: "Enter a phone number with its country code." })
+  .max(24, { error: "Use 24 characters or fewer." })
+  .transform((value, context) => {
+    const compact = value.replace(/[\s().-]/g, "");
+    let digits = compact.replace(/\D/g, "");
+    if (!compact.startsWith("+") && digits.startsWith("00")) {
+      digits = digits.slice(2);
+    } else if (!compact.startsWith("+") && digits.startsWith("0") && digits.length === 10) {
+      digits = `255${digits.slice(1)}`;
+    }
+    if (!/^\d{7,15}$/.test(digits)) {
+      context.addIssue({
+        code: "custom",
+        message: "Use 7–15 digits and include the country code.",
+      });
+      return z.NEVER;
+    }
+    return `+${digits}`;
+  });
+
+const optionalPhoneNumberSchema = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  phoneNumberSchema.optional(),
+);
+
 const nameField = z
   .string()
   .trim()
@@ -37,6 +65,8 @@ export const signUpSchema = z
   .object({
     name: nameField,
     email: emailField,
+    phone: optionalPhoneNumberSchema,
+    accountType: z.enum(["BUYER", "SELLER"]),
     password: passwordField,
     confirmPassword: z.string().max(128),
   })
@@ -81,6 +111,7 @@ export const vendorApplicationSchema = z.object({
     .trim()
     .min(20, { error: "Tell us at least 20 characters about your studio." })
     .max(1000, { error: "Use 1000 characters or fewer." }),
+  contactPhone: phoneNumberSchema,
   departmentIds: z.array(z.uuid()).min(1, { error: "Choose at least one department." }).max(20),
 });
 

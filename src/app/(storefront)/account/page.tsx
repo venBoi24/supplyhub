@@ -157,6 +157,10 @@ async function AccountContent({
                 <dd className="font-medium">{roleLabels[profile.role]}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground">Phone</dt>
+                <dd className="font-medium">{profile.phone || "Not added"}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-4">
                 <dt className="text-muted-foreground">Member since</dt>
                 <dd className="font-medium">{formatDate(profile.createdAt)}</dd>
               </div>

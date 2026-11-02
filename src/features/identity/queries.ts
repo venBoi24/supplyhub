@@ -9,6 +9,7 @@ export async function getAccountProfile(userId: string) {
       id: true,
       name: true,
       email: true,
+      phone: true,
       role: true,
       status: true,
       emailVerifiedAt: true,

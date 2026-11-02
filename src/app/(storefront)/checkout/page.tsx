@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCartView } from "@/features/cart/service";
+import { getAccountProfile } from "@/features/identity/queries";
 import type { CartLine } from "@/features/cart/types";
 import { formatMoney } from "@/features/catalog/money";
 import { getServerEnv } from "@/lib/config/env";
@@ -31,7 +32,7 @@ export default function CheckoutPage() {
 
 async function CheckoutContent() {
   const actor = await requireCustomer("/checkout");
-  const view = await getCartView();
+  const [view, profile] = await Promise.all([getCartView(), getAccountProfile(actor.id)]);
 
   if (view.lines.length === 0) {
     return (
@@ -105,6 +106,7 @@ async function CheckoutContent() {
             <CheckoutForm
               defaultName={actor.name}
               defaultEmail={actor.email}
+              defaultPhone={profile?.phone ?? ""}
               reservationMinutes={reservationMinutes}
             />
           </div>

@@ -12,10 +12,16 @@ import { initialFormState } from "@/features/identity/form-state";
 export interface CheckoutFormProps {
   defaultName: string;
   defaultEmail: string;
+  defaultPhone: string;
   reservationMinutes: number;
 }
 
-export function CheckoutForm({ defaultName, defaultEmail, reservationMinutes }: CheckoutFormProps) {
+export function CheckoutForm({
+  defaultName,
+  defaultEmail,
+  defaultPhone,
+  reservationMinutes,
+}: CheckoutFormProps) {
   const [state, formAction] = useActionState(placeOrderAction, initialFormState);
   const errors = state.fieldErrors ?? {};
 
@@ -62,6 +68,7 @@ export function CheckoutForm({ defaultName, defaultEmail, reservationMinutes }: 
             name="contactPhone"
             type="tel"
             autoComplete="tel"
+            defaultValue={defaultPhone}
             {...inputProps("contactPhone")}
           />
         </Field>

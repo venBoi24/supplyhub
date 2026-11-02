@@ -93,6 +93,8 @@ export async function signUpAction(
   const parsed = signUpSchema.safeParse({
     name: formValue(formData, "name"),
     email: formValue(formData, "email"),
+    phone: formValue(formData, "phone") || undefined,
+    accountType: formValue(formData, "accountType"),
     password: formValue(formData, "password"),
     confirmPassword: formValue(formData, "confirmPassword"),
   });
@@ -125,6 +127,7 @@ export async function signUpAction(
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
+        phone: parsed.data.phone,
         passwordHash,
       },
       select: { id: true, email: true },
@@ -155,7 +158,7 @@ export async function signUpAction(
       email: parsed.data.email,
       password: parsed.data.password,
       redirect: false,
-      redirectTo: "/account?welcome=1",
+      redirectTo: parsed.data.accountType === "SELLER" ? "/vendor/apply" : "/account?welcome=1",
     });
   } catch (error) {
     if (!(error instanceof AuthError)) {
@@ -168,7 +171,7 @@ export async function signUpAction(
     };
   }
 
-  redirect("/account?welcome=1");
+  redirect(parsed.data.accountType === "SELLER" ? "/vendor/apply" : "/account?welcome=1");
 }
 
 export async function signOutAction(): Promise<void> {

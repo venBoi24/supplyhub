@@ -23,6 +23,7 @@ export interface Vendor {
   latitude?: number | null;
   longitude?: number | null;
   discipline: string;
+  contactPhone: string | null;
   story: string;
 }
 

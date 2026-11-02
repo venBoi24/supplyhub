@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { phoneNumberSchema } from "@/features/identity/validation";
 
 import { MAX_UNIT_STOCK } from "./inventory";
 import { MAX_PRICE_CENTS, parseMoneyToCents } from "./money";
@@ -161,6 +162,7 @@ export const imageAltSchema = z.preprocess(
 
 export const studioProfileSchema = z
   .object({
+    contactPhone: phoneNumberSchema,
     departmentIds: z.array(z.uuid()).min(1, { error: "Choose at least one department." }).max(20),
     city: z.preprocess(
       trimmed,

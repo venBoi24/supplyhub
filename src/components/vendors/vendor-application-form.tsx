@@ -13,7 +13,13 @@ import {
 import { initialFormState } from "@/features/identity/form-state";
 import { applyForVendorAction } from "@/features/vendors/actions";
 
-export function VendorApplicationForm({ departments }: { departments: VendorDepartmentOption[] }) {
+export function VendorApplicationForm({
+  departments,
+  defaultPhone,
+}: {
+  departments: VendorDepartmentOption[];
+  defaultPhone: string;
+}) {
   const [state, action] = useActionState(applyForVendorAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -47,6 +53,26 @@ export function VendorApplicationForm({ departments }: { departments: VendorDepa
           placeholder="harbor-and-loom"
           aria-invalid={errors?.slug ? true : undefined}
           aria-describedby={errors?.slug ? "vendor-slug-error" : undefined}
+        />
+      </Field>
+
+      <Field
+        label="Public contact phone"
+        htmlFor="vendor-contact-phone"
+        hint="Customers will use this to contact your studio. Include your country code."
+        error={errors?.contactPhone}
+      >
+        <Input
+          id="vendor-contact-phone"
+          name="contactPhone"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          defaultValue={defaultPhone}
+          required
+          placeholder="+255 754 123 456"
+          aria-invalid={errors?.contactPhone ? true : undefined}
+          aria-describedby={errors?.contactPhone ? "vendor-contact-phone-error" : undefined}
         />
       </Field>
 

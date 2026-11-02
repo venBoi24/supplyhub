@@ -66,6 +66,7 @@ function mapVendor(vendor: {
   latitude: Prisma.Decimal | null;
   longitude: Prisma.Decimal | null;
   discipline: string | null;
+  contactPhone: string | null;
   story: string | null;
   description: string | null;
 }): Vendor {
@@ -80,6 +81,7 @@ function mapVendor(vendor: {
     latitude: vendor.latitude?.toNumber() ?? null,
     longitude: vendor.longitude?.toNumber() ?? null,
     discipline: vendor.discipline?.trim() || "Independent studio",
+    contactPhone: vendor.contactPhone,
     story: vendor.story?.trim() || vendor.description?.trim() || "",
   };
 }
@@ -281,6 +283,7 @@ export async function listVendorSummaries(): Promise<VendorSummary[]> {
       latitude: true,
       longitude: true,
       discipline: true,
+      contactPhone: true,
       story: true,
       description: true,
       _count: {

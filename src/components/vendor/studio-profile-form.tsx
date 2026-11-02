@@ -27,6 +27,7 @@ export function StudioProfileForm({
     latitude: string;
     longitude: string;
     discipline: string;
+    contactPhone: string;
     departmentIds: string[];
     story: string;
     monogram: string;
@@ -74,6 +75,26 @@ export function StudioProfileForm({
         selectedIds={defaults.departmentIds}
         error={errors?.departmentIds}
       />
+
+      <Field
+        label="Public contact phone"
+        htmlFor="studio-contact-phone"
+        hint="Customers will use this to contact your studio. Include your country code."
+        error={errors?.contactPhone}
+      >
+        <Input
+          id="studio-contact-phone"
+          name="contactPhone"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          defaultValue={defaults.contactPhone}
+          required
+          placeholder="+255 754 123 456"
+          aria-invalid={errors?.contactPhone ? true : undefined}
+          aria-describedby={errors?.contactPhone ? "studio-contact-phone-error" : undefined}
+        />
+      </Field>
 
       <Field label="Discipline" htmlFor="studio-discipline" error={errors?.discipline}>
         <Input

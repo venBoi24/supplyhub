@@ -56,6 +56,7 @@ export async function applyForVendorAction(
     name: formValue(formData, "name"),
     slug: formValue(formData, "slug"),
     description: formValue(formData, "description"),
+    contactPhone: formValue(formData, "contactPhone"),
     departmentIds: formData
       .getAll("departmentIds")
       .filter((value): value is string => typeof value === "string"),
@@ -79,6 +80,7 @@ export async function applyForVendorAction(
           name: parsed.data.name,
           slug: parsed.data.slug,
           description: parsed.data.description,
+          contactPhone: parsed.data.contactPhone,
           departments: {
             create: parsed.data.departmentIds.map((categoryId) => ({ categoryId })),
           },

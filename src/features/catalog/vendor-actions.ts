@@ -456,6 +456,7 @@ export async function updateStudioProfileAction(
   const { actor, vendorId } = await requireStudio();
 
   const parsed = studioProfileSchema.safeParse({
+    contactPhone: formValue(formData, "contactPhone"),
     departmentIds: formData
       .getAll("departmentIds")
       .filter((value): value is string => typeof value === "string"),
@@ -495,6 +496,7 @@ export async function updateStudioProfileAction(
         latitude: parsed.data.latitude?.toFixed(7) ?? null,
         longitude: parsed.data.longitude?.toFixed(7) ?? null,
         discipline: parsed.data.discipline,
+        contactPhone: parsed.data.contactPhone,
         story: parsed.data.story,
         monogram: parsed.data.monogram || initialsFor(actor.name),
         departments: {

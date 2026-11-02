@@ -14,6 +14,7 @@ import { studioProfileSchema } from "@/features/catalog/validation";
 
 describe("studioProfileSchema", () => {
   const location = {
+    contactPhone: "+255 754 123 456",
     departmentIds: ["30000000-0000-4000-8000-000000000001"],
     city: "Dar es Salaam",
     street: "Samora Avenue",
@@ -76,6 +77,8 @@ describe("signUpSchema", () => {
   const valid = {
     name: "  Ada Maker ",
     email: "ada@example.com",
+    phone: "+255 754 123 456",
+    accountType: "BUYER",
     password: "twelve-characters",
     confirmPassword: "twelve-characters",
   };
@@ -125,6 +128,7 @@ describe("vendorApplicationSchema", () => {
       slug: "  Harbor-And-Loom  ",
       description: "  Woven textiles from a small coastal workshop.  ",
       departmentIds: ["30000000-0000-4000-8000-000000000003"],
+      contactPhone: "+255 754 123 456",
     });
 
     expect(parsed).toEqual({
@@ -132,6 +136,7 @@ describe("vendorApplicationSchema", () => {
       slug: "harbor-and-loom",
       description: "Woven textiles from a small coastal workshop.",
       departmentIds: ["30000000-0000-4000-8000-000000000003"],
+      contactPhone: "+255754123456",
     });
   });
 

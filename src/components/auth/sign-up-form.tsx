@@ -43,6 +43,51 @@ export function SignUpForm() {
       </Field>
 
       <Field
+        label="Phone number"
+        htmlFor="sign-up-phone"
+        hint="Include your country code, for example +255 754 123 456. Buyers can add this later at checkout."
+        error={errors?.phone}
+      >
+        <Input
+          id="sign-up-phone"
+          name="phone"
+          type="tel"
+          autoComplete="tel"
+          inputMode="tel"
+          placeholder="+255 754 123 456"
+          aria-invalid={errors?.phone ? true : undefined}
+          aria-describedby={errors?.phone ? "sign-up-phone-error" : undefined}
+        />
+      </Field>
+
+      <fieldset className="space-y-2">
+        <legend className="mb-2 text-sm font-medium">I want to</legend>
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm hover:bg-surface-muted">
+          <input type="radio" name="accountType" value="BUYER" defaultChecked required />
+          <span>
+            <span className="block font-medium">Buy products</span>
+            <span className="block text-xs leading-5 text-muted-foreground">
+              Browse the marketplace and place orders.
+            </span>
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm hover:bg-surface-muted">
+          <input type="radio" name="accountType" value="SELLER" required />
+          <span>
+            <span className="block font-medium">Sell products</span>
+            <span className="block text-xs leading-5 text-muted-foreground">
+              Continue to the seller application. An administrator must approve the store.
+            </span>
+          </span>
+        </label>
+        {errors?.accountType ? (
+          <p className="text-xs text-danger" role="alert">
+            {errors.accountType}
+          </p>
+        ) : null}
+      </fieldset>
+
+      <Field
         label="Password"
         htmlFor="sign-up-password"
         hint="At least 12 characters"

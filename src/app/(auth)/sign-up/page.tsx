@@ -16,7 +16,7 @@ export default function SignUpPage() {
       <AuthIntro
         eyebrow="New account"
         title="Start your registry."
-        description="Create an account to keep orders and studio details together. Vendor applications open after sign-up."
+        description="Create an account to shop or sell. Sellers continue to a studio application for administrator review."
       />
 
       <SignUpForm />
