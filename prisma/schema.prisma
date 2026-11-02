@@ -197,6 +197,7 @@ model Vendor {
   reviewedAt        DateTime?          @map("reviewed_at") @db.Timestamptz(6)
   reviewedById      String?            @map("reviewed_by_id") @db.Uuid
   reviewedBy        User?              @relation("VendorReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  departments       VendorDepartment[]
   products          Product[]
   vendorOrders      VendorOrder[]
   commissionEntries CommissionLedger[]
@@ -210,23 +211,36 @@ model Vendor {
 }
 
 model Category {
-  id          String         @id @default(uuid()) @db.Uuid
-  parentId    String?        @map("parent_id") @db.Uuid
-  parent      Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Category[]     @relation("CategoryHierarchy")
+  id          String             @id @default(uuid()) @db.Uuid
+  parentId    String?            @map("parent_id") @db.Uuid
+  parent      Category?          @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[]         @relation("CategoryHierarchy")
   name        String
-  slug        String         @unique
-  headline    String         @default("")
-  description String         @default("")
-  status      CategoryStatus @default(ACTIVE)
-  sortOrder   Int            @default(0) @map("sort_order")
+  slug        String             @unique
+  headline    String             @default("")
+  description String             @default("")
+  status      CategoryStatus     @default(ACTIVE)
+  sortOrder   Int                @default(0) @map("sort_order")
   products    Product[]
-  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vendors     VendorDepartment[]
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([status, sortOrder])
   @@index([parentId])
   @@map("categories")
+}
+
+model VendorDepartment {
+  vendorId   String   @map("vendor_id") @db.Uuid
+  vendor     Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  categoryId String   @map("category_id") @db.Uuid
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([vendorId, categoryId])
+  @@index([categoryId])
+  @@map("vendor_departments")
 }
 
 model Product {

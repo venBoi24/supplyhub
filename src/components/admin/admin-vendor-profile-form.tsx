@@ -7,14 +7,20 @@ import { LocationMapField } from "@/components/vendor/location-map-field";
 import { Field, Textarea } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
+import {
+  VendorDepartmentPicker,
+  type VendorDepartmentOption,
+} from "@/components/vendors/vendor-department-picker";
 import { updateVendorProfileForUserAction } from "@/features/admin/vendor-management-actions";
 import { initialFormState } from "@/features/identity/form-state";
 
 export function AdminVendorProfileForm({
   user,
   vendor,
+  departments,
 }: {
   user: { id: string; name: string };
+  departments: VendorDepartmentOption[];
   vendor: {
     id: string;
     location: string;
@@ -24,6 +30,7 @@ export function AdminVendorProfileForm({
     latitude: string;
     longitude: string;
     discipline: string;
+    departmentIds: string[];
     story: string;
     monogram: string;
   };
@@ -65,6 +72,11 @@ export function AdminVendorProfileForm({
           placeholder="Ceramics, clothing, food…"
         />
       </Field>
+      <VendorDepartmentPicker
+        departments={departments}
+        selectedIds={vendor.departmentIds}
+        error={errors?.departmentIds}
+      />
       <div className="grid gap-5 sm:grid-cols-[7rem_1fr]">
         <Field
           label="Monogram"

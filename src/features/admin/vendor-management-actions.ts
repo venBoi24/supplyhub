@@ -33,6 +33,9 @@ export async function updateVendorProfileForUserAction(
     name: formValue(formData, "name"),
   });
   const details = studioProfileSchema.safeParse({
+    departmentIds: formData
+      .getAll("departmentIds")
+      .filter((value): value is string => typeof value === "string"),
     city: formValue(formData, "city"),
     street: formValue(formData, "street"),
     address: formValue(formData, "address"),
@@ -57,6 +60,12 @@ export async function updateVendorProfileForUserAction(
         select: { id: true, name: true, role: true },
       });
       if (!vendor || !target || target.role === "ADMIN") throw new Error("invalid-target");
+      const activeDepartments = await transaction.category.count({
+        where: { id: { in: details.data.departmentIds }, status: "ACTIVE" },
+      });
+      if (activeDepartments !== new Set(details.data.departmentIds).size) {
+        throw new Error("invalid-departments");
+      }
 
       await transaction.user.update({
         where: { id: target.id },
@@ -74,6 +83,10 @@ export async function updateVendorProfileForUserAction(
           discipline: details.data.discipline,
           story: details.data.story,
           monogram: details.data.monogram || profile.data.name.slice(0, 2).toUpperCase(),
+          departments: {
+            deleteMany: {},
+            create: details.data.departmentIds.map((categoryId) => ({ categoryId })),
+          },
         },
       });
       await recordAuditEvent(transaction, {
@@ -96,6 +109,12 @@ export async function updateVendorProfileForUserAction(
   } catch (error) {
     if (error instanceof Error && error.message === "invalid-target") {
       return { status: "error", message: "That vendor profile is not available for this account." };
+    }
+    if (error instanceof Error && error.message === "invalid-departments") {
+      return {
+        status: "error",
+        fieldErrors: { departmentIds: "Choose active departments from the list." },
+      };
     }
     logger.error("admin.vendor_profile_update_failed", {
       actorId: actor.id,

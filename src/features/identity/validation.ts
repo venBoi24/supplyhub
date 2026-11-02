@@ -81,6 +81,7 @@ export const vendorApplicationSchema = z.object({
     .trim()
     .min(20, { error: "Tell us at least 20 characters about your studio." })
     .max(1000, { error: "Use 1000 characters or fewer." }),
+  departmentIds: z.array(z.uuid()).min(1, { error: "Choose at least one department." }).max(20),
 });
 
 export const vendorReviewSchema = z

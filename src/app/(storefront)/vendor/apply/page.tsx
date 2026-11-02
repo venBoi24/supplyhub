@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VendorApplicationForm } from "@/components/vendors/vendor-application-form";
+import { listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
 import { requireActor } from "@/server/auth/guards";
 import { canApplyForVendor } from "@/server/auth/policies";
 
@@ -49,6 +50,8 @@ async function ApplyContent() {
   if (!canApplyForVendor(actor)) {
     redirect("/account?denied=vendor");
   }
+
+  const departments = await listStudioCategoryOptions();
 
   return (
     <PageShell className="pt-10 sm:pt-14">
@@ -111,7 +114,7 @@ async function ApplyContent() {
             This becomes your public studio profile once approved.
           </p>
           <div className="mt-6">
-            <VendorApplicationForm />
+            <VendorApplicationForm departments={departments} />
           </div>
         </section>
       </div>

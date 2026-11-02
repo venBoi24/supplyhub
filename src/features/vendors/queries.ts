@@ -19,6 +19,7 @@ const vendorSummarySelect = {
   latitude: true,
   longitude: true,
   discipline: true,
+  departments: { select: { categoryId: true, category: { select: { name: true } } } },
   story: true,
   status: true,
   reviewNote: true,

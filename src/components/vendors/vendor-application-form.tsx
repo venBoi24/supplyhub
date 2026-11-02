@@ -6,10 +6,14 @@ import { SubmitButton } from "@/components/forms/submit-button";
 import { Field, Textarea } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
+import {
+  VendorDepartmentPicker,
+  type VendorDepartmentOption,
+} from "@/components/vendors/vendor-department-picker";
 import { initialFormState } from "@/features/identity/form-state";
 import { applyForVendorAction } from "@/features/vendors/actions";
 
-export function VendorApplicationForm() {
+export function VendorApplicationForm({ departments }: { departments: VendorDepartmentOption[] }) {
   const [state, action] = useActionState(applyForVendorAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -45,6 +49,8 @@ export function VendorApplicationForm() {
           aria-describedby={errors?.slug ? "vendor-slug-error" : undefined}
         />
       </Field>
+
+      <VendorDepartmentPicker departments={departments} error={errors?.departmentIds} />
 
       <Field
         label="What do you make?"

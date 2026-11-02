@@ -50,6 +50,7 @@ export default async function AdminUserInventoryPage({
           story: true,
           description: true,
           monogram: true,
+          departments: { select: { categoryId: true } },
         },
       },
     },
@@ -95,6 +96,7 @@ export default async function AdminUserInventoryPage({
         </p>
         <AdminVendorProfileForm
           user={{ id: user.id, name: user.name }}
+          departments={categories}
           vendor={{
             id: user.vendor.id,
             location: user.vendor.location ?? "",
@@ -104,6 +106,7 @@ export default async function AdminUserInventoryPage({
             latitude: user.vendor.latitude?.toString() ?? "",
             longitude: user.vendor.longitude?.toString() ?? "",
             discipline: user.vendor.discipline ?? "",
+            departmentIds: user.vendor.departments.map((department) => department.categoryId),
             story: user.vendor.story ?? user.vendor.description ?? "",
             monogram: user.vendor.monogram ?? "",
           }}

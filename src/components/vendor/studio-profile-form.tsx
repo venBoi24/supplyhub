@@ -7,12 +7,18 @@ import { Field, Textarea } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { LocationMapField } from "@/components/vendor/location-map-field";
+import {
+  VendorDepartmentPicker,
+  type VendorDepartmentOption,
+} from "@/components/vendors/vendor-department-picker";
 import { updateStudioProfileAction } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
 
 export function StudioProfileForm({
   defaults,
+  departments,
 }: {
+  departments: VendorDepartmentOption[];
   defaults: {
     location: string;
     city: string;
@@ -21,6 +27,7 @@ export function StudioProfileForm({
     latitude: string;
     longitude: string;
     discipline: string;
+    departmentIds: string[];
     story: string;
     monogram: string;
   };
@@ -60,6 +67,12 @@ export function StudioProfileForm({
         defaultLatitude={defaults.latitude}
         defaultLongitude={defaults.longitude}
         errors={errors}
+      />
+
+      <VendorDepartmentPicker
+        departments={departments}
+        selectedIds={defaults.departmentIds}
+        error={errors?.departmentIds}
       />
 
       <Field label="Discipline" htmlFor="studio-discipline" error={errors?.discipline}>

@@ -14,6 +14,7 @@ import { studioProfileSchema } from "@/features/catalog/validation";
 
 describe("studioProfileSchema", () => {
   const location = {
+    departmentIds: ["30000000-0000-4000-8000-000000000001"],
     city: "Dar es Salaam",
     street: "Samora Avenue",
     address: "Plot 12, Mlimani Tower",
@@ -123,12 +124,14 @@ describe("vendorApplicationSchema", () => {
       name: "  Harbor & Loom ",
       slug: "  Harbor-And-Loom  ",
       description: "  Woven textiles from a small coastal workshop.  ",
+      departmentIds: ["30000000-0000-4000-8000-000000000003"],
     });
 
     expect(parsed).toEqual({
       name: "Harbor & Loom",
       slug: "harbor-and-loom",
       description: "Woven textiles from a small coastal workshop.",
+      departmentIds: ["30000000-0000-4000-8000-000000000003"],
     });
   });
 

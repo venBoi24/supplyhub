@@ -56,6 +56,9 @@ export async function applyForVendorAction(
     name: formValue(formData, "name"),
     slug: formValue(formData, "slug"),
     description: formValue(formData, "description"),
+    departmentIds: formData
+      .getAll("departmentIds")
+      .filter((value): value is string => typeof value === "string"),
   });
 
   if (!parsed.success) {
@@ -64,12 +67,21 @@ export async function applyForVendorAction(
 
   try {
     await getDatabase().$transaction(async (transaction) => {
+      const activeDepartments = await transaction.category.count({
+        where: { id: { in: parsed.data.departmentIds }, status: "ACTIVE" },
+      });
+      if (activeDepartments !== new Set(parsed.data.departmentIds).size) {
+        throw new Error("invalid-departments");
+      }
       const vendor = await transaction.vendor.create({
         data: {
           ownerId: actor.id,
           name: parsed.data.name,
           slug: parsed.data.slug,
           description: parsed.data.description,
+          departments: {
+            create: parsed.data.departmentIds.map((categoryId) => ({ categoryId })),
+          },
         },
         select: { id: true, slug: true },
       });
@@ -83,6 +95,12 @@ export async function applyForVendorAction(
       });
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "invalid-departments") {
+      return {
+        status: "error",
+        fieldErrors: { departmentIds: "Choose active departments from the list." },
+      };
+    }
     if (isUniqueConstraintError(error)) {
       return {
         status: "error",

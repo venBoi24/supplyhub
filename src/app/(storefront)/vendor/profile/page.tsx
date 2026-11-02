@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StudioNav } from "@/components/vendor/studio-nav";
 import { StudioProfileForm } from "@/components/vendor/studio-profile-form";
 import { getVendorForOwner } from "@/features/vendors/queries";
+import { listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
 import { initialsFor } from "@/lib/utils/initials";
 import { requireApprovedVendor } from "@/server/auth/guards";
 
@@ -41,7 +42,10 @@ async function ProfileContent({
     searchParams,
   ]);
 
-  const vendor = await getVendorForOwner(actor.id);
+  const [vendor, departments] = await Promise.all([
+    getVendorForOwner(actor.id),
+    listStudioCategoryOptions(),
+  ]);
 
   if (!vendor || vendor.id !== vendorId) {
     redirect("/vendor");
@@ -82,6 +86,7 @@ async function ProfileContent({
 
       <div className="mt-8 max-w-3xl rounded-xl border border-border bg-surface p-6 sm:p-8">
         <StudioProfileForm
+          departments={departments}
           defaults={{
             location: vendor.location ?? "",
             city: vendor.city ?? "",
@@ -90,6 +95,7 @@ async function ProfileContent({
             latitude: vendor.latitude?.toString() ?? "",
             longitude: vendor.longitude?.toString() ?? "",
             discipline: vendor.discipline ?? "",
+            departmentIds: vendor.departments.map((department) => department.categoryId),
             story: vendor.story ?? vendor.description ?? "",
             monogram: vendor.monogram ?? initialsFor(vendor.name),
           }}

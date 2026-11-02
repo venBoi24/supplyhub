@@ -456,6 +456,9 @@ export async function updateStudioProfileAction(
   const { actor, vendorId } = await requireStudio();
 
   const parsed = studioProfileSchema.safeParse({
+    departmentIds: formData
+      .getAll("departmentIds")
+      .filter((value): value is string => typeof value === "string"),
     city: formValue(formData, "city"),
     street: formValue(formData, "street"),
     address: formValue(formData, "address"),
@@ -470,19 +473,36 @@ export async function updateStudioProfileAction(
     return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
   }
 
-  await getDatabase().vendor.update({
-    where: { id: vendorId },
-    data: {
-      location: [parsed.data.address, parsed.data.street, parsed.data.city].join(", "),
-      city: parsed.data.city,
-      street: parsed.data.street,
-      address: parsed.data.address,
-      latitude: parsed.data.latitude?.toFixed(7) ?? null,
-      longitude: parsed.data.longitude?.toFixed(7) ?? null,
-      discipline: parsed.data.discipline,
-      story: parsed.data.story,
-      monogram: parsed.data.monogram || initialsFor(actor.name),
-    },
+  const database = getDatabase();
+  const activeDepartments = await database.category.count({
+    where: { id: { in: parsed.data.departmentIds }, status: "ACTIVE" },
+  });
+  if (activeDepartments !== new Set(parsed.data.departmentIds).size) {
+    return {
+      status: "error",
+      fieldErrors: { departmentIds: "Choose active departments from the list." },
+    };
+  }
+
+  await database.$transaction(async (transaction) => {
+    await transaction.vendor.update({
+      where: { id: vendorId },
+      data: {
+        location: [parsed.data.address, parsed.data.street, parsed.data.city].join(", "),
+        city: parsed.data.city,
+        street: parsed.data.street,
+        address: parsed.data.address,
+        latitude: parsed.data.latitude?.toFixed(7) ?? null,
+        longitude: parsed.data.longitude?.toFixed(7) ?? null,
+        discipline: parsed.data.discipline,
+        story: parsed.data.story,
+        monogram: parsed.data.monogram || initialsFor(actor.name),
+        departments: {
+          deleteMany: {},
+          create: parsed.data.departmentIds.map((categoryId) => ({ categoryId })),
+        },
+      },
+    });
   });
 
   logger.info("vendor.profile_updated", { actorId: actor.id, vendorId });

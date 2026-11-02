@@ -161,6 +161,7 @@ export const imageAltSchema = z.preprocess(
 
 export const studioProfileSchema = z
   .object({
+    departmentIds: z.array(z.uuid()).min(1, { error: "Choose at least one department." }).max(20),
     city: z.preprocess(
       trimmed,
       z
