@@ -2,10 +2,12 @@
 
 import { useActionState, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { Field } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
+import { DeliveryPlanner } from "./delivery-planner";
 import { formatMoney } from "@/features/catalog/money";
 import { placeOrderAction } from "@/features/checkout/actions";
 import { initialFormState } from "@/features/identity/form-state";
@@ -81,10 +83,8 @@ export function CheckoutForm({
   );
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
+  const [showDeliveryDialog, setShowDeliveryDialog] = useState(false);
 
-  function openDeliveryPage() {
-    window.open("/delivery", "_blank", "noopener,noreferrer");
-  }
 
   const ratePerKmCents = 20000;
   const minimumFeeCents = 50000;
@@ -266,7 +266,10 @@ export function CheckoutForm({
               name="fulfillmentMethod"
               value="PICKUP"
               checked={deliveryMethod === "PICKUP"}
-              onChange={() => setDeliveryMethod("PICKUP")}
+              onChange={() => {
+                setDeliveryMethod("PICKUP");
+                setShowDeliveryDialog(false);
+              }}
               className="mt-1"
             />
             <span>
@@ -284,7 +287,7 @@ export function CheckoutForm({
               checked={deliveryMethod === "DELIVERY"}
               onChange={() => {
                 setDeliveryMethod("DELIVERY");
-                openDeliveryPage();
+                setShowDeliveryDialog(true);
               }}
               className="mt-1"
             />
@@ -323,6 +326,9 @@ export function CheckoutForm({
               ) : null}
             </div>
             {locationError ? <p className="text-sm text-danger">{locationError}</p> : null}
+            <Button type="button" variant="secondary" onClick={() => setShowDeliveryDialog(true)}>
+              Open delivery map
+            </Button>
             {quotes.length > 0 ? (
               <ul className="space-y-2 text-sm">
                 {quotes.map((quote) => (
@@ -360,6 +366,56 @@ export function CheckoutForm({
           calculated when you choose delivery; tax is not calculated.
         </p>
       </div>
+
+      {showDeliveryDialog ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-auto rounded-xl border border-border bg-background p-6 shadow-xl">
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="font-display text-xl font-medium tracking-[-0.02em]">
+                Delivery location
+              </h3>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowDeliveryDialog(false)}>
+                Close
+              </Button>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Pin your location on the map. Seller locations are shown below.
+            </p>
+            <div className="mt-6">
+              <DeliveryPlanner vendors={vendors} currency={currency} />
+            </div>
+            {vendors.length > 0 ? (
+              <div className="mt-6 rounded-xl border border-border bg-surface p-5">
+                <h4 className="font-medium">Seller locations</h4>
+                <ul className="mt-3 space-y-3 text-sm">
+                  {vendors.map((vendor) => (
+                    <li key={vendor.id} className="space-y-1">
+                      <p className="font-medium">{vendor.name}</p>
+                      {vendor.latitude !== null && vendor.longitude !== null ? (
+                        <>
+                          <p className="text-muted-foreground">
+                            {vendor.latitude.toFixed(5)}, {vendor.longitude.toFixed(5)}
+                          </p>
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${vendor.latitude},${vendor.longitude}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-medium text-accent underline underline-offset-4"
+                          >
+                            View on Google Maps
+                          </a>
+                        </>
+                      ) : (
+                        <p className="text-muted-foreground">Location not listed</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }
