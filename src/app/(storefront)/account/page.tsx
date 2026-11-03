@@ -18,7 +18,6 @@ import {
 } from "@/features/identity/actions";
 import { getAccountProfile } from "@/features/identity/queries";
 import { requireActor } from "@/server/auth/guards";
-import { canApplyForVendor } from "@/server/auth/policies";
 import type { UserRole } from "@/generated/prisma/enums";
 import { formatDate } from "@/lib/utils/format-date";
 import { initialsFor } from "@/lib/utils/initials";
@@ -282,20 +281,10 @@ async function AccountContent({
                   <Link href="/vendor">Open studio workspace</Link>
                 </Button>
               </div>
-            ) : canApplyForVendor(actor) ? (
-              <div className="mt-5 space-y-4">
-                <p className="text-sm leading-6 text-muted-foreground">
-                  You don&apos;t have a studio yet. Apply with your studio name, handle, and a short
-                  description of what you make.
-                </p>
-                <Button asChild size="sm" className="w-fit">
-                  <Link href="/vendor/apply">Apply for a studio</Link>
-                </Button>
-              </div>
             ) : (
               <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                This account is not eligible for a new studio application. Contact the SupplyHub
-                team if you believe that is wrong.
+                This account is for shopping on SupplyHub. Studio workspaces are separate and are
+                reviewed by an administrator before activation.
               </p>
             )}
           </section>

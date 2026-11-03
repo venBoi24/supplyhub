@@ -35,6 +35,9 @@ export async function SiteHeader() {
           </Button>
           <DepartmentMenu categories={categories} />
           <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
+            <Link href="/delivery">Delivery</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
             <Link href="/vendors">Studios</Link>
           </Button>
         </nav>

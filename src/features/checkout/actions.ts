@@ -49,6 +49,9 @@ export async function placeOrderAction(
     region: formValue(formData, "region"),
     postalCode: formValue(formData, "postalCode"),
     countryCode: formValue(formData, "countryCode"),
+    deliveryMethod: formValue(formData, "deliveryMethod"),
+    customerLatitude: formValue(formData, "customerLatitude"),
+    customerLongitude: formValue(formData, "customerLongitude"),
   });
 
   if (!parsed.success) {

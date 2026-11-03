@@ -108,6 +108,20 @@ async function CheckoutContent() {
               defaultEmail={actor.email}
               defaultPhone={profile?.phone ?? ""}
               reservationMinutes={reservationMinutes}
+              currency={view.currency}
+              vendors={[
+                ...new Map(
+                  view.lines.map((line) => [
+                    line.vendorId,
+                    {
+                      id: line.vendorId,
+                      name: line.vendorName,
+                      latitude: line.vendorLatitude,
+                      longitude: line.vendorLongitude,
+                    },
+                  ]),
+                ).values(),
+              ]}
             />
           </div>
         </section>

@@ -57,6 +57,11 @@ export function MobileNav({ categories, vendors }: MobileNavProps) {
             </Link>
           </SheetClose>
           <SheetClose asChild>
+            <Link href="/delivery" className={linkClassName}>
+              Delivery <span aria-hidden="true">→</span>
+            </Link>
+          </SheetClose>
+          <SheetClose asChild>
             <Link href="/vendors" className={linkClassName}>
               Studios <span aria-hidden="true">→</span>
             </Link>

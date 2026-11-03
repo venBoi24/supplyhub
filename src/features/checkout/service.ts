@@ -14,6 +14,25 @@ import type { CheckoutAddressInput } from "./validation";
 export type CheckoutErrorCode =
   "cart-empty" | "unavailable-items" | "currency-mismatch" | "invalid-request";
 
+function haversineKm(
+  latitude1: number,
+  longitude1: number,
+  latitude2: number,
+  longitude2: number,
+): number {
+  const earthRadiusKm = 6371;
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const deltaLatitude = toRadians(latitude2 - latitude1);
+  const deltaLongitude = toRadians(longitude2 - longitude1);
+  const a =
+    Math.sin(deltaLatitude / 2) ** 2 +
+    Math.cos(toRadians(latitude1)) *
+      Math.cos(toRadians(latitude2)) *
+      Math.sin(deltaLongitude / 2) ** 2;
+
+  return 2 * earthRadiusKm * Math.asin(Math.sqrt(a));
+}
+
 export class CheckoutError extends Error {
   constructor(
     readonly code: CheckoutErrorCode,
@@ -47,7 +66,7 @@ const checkoutCartInclude = {
           stock: true,
           status: true,
           vendorId: true,
-          vendor: { select: { id: true, status: true } },
+          vendor: { select: { id: true, status: true, latitude: true, longitude: true } },
           category: { select: { status: true } },
           images: {
             where: { status: "APPROVED" },
@@ -130,6 +149,11 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
       throw new CheckoutError("cart-empty", "Your cart is empty.");
     }
 
+    const vendorCoordinates = new Map<
+      string,
+      { latitude: Prisma.Decimal | null; longitude: Prisma.Decimal | null }
+    >();
+
     const problems: string[] = [];
 
     for (const item of cart.items) {
@@ -179,6 +203,7 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
     }
 
     const orderNumber = createOrderNumber(now);
+
     const groups = new Map<
       string,
       {
@@ -202,6 +227,12 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
 
     for (const item of cart.items) {
       const product = item.product;
+      if (!vendorCoordinates.has(product.vendorId)) {
+        vendorCoordinates.set(product.vendorId, {
+          latitude: product.vendor.latitude,
+          longitude: product.vendor.longitude,
+        });
+      }
       const unitPriceCents = decimalToCents(product.price);
       const lineTotalCents = unitPriceCents * item.quantity;
       const snapshot = {
@@ -229,6 +260,61 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
       itemCount += item.quantity;
     }
 
+    const deliveryMethod = input.address.deliveryMethod ?? "PICKUP";
+    const deliveryRatePerKmCents = Math.max(
+      0,
+      Number(process.env.DELIVERY_RATE_PER_KM_CENTS ?? 20000),
+    );
+    const deliveryMinimumFeeCents = Math.max(
+      0,
+      Number(process.env.DELIVERY_MIN_FEE_CENTS ?? 50000),
+    );
+
+    let shippingCents = 0;
+    let deliveryDistanceKm: number | null = null;
+
+    if (deliveryMethod === "DELIVERY") {
+      const customerLatitude = input.address.customerLatitude;
+      const customerLongitude = input.address.customerLongitude;
+
+      if (customerLatitude === undefined || customerLongitude === undefined) {
+        throw new CheckoutError(
+          "invalid-request",
+          "Use your location to calculate delivery distance and price.",
+        );
+      }
+
+      let totalDistance = 0;
+
+      for (const group of groups.values()) {
+        const coordinates = vendorCoordinates.get(group.vendorId);
+
+        if (!coordinates || coordinates.latitude === null || coordinates.longitude === null) {
+          throw new CheckoutError(
+            "unavailable-items",
+            "Delivery is not available for one of the studios in your cart.",
+          );
+        }
+
+        const distanceKm = haversineKm(
+          customerLatitude,
+          customerLongitude,
+          Number(coordinates.latitude),
+          Number(coordinates.longitude),
+        );
+
+        totalDistance += distanceKm;
+        shippingCents += Math.max(
+          deliveryMinimumFeeCents,
+          Math.round(distanceKm * deliveryRatePerKmCents),
+        );
+      }
+
+      deliveryDistanceKm = totalDistance;
+    }
+
+    const totalCents = subtotalCents + shippingCents;
+
     const order = await transaction.order.create({
       data: {
         orderNumber,
@@ -236,10 +322,10 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         status: "AWAITING_PAYMENT",
         currency,
         subtotal: centsToDecimalString(subtotalCents),
-        shippingTotal: "0.00",
+        shippingTotal: centsToDecimalString(shippingCents),
         taxTotal: "0.00",
         discountTotal: "0.00",
-        total: centsToDecimalString(subtotalCents),
+        total: centsToDecimalString(totalCents),
         recipientName: input.address.recipientName,
         contactEmail: input.address.contactEmail,
         contactPhone: input.address.contactPhone ?? null,
@@ -249,6 +335,16 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         region: input.address.region,
         postalCode: input.address.postalCode,
         countryCode: input.address.countryCode,
+        deliveryMethod,
+        deliveryDistanceKm: deliveryDistanceKm === null ? null : deliveryDistanceKm.toFixed(3),
+        customerLatitude:
+          input.address.customerLatitude === undefined
+            ? null
+            : input.address.customerLatitude.toFixed(7),
+        customerLongitude:
+          input.address.customerLongitude === undefined
+            ? null
+            : input.address.customerLongitude.toFixed(7),
         reservationExpiresAt,
       },
       select: { id: true },

@@ -68,6 +68,11 @@ enum OrderStatus {
   EXPIRED
 }
 
+enum DeliveryMethod {
+  PICKUP
+  DELIVERY
+}
+
 enum PaymentProvider {
   LYNXPAY
 }
@@ -371,6 +376,10 @@ model Order {
   region               String
   postalCode           String             @map("postal_code")
   countryCode          String             @map("country_code") @db.VarChar(2)
+  deliveryMethod       DeliveryMethod     @default(PICKUP) @map("delivery_method")
+  deliveryDistanceKm   Decimal?           @map("delivery_distance_km") @db.Decimal(10, 3)
+  customerLatitude     Decimal?           @map("customer_latitude") @db.Decimal(10, 7)
+  customerLongitude    Decimal?           @map("customer_longitude") @db.Decimal(10, 7)
   reservationExpiresAt DateTime?          @map("reservation_expires_at") @db.Timestamptz(6)
   placedAt             DateTime           @default(now()) @map("placed_at") @db.Timestamptz(6)
   paidAt               DateTime?          @map("paid_at") @db.Timestamptz(6)

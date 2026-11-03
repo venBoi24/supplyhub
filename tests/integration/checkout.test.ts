@@ -23,6 +23,7 @@ const address: CheckoutAddressInput = {
   region: "Oregon",
   postalCode: "97205",
   countryCode: "US",
+  deliveryMethod: "PICKUP",
 };
 
 function blockAuditWrites(tx: Prisma.TransactionClient): Prisma.TransactionClient {

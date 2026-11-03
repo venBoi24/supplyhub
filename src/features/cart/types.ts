@@ -7,8 +7,11 @@ export interface CartLineDraft {
   slug: string;
   name: string;
   sku: string;
+  vendorId: string;
   vendorName: string;
   vendorSlug: string;
+  vendorLatitude: number | null;
+  vendorLongitude: number | null;
   image: CatalogImage | null;
   unitPriceCents: number;
   currency: string;
