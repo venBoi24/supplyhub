@@ -152,14 +152,6 @@ export const inventoryAdjustmentSchema = z
     }
   });
 
-export const imageAltSchema = z.preprocess(
-  trimmed,
-  z
-    .string({ error: "Describe the image." })
-    .min(3, { error: "Use at least 3 characters." })
-    .max(160, { error: "Use 160 characters or fewer." }),
-);
-
 export const studioProfileSchema = z
   .object({
     contactPhone: phoneNumberSchema,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getAvailability, LOW_STOCK_THRESHOLD } from "@/features/catalog/availability";
 import { applyStockAdjustment, MAX_UNIT_STOCK } from "@/features/catalog/inventory";
+import { productImageAlt } from "@/features/catalog/image-alt";
 import { buildSearchText, normalizeSearchText, searchTokens } from "@/features/catalog/search";
 import { inventoryAdjustmentSchema, productInputSchema } from "@/features/catalog/validation";
 import {
@@ -16,6 +17,11 @@ const PNG_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
 const WEBP_BYTES = new Uint8Array([
   0x52, 0x49, 0x46, 0x46, 0x10, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
 ]);
+const GIF_BYTES = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
+const AVIF_BYTES = new Uint8Array([
+  0x00, 0x00, 0x00, 0x1c, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66,
+]);
+const BMP_BYTES = new Uint8Array([0x42, 0x4d, 0x00, 0x00]);
 
 describe("availability", () => {
   it("maps inventory to a status band", () => {
@@ -57,7 +63,10 @@ describe("image upload validation", () => {
     expect(sniffImageType(JPEG_BYTES)).toBe("jpg");
     expect(sniffImageType(PNG_BYTES)).toBe("png");
     expect(sniffImageType(WEBP_BYTES)).toBe("webp");
-    expect(sniffImageType(new Uint8Array([0x47, 0x49, 0x46, 0x38]))).toBeNull();
+    expect(sniffImageType(GIF_BYTES)).toBe("gif");
+    expect(sniffImageType(AVIF_BYTES)).toBe("avif");
+    expect(sniffImageType(BMP_BYTES)).toBe("bmp");
+    expect(sniffImageType(new Uint8Array([0x3c, 0x73, 0x76, 0x67]))).toBeNull();
   });
 
   it("accepts a matching file and returns its metadata", () => {
@@ -71,6 +80,30 @@ describe("image upload validation", () => {
       ok: true,
       image: { extension: "png", contentType: "image/png", byteSize: PNG_BYTES.byteLength },
     });
+  });
+
+  it("accepts the additional common image formats", () => {
+    expect(
+      validateImageUpload({
+        bytes: GIF_BYTES,
+        declaredType: "image/gif",
+        declaredSize: GIF_BYTES.byteLength,
+      }),
+    ).toMatchObject({ ok: true, image: { extension: "gif", contentType: "image/gif" } });
+    expect(
+      validateImageUpload({
+        bytes: AVIF_BYTES,
+        declaredType: "image/avif",
+        declaredSize: AVIF_BYTES.byteLength,
+      }),
+    ).toMatchObject({ ok: true, image: { extension: "avif", contentType: "image/avif" } });
+    expect(
+      validateImageUpload({
+        bytes: BMP_BYTES,
+        declaredType: "image/x-ms-bmp",
+        declaredSize: BMP_BYTES.byteLength,
+      }),
+    ).toMatchObject({ ok: true, image: { extension: "bmp", contentType: "image/bmp" } });
   });
 
   it("rejects empty, oversized, truncated, and mismatched uploads", () => {
@@ -97,6 +130,14 @@ describe("image upload validation", () => {
   });
 });
 
+describe("product image alt text", () => {
+  it("derives accessible alt text from the product name", () => {
+    expect(productImageAlt("  Ridge   Carafe ")).toBe("Photo of Ridge Carafe");
+    expect(productImageAlt("")).toBe("Product photo");
+    expect(productImageAlt("a".repeat(200))).toHaveLength(160);
+  });
+});
+
 describe("storage keys", () => {
   const key =
     "products/40000000-0000-4000-8000-000000000001/50000000-0000-4000-8000-000000000002.jpg";
@@ -111,6 +152,8 @@ describe("storage keys", () => {
   it("derives the media URL and content type from the extension", () => {
     expect(mediaUrlForKey(key)).toBe(`/media/${key}`);
     expect(contentTypeForKey(key)).toBe("image/jpeg");
+    expect(contentTypeForKey(key.replace(".jpg", ".gif"))).toBe("image/gif");
+    expect(contentTypeForKey(key.replace(".jpg", ".avif"))).toBe("image/avif");
     expect(contentTypeForKey("products/a/b.svg")).toBeNull();
   });
 });

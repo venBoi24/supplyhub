@@ -43,7 +43,8 @@ export function ProductImagesPanel({
       <div>
         <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Images</h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          JPEG, PNG, or WebP up to 5 MB. The first image is the cover. Up to six images per object.
+          JPEG, PNG, WebP, GIF, AVIF, or BMP up to 5 MB. The first image is the cover. Up to six
+          images per object.
         </p>
       </div>
 
@@ -75,30 +76,13 @@ export function ProductImagesPanel({
           ) : null}
           <FormMessage state={state} />
 
-          <Field
-            label="Describe the image"
-            htmlFor="image-alt"
-            hint="Read by screen readers"
-            error={errors?.alt}
-          >
-            <Input
-              id="image-alt"
-              name="alt"
-              required
-              maxLength={160}
-              placeholder="A speckled carafe against a limestone wall."
-              aria-invalid={errors?.alt ? true : undefined}
-              aria-describedby={errors?.alt ? "image-alt-error" : undefined}
-            />
-          </Field>
-
           <Field label="Image file" htmlFor="image-file" error={errors?.image}>
             <Input
               id="image-file"
               name="image"
               type="file"
               required
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               className="h-auto py-2.5 file:mr-3 file:rounded-sm file:border-0 file:bg-surface-muted file:px-2.5 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
               aria-invalid={errors?.image ? true : undefined}
               aria-describedby={errors?.image ? "image-file-error" : undefined}

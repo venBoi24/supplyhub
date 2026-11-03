@@ -1,13 +1,16 @@
 const UUID_SEGMENT = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
 export const STORAGE_KEY_PATTERN = new RegExp(
-  `^products/${UUID_SEGMENT}/${UUID_SEGMENT}\\.(jpg|png|webp)$`,
+  `^products/${UUID_SEGMENT}/${UUID_SEGMENT}\\.(jpg|png|webp|gif|avif|bmp)$`,
 );
 
 export const CONTENT_TYPE_BY_EXTENSION = {
   jpg: "image/jpeg",
   png: "image/png",
   webp: "image/webp",
+  gif: "image/gif",
+  avif: "image/avif",
+  bmp: "image/bmp",
 } as const;
 
 export type ImageExtension = keyof typeof CONTENT_TYPE_BY_EXTENSION;

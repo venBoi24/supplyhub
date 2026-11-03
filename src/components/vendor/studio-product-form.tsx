@@ -229,26 +229,17 @@ export function StudioProductForm({
         <fieldset className="space-y-5 border-t border-border pt-8">
           <legend className="eyebrow text-muted-foreground">Product photo</legend>
           <p className="text-sm text-muted-foreground">
-            Add a JPEG, PNG, or WebP cover image up to 5 MB. You can add more photos after creating
-            the draft.
+            Add a JPEG, PNG, WebP, GIF, AVIF, or BMP cover image up to 5 MB. You can add more photos
+            after creating the draft.
           </p>
           <Field label="Image file" htmlFor="new-image" error={errors?.image}>
             <Input
               id="new-image"
               name="image"
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               required
               className="h-auto py-2.5"
-            />
-          </Field>
-          <Field label="Describe the image" htmlFor="new-image-alt" error={errors?.alt}>
-            <Input
-              id="new-image-alt"
-              name="alt"
-              required
-              maxLength={160}
-              placeholder="A clear description of the product photo"
             />
           </Field>
         </fieldset>

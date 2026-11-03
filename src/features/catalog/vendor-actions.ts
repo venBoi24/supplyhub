@@ -19,15 +19,11 @@ import { getStorage } from "@/server/storage/object-storage";
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
 
 import { DEFAULT_CURRENCY, MAX_PRODUCT_IMAGES } from "./constants";
+import { productImageAlt } from "./image-alt";
 import { applyStockAdjustment } from "./inventory";
 import { centsToDecimalString } from "./money";
 import { buildSearchText } from "./search";
-import {
-  imageAltSchema,
-  inventoryAdjustmentSchema,
-  productInputSchema,
-  studioProfileSchema,
-} from "./validation";
+import { inventoryAdjustmentSchema, productInputSchema, studioProfileSchema } from "./validation";
 
 const uuidSchema = z.uuid();
 
@@ -156,10 +152,10 @@ export async function saveProductAction(
   }
 
   const upload = formData.get("image");
-  const altResult = imageAltSchema.safeParse(formValue(formData, "alt"));
   let imagePayload: {
     bytes: Uint8Array;
     contentType: string;
+    extension: string;
     byteSize: number;
     alt: string;
   } | null = null;
@@ -169,12 +165,6 @@ export async function saveProductAction(
     }
     if (upload.size > MAX_IMAGE_BYTES) {
       return { status: "error", fieldErrors: { image: "Images must be 5 MB or smaller." } };
-    }
-    if (!altResult.success) {
-      return {
-        status: "error",
-        fieldErrors: { alt: altResult.error.issues[0]?.message ?? "Describe the image." },
-      };
     }
     const bytes = new Uint8Array(await upload.arrayBuffer());
     const validation = validateImageUpload({
@@ -188,8 +178,9 @@ export async function saveProductAction(
     imagePayload = {
       bytes,
       contentType: validation.image.contentType,
+      extension: validation.image.extension,
       byteSize: validation.image.byteSize,
-      alt: altResult.data,
+      alt: productImageAlt(parsed.data.name),
     };
   }
 
@@ -241,10 +232,13 @@ export async function saveProductAction(
 
   try {
     if (!productId) {
+      if (!imagePayload) {
+        return { status: "error", message: "Choose a cover photo." };
+      }
+
       const createdProductId = randomUUID();
-      const storageKey = `products/${createdProductId}/${randomUUID()}.${imagePayload?.contentType === "image/jpeg" ? "jpg" : imagePayload?.contentType === "image/png" ? "png" : "webp"}`;
+      const storageKey = `products/${createdProductId}/${randomUUID()}.${imagePayload.extension}`;
       try {
-        if (!imagePayload) return { status: "error", message: "Choose a cover photo." };
         await getStorage().put(storageKey, imagePayload.bytes, imagePayload.contentType);
       } catch {
         return { status: "error", message: "The photo could not be uploaded. Please try again." };
@@ -725,12 +719,6 @@ export async function uploadProductImageAction(
     return { status: "error", message: "That object reference is invalid." };
   }
 
-  const alt = imageAltSchema.safeParse(formValue(formData, "alt"));
-
-  if (!alt.success) {
-    return { status: "error", fieldErrors: firstFieldErrors(alt.error) };
-  }
-
   const file = formData.get("image");
 
   if (!(file instanceof File) || file.size === 0) {
@@ -746,6 +734,7 @@ export async function uploadProductImageAction(
     where: { id: productId, vendorId },
     select: {
       id: true,
+      name: true,
       status: true,
       _count: { select: { images: true } },
     },
@@ -796,7 +785,7 @@ export async function uploadProductImageAction(
       data: {
         productId: product.id,
         storageKey: key,
-        alt: alt.data,
+        alt: productImageAlt(product.name),
         contentType: validation.image.contentType,
         byteSize: validation.image.byteSize,
         sortOrder: (highest._max.sortOrder ?? -1) + 1,

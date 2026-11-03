@@ -98,9 +98,10 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
   draft, and may not edit an object while it is in review; stock can still be adjusted so the
   inventory stays accurate. Administrators publish or return an object with a reason, and every
   decision is written to the audit log.
-- Uploads accept JPEG, PNG, or WebP up to 5 MB, verified by magic bytes rather than the declared
-  MIME type. Keys are generated server-side as `products/<productId>/<uuid>.<ext>`, so a client
-  cannot choose a path, overwrite another object's image, or upload SVG or executable content.
+- Uploads accept JPEG, PNG, WebP, GIF, AVIF, or BMP up to 5 MB, verified by magic bytes rather than
+  the declared MIME type. Keys are generated server-side as `products/<productId>/<uuid>.<ext>`, so
+  a client cannot choose a path, overwrite another object's image, or upload SVG or executable
+  content.
 - Development storage is a local driver at `.local/uploads` behind the `/media/[...key]` route,
   which serves only known image extensions with immutable caching and rejects traversal. The
   storage interface and an S3-compatible driver are separated so a production bucket can replace
@@ -347,9 +348,9 @@ docs/                  Product, architecture, security, and phase specifications
 - **Search is a SQL `contains` match on a normalized search column**, not PostgreSQL full-text
   search. The demo catalogue is small and this keeps ranking predictable; moving to `tsvector` and
   trigram indexes is a performance change, not a schema rewrite.
-- **Image moderation is automatic and validation-based.** Accepted JPEG/PNG/WebP files are
-  auto-approved as `APPROVED`; the product-level review gate is human. A separate image moderation
-  queue is not part of this phase.
+- **Image moderation is automatic and validation-based.** Accepted JPEG/PNG/WebP/GIF/AVIF/BMP files
+  are auto-approved as `APPROVED`; the product-level review gate is human. A separate image
+  moderation queue is not part of this phase.
 - **Edits to published products go live immediately.** Administrators moderate the initial
   submission, not every subsequent edit. If continuous review becomes policy, published edits
   should move to a draft revision instead of mutating the live row.
