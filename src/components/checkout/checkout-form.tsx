@@ -55,10 +55,36 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const [state, formAction] = useActionState(placeOrderAction, initialFormState);
   const errors = state.fieldErrors ?? {};
-  const [deliveryMethod, setDeliveryMethod] = useState<"PICKUP" | "DELIVERY">("PICKUP");
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
+    try {
+      const saved = window.localStorage.getItem("supplyhub.deliveryLocation");
+      if (!saved) {
+        return null;
+      }
+
+      const parsed = JSON.parse(saved) as { latitude: number; longitude: number };
+      return Number.isFinite(parsed.latitude) && Number.isFinite(parsed.longitude) ? parsed : null;
+    } catch {
+      window.localStorage.removeItem("supplyhub.deliveryLocation");
+      return null;
+    }
+  });
+  const [deliveryMethod, setDeliveryMethod] = useState<"PICKUP" | "DELIVERY">(() =>
+    typeof window !== "undefined" &&
+    window.localStorage.getItem("supplyhub.deliveryLocation")
+      ? "DELIVERY"
+      : "PICKUP",
+  );
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
+
+  function openDeliveryPage() {
+    window.open("/delivery", "_blank", "noopener,noreferrer");
+  }
 
   const ratePerKmCents = 20000;
   const minimumFeeCents = 50000;
@@ -256,7 +282,10 @@ export function CheckoutForm({
               name="fulfillmentMethod"
               value="DELIVERY"
               checked={deliveryMethod === "DELIVERY"}
-              onChange={() => setDeliveryMethod("DELIVERY")}
+              onChange={() => {
+                setDeliveryMethod("DELIVERY");
+                openDeliveryPage();
+              }}
               className="mt-1"
             />
             <span>
