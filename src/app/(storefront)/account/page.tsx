@@ -75,7 +75,9 @@ async function AccountContent({
             Good to see you, {firstName}.
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-            Your profile, email verification, orders, and studio status in one place.
+            {profile.role === "VENDOR" && profile.vendor
+              ? "Your profile, email verification, orders, and studio status in one place."
+              : "Your profile, email verification, and orders in one place."}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -249,26 +251,26 @@ async function AccountContent({
             )}
           </section>
 
-          <section
-            aria-labelledby="account-studio"
-            className="rounded-xl border border-border bg-surface p-6 sm:p-8"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2
-                  id="account-studio"
-                  className="font-display text-xl font-medium tracking-[-0.02em]"
-                >
-                  Studio
-                </h2>
-                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                  Vendor workspaces are reviewed by a SupplyHub administrator before activation.
-                </p>
+          {profile.role === "VENDOR" && profile.vendor ? (
+            <section
+              aria-labelledby="account-studio"
+              className="rounded-xl border border-border bg-surface p-6 sm:p-8"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2
+                    id="account-studio"
+                    className="font-display text-xl font-medium tracking-[-0.02em]"
+                  >
+                    Studio
+                  </h2>
+                  <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                    Your studio workspace, reviewed by a SupplyHub administrator.
+                  </p>
+                </div>
+                <Store className="mt-1 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
               </div>
-              <Store className="mt-1 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-            </div>
 
-            {profile.vendor ? (
               <div className="mt-5 space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium">{profile.vendor.name}</p>
@@ -281,24 +283,8 @@ async function AccountContent({
                   <Link href="/vendor">Open studio workspace</Link>
                 </Button>
               </div>
-            ) : profile.role === "CUSTOMER" ? (
-              <div className="mt-5 space-y-4">
-                <p className="text-sm leading-6 text-muted-foreground">
-                  You can apply for a studio at any time. Tell us what you make, and an
-                  administrator reviews the application before selling tools open. Your buyer
-                  account keeps its orders and checkout while the application is reviewed.
-                </p>
-                <Button asChild size="sm" className="w-fit">
-                  <Link href="/vendor/apply">Apply for a studio</Link>
-                </Button>
-              </div>
-            ) : (
-              <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                Studio workspaces are managed by administrators. This account cannot submit a studio
-                application.
-              </p>
-            )}
-          </section>
+            </section>
+          ) : null}
 
           <section
             aria-labelledby="account-security"
