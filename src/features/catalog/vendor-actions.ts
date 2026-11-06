@@ -442,7 +442,7 @@ export async function submitProductAction(
   logger.info("product.submitted", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
   if (adminManaged) return { status: "success", message: "Product sent for review." };
-  redirect("/vendor?sent=1");
+  redirect("/vendor/products?sent=1");
 }
 
 export async function archiveProductAction(
@@ -494,7 +494,7 @@ export async function archiveProductAction(
   logger.info("product.archived", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
   if (adminManaged) return { status: "success", message: "Product archived." };
-  redirect("/vendor?archived=1");
+  redirect("/vendor/products?archived=1");
 }
 
 export async function deleteProductAction(
@@ -551,7 +551,7 @@ export async function deleteProductAction(
   logger.info("product.deleted", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
   if (adminManaged) return { status: "success", message: "Product draft deleted." };
-  redirect("/vendor?deleted=1");
+  redirect("/vendor/products?deleted=1");
 }
 
 export async function updateStudioProfileAction(

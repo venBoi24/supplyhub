@@ -81,7 +81,7 @@ export function StudioSetupPanel({
   return (
     <section
       aria-labelledby="studio-setup-heading"
-      className="mt-8 overflow-hidden rounded-xl border border-border bg-surface"
+      className="overflow-hidden rounded-xl border border-border bg-surface"
     >
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border p-6 sm:px-8">
         <div>

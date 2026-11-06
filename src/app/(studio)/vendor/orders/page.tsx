@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
+import { PackageCheck } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { PackageCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { OrderStatusForm } from "@/components/vendor/order-status-form";
-import { StudioNav } from "@/components/vendor/studio-nav";
-import { PageShell } from "@/components/storefront/page-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { OrderStatusForm } from "@/components/vendor/order-status-form";
+import { OrderStatusPill } from "@/components/vendor/order-status-pill";
+import { StudioPageHead } from "@/components/vendor/studio-page-head";
 import { decimalToCents, formatMoney } from "@/features/catalog/money";
 import { listVendorOrders } from "@/features/checkout/vendor-operations";
-import { ORDER_STATUS_LABELS } from "@/features/checkout/status";
-import { requireApprovedVendor } from "@/server/auth/guards";
 import { formatDate } from "@/lib/utils/format-date";
+import { requireApprovedVendor } from "@/server/auth/guards";
 
 export const metadata: Metadata = {
   title: "Studio orders",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function VendorOrdersPage() {
   return (
-    <Suspense fallback={<PageShell className="pt-12">Loading studio orders…</PageShell>}>
+    <Suspense fallback={<OrdersSkeleton />}>
       <VendorOrdersContent />
     </Suspense>
   );
@@ -32,45 +32,38 @@ async function VendorOrdersContent() {
   const orders = await listVendorOrders(vendorId);
 
   return (
-    <PageShell className="pt-10 sm:pt-14">
-      <p className="eyebrow text-muted-foreground">Studio workspace</p>
-      <h1 className="mt-3 font-display text-4xl font-medium tracking-[-0.04em] sm:text-5xl">
-        Your orders.
-      </h1>
-      <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-        Orders are limited to your studio. Move each paid order through processing, shipped, and
-        delivered as work progresses.
-      </p>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <StudioNav />
-        <Button asChild variant="secondary">
-          <Link href="/api/vendor/orders/export">Export CSV</Link>
-        </Button>
-      </div>
+    <>
+      <StudioPageHead
+        title="Orders"
+        description="Orders are limited to your studio. Move each paid order through processing, shipped, and delivered as work progresses."
+        action={
+          <Button asChild variant="secondary" size="sm">
+            <Link href="/api/vendor/orders/export">Export CSV</Link>
+          </Button>
+        }
+      />
+
       {orders.length === 0 ? (
         <EmptyState
-          className="mt-8"
           icon={<PackageCheck className="size-5" aria-hidden="true" />}
           title="No studio orders yet."
           description="Orders containing your products will appear here after payment is confirmed."
         />
       ) : (
-        <ul className="mt-8 space-y-4">
+        <ul className="space-y-3">
           {orders.map((order) => (
-            <li key={order.id} className="rounded-xl border border-border bg-surface p-5 sm:p-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
+            <li key={order.id} className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="font-mono text-sm font-medium">{order.order.orderNumber}</h2>
                   <p className="mt-1 text-xs text-muted-foreground">
                     For {order.order.recipientName} · {formatDate(order.createdAt)}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">
+                <div className="flex flex-wrap items-center gap-3">
+                  <OrderStatusPill status={order.status} />
+                  <p className="font-mono text-sm font-medium tabular-nums">
                     {formatMoney(decimalToCents(order.subtotal), order.currency)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {ORDER_STATUS_LABELS[order.status]}
                   </p>
                 </div>
               </div>
@@ -92,6 +85,23 @@ async function VendorOrdersContent() {
           ))}
         </ul>
       )}
-    </PageShell>
+    </>
+  );
+}
+
+function OrdersSkeleton() {
+  return (
+    <div role="status" aria-label="Loading studio orders">
+      <div className="mb-5">
+        <Skeleton className="h-7 w-28" />
+        <Skeleton className="mt-2 h-3.5 w-80 max-w-full" />
+      </div>
+      <div className="space-y-3">
+        {Array.from({ length: 3 }, (_, index) => (
+          <Skeleton key={index} className="h-48 w-full rounded-xl" />
+        ))}
+      </div>
+      <span className="sr-only">Loading…</span>
+    </div>
   );
 }

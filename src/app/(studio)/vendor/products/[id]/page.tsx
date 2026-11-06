@@ -5,14 +5,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { PageShell } from "@/components/storefront/page-shell";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InventoryPanel } from "@/components/vendor/inventory-panel";
 import { ProductImagesPanel } from "@/components/vendor/product-images-panel";
 import { ProductLifecycleActions } from "@/components/vendor/product-lifecycle-actions";
 import { ProductStatusBadge } from "@/components/vendor/product-status-badge";
-import { StudioNav } from "@/components/vendor/studio-nav";
 import { StudioProductForm } from "@/components/vendor/studio-product-form";
 import { MAX_PRODUCT_IMAGES } from "@/features/catalog/constants";
 import { centsToDecimalString } from "@/features/catalog/money";
@@ -79,60 +77,56 @@ function StudioProductContent({
   const saved = searchParamValue(query.saved) === "1";
 
   return (
-    <PageShell className="pt-10 sm:pt-14">
+    <>
       <Link
-        href="/vendor"
-        className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+        href="/vendor/products"
+        className="inline-flex items-center gap-1.5 rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
       >
-        <ArrowLeft className="size-4" aria-hidden="true" />
-        Studio objects
+        <ArrowLeft className="size-3.5" aria-hidden="true" />
+        Products
       </Link>
 
-      <div className="mt-6">
-        <StudioNav />
-      </div>
-
-      <div className="mt-8 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-8">
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-4xl leading-none font-medium tracking-[-0.04em] text-balance sm:text-5xl">
+            <h1 className="font-display text-2xl leading-none font-semibold tracking-[-0.03em] text-balance sm:text-[1.75rem]">
               {product.name}
             </h1>
             <ProductStatusBadge status={product.status} />
           </div>
-          <p className="mt-3 font-mono text-[0.6875rem] tracking-[0.1em] text-muted-foreground">
+          <p className="mt-2 font-mono text-[0.65rem] tracking-[0.08em] text-muted-foreground">
             /products/{product.slug} · {product.sku} · {product.categoryName}
           </p>
         </div>
       </div>
 
       {saved ? (
-        <Notice tone="success" className="mt-6">
+        <Notice tone="success" className="mt-4">
           Changes saved.
         </Notice>
       ) : null}
 
       {product.status === "REJECTED" && product.reviewNote ? (
-        <Notice tone="danger" className="mt-6">
+        <Notice tone="danger" className="mt-4">
           <span className="font-medium">Changes requested: </span>
           {product.reviewNote}
         </Notice>
       ) : null}
 
       {product.status === "PENDING_REVIEW" ? (
-        <Notice tone="info" className="mt-6">
+        <Notice tone="info" className="mt-4">
           This object is waiting for review. Editing and image uploads are paused until an
           administrator decides. Stock can still be adjusted.
         </Notice>
       ) : null}
 
       {product.status === "ARCHIVED" ? (
-        <Notice tone="warning" className="mt-6">
+        <Notice tone="warning" className="mt-4">
           This object is archived and no longer visible on the storefront.
         </Notice>
       ) : null}
 
-      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-12">
+      <div className="mt-5 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-8">
         <div className="min-w-0">
           {canEdit ? (
             <section
@@ -237,28 +231,28 @@ function StudioProductContent({
           </section>
         </aside>
       </div>
-    </PageShell>
+    </>
   );
 }
 
 function ProductSkeleton() {
   return (
-    <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading the object">
-        <div className="border-b border-border pb-8">
-          <Skeleton className="h-3 w-28" />
-          <Skeleton className="mt-4 h-12 w-96 max-w-full" />
-          <Skeleton className="mt-4 h-4 w-full max-w-xl" />
-        </div>
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_23rem]">
-          <Skeleton className="h-[40rem] w-full rounded-xl" />
-          <div className="space-y-6">
-            <Skeleton className="h-48 w-full rounded-xl" />
-            <Skeleton className="h-64 w-full rounded-xl" />
-          </div>
+    <div role="status" aria-label="Loading the object">
+      <div className="mb-4">
+        <Skeleton className="h-3 w-20" />
+      </div>
+      <div className="border-b border-border pb-5">
+        <Skeleton className="h-8 w-80 max-w-full" />
+        <Skeleton className="mt-2 h-3 w-64 max-w-full" />
+      </div>
+      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_23rem]">
+        <Skeleton className="h-[40rem] w-full rounded-xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
         </div>
       </div>
       <span className="sr-only">Loading…</span>
-    </PageShell>
+    </div>
   );
 }

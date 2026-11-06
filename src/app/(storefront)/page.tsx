@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { ArrowRight, BadgeCheck, Compass, PackageSearch, Store } from "lucide-react";
+import { ArrowRight, FileText, Heart, ShieldCheck, Store, Truck } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -7,12 +8,10 @@ import { Reveal } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { CategoryTile } from "@/components/storefront/category-tile";
 import { HeroSlider } from "@/components/storefront/hero-slider";
-import { MakerLabel } from "@/components/storefront/maker-label";
 import { PageShell } from "@/components/storefront/page-shell";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { SectionHeading } from "@/components/storefront/section-heading";
 import { HomePageSkeleton } from "@/components/storefront/skeletons";
-import { StudioCompactCard, StudioFeatureCard } from "@/components/storefront/studio-card";
 
 import {
   getCatalogStats,
@@ -28,28 +27,30 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+const trustItems = [
+  { icon: Truck, label: "Delivery priced by distance" },
+  { icon: ShieldCheck, label: "Secure checkout" },
+  { icon: Heart, label: "Named makers" },
+  { icon: Store, label: "Studio-direct orders" },
+] as const;
+
 const benefits = [
   {
-    icon: PackageSearch,
-    title: "Discover by material",
-    copy: "Filter by ceramic, leather, linen, and other materials used by each studio.",
-  },
-  {
-    icon: BadgeCheck,
+    icon: ShieldCheck,
     title: "Maker provenance",
     copy: "Every listing carries the studio, location, and maker behind the object.",
   },
   {
-    icon: Store,
-    title: "Independent studios",
-    copy: "Browse a small, curated set of workshops rather than an anonymous catalog.",
+    icon: FileText,
+    title: "Clear product detail",
+    copy: "Materials, dimensions and care notes stay visible, not buried.",
   },
   {
-    icon: Compass,
-    title: "Clear product detail",
-    copy: "Materials, dimensions, care notes, and maker information stay visible.",
+    icon: Truck,
+    title: "Delivery that fits",
+    copy: "Pickup or distance-based delivery, shown clearly before checkout.",
   },
-];
+] as const;
 
 export default function StorefrontHomePage() {
   return (
@@ -67,81 +68,74 @@ async function HomeContent() {
     listProducts({ sort: "featured", limit: 8 }),
   ]);
 
-  const heroVendor = vendors.find((vendor) => vendor.slug === "atelier-nord");
   const featureVendor = vendors[0];
   const featureImage = featureVendor
     ? (await listProducts({ vendor: featureVendor.slug, limit: 1 }))[0]
     : undefined;
+  const featureStory =
+    featureVendor?.story.trim() ||
+    (featureVendor
+      ? `${featureVendor.name} is an approved studio with ${featureVendor.productCount} ${
+          featureVendor.productCount === 1 ? "object" : "objects"
+        } in the current catalog.`
+      : "");
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-border bg-background">
+      <section className="relative overflow-hidden bg-primary text-primary-foreground">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,color-mix(in_oklab,var(--accent)_18%,transparent),transparent_34%),linear-gradient(180deg,var(--surface)_0%,var(--background)_100%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_16%,rgba(249,115,22,0.2),transparent_38%),radial-gradient(circle_at_90%_64%,rgba(249,115,22,0.1),transparent_30%)]"
         />
-        <PageShell className="relative grid gap-8 py-8 sm:py-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10 lg:py-14">
+        <PageShell className="relative grid gap-10 py-10 sm:py-14 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-12 lg:py-16">
           <Reveal className="max-w-xl">
-            <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-2 text-muted-foreground">
-              <span aria-hidden="true" className="h-px w-10 bg-accent" />
+            <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-2 text-primary-foreground/70">
+              <span aria-hidden="true" className="h-px w-6 bg-accent" />
               Marketplace · {stats.products} objects · {stats.vendors} studios
             </p>
-            <h1 className="mt-5 font-display text-[clamp(2.5rem,5.4vw,4.25rem)] leading-[0.96] font-semibold tracking-[-0.045em] text-balance">
-              Shop objects made by independent studios.
+            <h1 className="mt-5 font-display text-[clamp(2.6rem,5.2vw,4rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance">
+              Objects with a maker&rsquo;s name on them.
             </h1>
-            <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">
-              Browse ceramics, leather, and cloth with the maker, materials, and origin visible on
-              every listing.
+            <p className="mt-5 max-w-md text-base leading-7 text-primary-foreground/70 sm:text-lg">
+              Ceramics, leather and cloth from independent workshops — with the maker, materials and
+              origin visible on every listing.
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="lg" className="px-6">
                 <Link href="/products">
                   Shop all objects
                   <ArrowRight className="size-4" aria-hidden="true" />
                 </Link>
               </Button>
-              <Button asChild variant="secondary" size="lg" className="px-6">
-                <Link href="#departments">
-                  Browse categories
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="border-white/30 bg-transparent px-6 text-primary-foreground hover:border-white/60 hover:bg-white/10 hover:text-white"
+              >
+                <Link href="/vendors">Meet the studios</Link>
               </Button>
-            </div>
-            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-border pt-5">
-              <div>
-                <p className="font-display text-2xl font-semibold tracking-[-0.03em]">
-                  {stats.products}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">Objects</p>
-              </div>
-              <div>
-                <p className="font-display text-2xl font-semibold tracking-[-0.03em]">
-                  {stats.vendors}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">Studios</p>
-              </div>
-              <div>
-                <p className="font-display text-2xl font-semibold tracking-[-0.03em]">
-                  {stats.categories}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">Departments</p>
-              </div>
             </div>
           </Reveal>
 
           <Reveal delay={0.06}>
             <HeroSlider />
-            {heroVendor ? (
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <MakerLabel vendor={heroVendor} variant="tag" tilt />
-                <p className="text-xs text-muted-foreground">
-                  Demo photography from the preview catalog.
-                </p>
-              </div>
-            ) : null}
           </Reveal>
         </PageShell>
       </section>
+
+      <div className="border-b border-border bg-surface">
+        <PageShell>
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-3 py-4 sm:grid-cols-4">
+            {trustItems.map(({ icon: Icon, label }) => (
+              <li key={label} className="flex items-center gap-2.5 text-xs text-muted-foreground">
+                <Icon className="size-4 shrink-0 text-sage" aria-hidden="true" />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </PageShell>
+      </div>
 
       <section
         id="departments"
@@ -175,7 +169,7 @@ async function HomeContent() {
         </PageShell>
       </section>
 
-      <section className="py-12 sm:py-16">
+      <section className="border-b border-border bg-surface py-12 sm:py-16">
         <PageShell>
           <SectionHeading
             eyebrow="Discover products"
@@ -193,72 +187,88 @@ async function HomeContent() {
         </PageShell>
       </section>
 
-      <section className="border-t border-border bg-surface-muted/40 py-12 sm:py-16">
-        <PageShell>
-          <SectionHeading
-            eyebrow="Featured studios"
-            title="Shop by maker"
-            description="A small set of independent workshops, each with a named maker and a distinct point of view."
-            action={
-              <Button asChild variant="link" size="sm">
-                <Link href="/vendors">
-                  Meet all studios
-                  <ArrowRight className="size-3.5" aria-hidden="true" />
-                </Link>
-              </Button>
-            }
-          />
+      {featureVendor ? (
+        <section className="border-b border-border bg-sand-soft/50 py-12 sm:py-16">
+          <PageShell>
+            <div className="grid overflow-hidden rounded-2xl border border-border bg-sand-soft lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="relative min-h-[18rem] bg-sand">
+                {featureImage ? (
+                  <Image
+                    src={featureImage.image.src}
+                    alt={featureImage.image.alt}
+                    fill
+                    sizes="(min-width: 1024px) 45vw, 100vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="grid h-full place-items-center">
+                    <span className="font-display text-5xl font-semibold tracking-[-0.04em] text-sand-ink/60">
+                      {featureVendor.monogram}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-          <div className="mt-8 grid gap-5 lg:grid-cols-[1.15fr_1fr]">
-            {featureVendor && featureImage ? (
-              <StudioFeatureCard
-                vendor={featureVendor}
-                image={featureImage}
-                priority
-                className="min-h-[24rem] lg:min-h-full"
-              />
-            ) : null}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              {vendors.slice(1, 4).map((vendor) => (
-                <StudioCompactCard key={vendor.slug} vendor={vendor} />
-              ))}
+              <div className="flex flex-col justify-center p-7 sm:p-10">
+                <p className="eyebrow text-sage">Studio spotlight</p>
+                <h2 className="mt-3 font-display text-3xl leading-[1.05] font-semibold tracking-[-0.035em] text-balance">
+                  {featureVendor.name}
+                </h2>
+                <p className="mt-4 max-w-xl text-sm leading-7 text-sand-ink/85 sm:text-base">
+                  {featureStory}
+                </p>
+
+                <div className="mt-7 flex items-center gap-3">
+                  <span className="grid size-11 place-items-center rounded-md border border-sand-ink/15 bg-sand font-display text-sm font-semibold text-sand-ink">
+                    {featureVendor.monogram}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{featureVendor.name}</p>
+                    <p className="mt-0.5 text-xs text-sand-ink/70">
+                      {featureVendor.location || "Independent studio"} ·{" "}
+                      {featureVendor.productCount}{" "}
+                      {featureVendor.productCount === 1 ? "object" : "objects"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-7">
+                  <Button asChild variant="secondary" className="bg-surface">
+                    <Link href={`/vendors/${featureVendor.slug}`}>
+                      Visit the studio
+                      <ArrowRight className="size-4" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </PageShell>
-      </section>
+          </PageShell>
+        </section>
+      ) : null}
 
-      <section className="border-t border-border bg-surface py-10 sm:py-12">
+      <section className="bg-surface py-12 sm:py-16">
         <PageShell>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {benefits.map(({ icon: Icon, title, copy }) => (
-              <div key={title} className="rounded-2xl border border-border bg-background p-5">
-                <span className="grid size-10 place-items-center rounded-md bg-accent-soft text-accent">
+          <div className="grid gap-8 sm:grid-cols-3">
+            {benefits.map(({ icon: Icon, title, copy }, index) => (
+              <div key={title}>
+                <span
+                  className={
+                    index === 0
+                      ? "grid size-9 place-items-center rounded-md bg-sage-soft text-sage"
+                      : index === 1
+                        ? "grid size-9 place-items-center rounded-md bg-accent-soft text-accent"
+                        : "grid size-9 place-items-center rounded-md bg-sky text-sky-ink"
+                  }
+                >
                   <Icon className="size-4" aria-hidden="true" />
                 </span>
                 <h2 className="mt-4 font-display text-lg font-semibold tracking-[-0.02em]">
                   {title}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{copy}</p>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">{copy}</p>
               </div>
             ))}
           </div>
-        </PageShell>
-      </section>
-
-      <section className="border-t border-border bg-primary text-primary-foreground">
-        <PageShell className="flex flex-col items-start justify-between gap-6 py-10 sm:flex-row sm:items-center sm:py-12">
-          <div className="max-w-2xl">
-            <p className="eyebrow text-primary-foreground/60">The full catalog</p>
-            <p className="mt-2 font-display text-2xl font-semibold tracking-[-0.03em] text-balance sm:text-3xl">
-              Browse every object with its maker, materials, and price.
-            </p>
-          </div>
-          <Button asChild size="lg" variant="secondary" className="px-6">
-            <Link href="/products">
-              Browse all objects
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </Button>
         </PageShell>
       </section>
     </>
