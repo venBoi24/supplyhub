@@ -24,7 +24,7 @@ export function SectionHeading({
     >
       <div className="max-w-2xl">
         <p className="eyebrow text-muted-foreground">{eyebrow}</p>
-        <h2 className="mt-3 font-display text-3xl leading-[1.05] font-medium tracking-[-0.035em] text-balance sm:text-4xl">
+        <h2 className="mt-3 font-display text-2xl leading-[1.08] font-medium tracking-[-0.03em] text-balance sm:text-3xl">
           {title}
         </h2>
         {description ? (

@@ -8,6 +8,7 @@ import { getDatabase } from "@/server/db/client";
 import { mediaUrlForKey } from "@/server/storage/keys";
 
 import { getAvailability } from "./availability";
+import { composeCategoryImages } from "./category-media";
 import { PRODUCT_IMAGE_HEIGHT, PRODUCT_IMAGE_WIDTH } from "./constants";
 import { decimalToCents } from "./money";
 import { searchTokens } from "./search";
@@ -322,6 +323,19 @@ export async function listCategorySummaries(): Promise<CategorySummary[]> {
       slug: true,
       headline: true,
       description: true,
+      products: {
+        where: { status: "PUBLISHED", vendor: { status: "APPROVED" } },
+        orderBy: [{ createdAt: "desc" }],
+        take: 3,
+        select: {
+          images: {
+            where: { status: "APPROVED" },
+            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+            take: 1,
+            select: { storageKey: true, alt: true },
+          },
+        },
+      },
       _count: {
         select: {
           products: {
@@ -333,10 +347,15 @@ export async function listCategorySummaries(): Promise<CategorySummary[]> {
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 
-  return categories.map((category) => ({
-    ...mapCategory(category),
-    productCount: category._count.products,
-  }));
+  return categories.map((category) => {
+    const listingImages = category.products.flatMap((product) => product.images.map(mapImage));
+
+    return {
+      ...mapCategory(category),
+      productCount: category._count.products,
+      images: composeCategoryImages(category.slug, listingImages),
+    };
+  });
 }
 
 export async function getCategoryBySlug(slug: string): Promise<CategorySummary | undefined> {

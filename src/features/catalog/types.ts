@@ -61,6 +61,7 @@ export interface VendorSummary extends Vendor {
 
 export interface CategorySummary extends Category {
   productCount: number;
+  images: readonly CatalogImage[];
 }
 
 export interface CatalogFilters {

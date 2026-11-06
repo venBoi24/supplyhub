@@ -19,7 +19,7 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
       <AnnouncementBar />
-      <PageShell className="flex h-16 items-center gap-2 sm:gap-3">
+      <PageShell className="flex h-18 items-center gap-3 sm:gap-4">
         <MobileNav categories={categories} vendors={vendors} />
 
         <Link
@@ -43,8 +43,8 @@ export async function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <div className="hidden w-64 md:block">
-            <SearchForm inputId="header-catalog-search" />
+          <div className="hidden flex-1 justify-center md:flex">
+            <SearchForm inputId="header-catalog-search" className="w-full max-w-xl" />
           </div>
           <Link
             href="/search"

@@ -5,9 +5,17 @@ export function getPostSignInDestination(
   nextPath: string | undefined,
   vendorStatus: VendorStatus | null | undefined,
 ): string {
-  if (!nextPath && vendorStatus === "REJECTED") {
+  if (nextPath) {
+    return safeNextPath(nextPath, "/account");
+  }
+
+  if (vendorStatus === "REJECTED") {
     return "/vendor?appeal=1#appeal";
   }
 
-  return safeNextPath(nextPath, "/account");
+  if (vendorStatus === "PENDING" || vendorStatus === "APPROVED") {
+    return "/vendor";
+  }
+
+  return "/account";
 }

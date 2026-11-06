@@ -11,6 +11,7 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductStatusBadge } from "@/components/vendor/product-status-badge";
 import { StudioNav } from "@/components/vendor/studio-nav";
+import { StudioSetupPanel } from "@/components/vendor/studio-setup-panel";
 import { VendorStatusBadge } from "@/components/vendors/vendor-status-badge";
 import { VendorAppealForm } from "@/components/vendors/vendor-appeal-form";
 import { formatMoney } from "@/features/catalog/money";
@@ -164,6 +165,13 @@ async function VendorContent({
               Draft deleted.
             </Notice>
           ) : null}
+
+          <StudioSetupPanel
+            hasProfile={Boolean((vendor.story ?? vendor.description) && vendor.departments.length)}
+            hasLocation={vendor.latitude !== null && vendor.longitude !== null}
+            objectCount={stats.total}
+            submittedCount={stats.published + stats.pendingReview}
+          />
 
           <dl className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StudioStat label="Objects" value={stats.total} />

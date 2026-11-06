@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { SubmitButton } from "@/components/forms/submit-button";
+import { BuyerWelcomePanel } from "@/components/storefront/buyer-welcome-panel";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ async function AccountContent({
   const verification = searchParamValue(params.verification);
   const denied = searchParamValue(params.denied);
   const firstName = profile.name.split(/\s+/)[0] || profile.name;
+  const showWelcome = profile.role === "CUSTOMER" && (welcome || !profile.emailVerifiedAt);
 
   return (
     <PageShell className="pt-10 sm:pt-14">
@@ -86,12 +88,6 @@ async function AccountContent({
       </div>
 
       <div className="mt-8 space-y-3">
-        {welcome ? (
-          <Notice tone="success">
-            Welcome to SupplyHub. Your account is ready — verify your email so recovery keeps
-            working.
-          </Notice>
-        ) : null}
         {verified ? (
           <Notice tone="success">Your email address is verified. Thank you.</Notice>
         ) : null}
@@ -125,6 +121,10 @@ async function AccountContent({
           </Notice>
         ) : null}
       </div>
+
+      {showWelcome ? (
+        <BuyerWelcomePanel firstName={firstName} emailVerified={Boolean(profile.emailVerifiedAt)} />
+      ) : null}
 
       <div className="mt-10 grid items-start gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
         <div className="space-y-6">

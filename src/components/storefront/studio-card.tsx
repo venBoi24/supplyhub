@@ -70,7 +70,7 @@ export function StudioCompactCard({
     <Link
       href={`/vendors/${vendor.slug}`}
       className={cn(
-        "group flex min-h-[12rem] flex-col justify-between rounded-xl border border-border bg-surface p-6 transition-colors duration-300 hover:border-border-strong focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
+        "group flex min-h-[12rem] flex-col justify-between rounded-xl border border-border bg-surface p-6 transition-colors duration-300 hover:border-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
         className,
       )}
     >

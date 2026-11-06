@@ -12,17 +12,19 @@ export const metadata: Metadata = {
 
 export default async function DeliveryPage() {
   const view = await getCartView();
-  const vendors = [...new Map(
-    view.lines.map((line) => [
-      line.vendorId,
-      {
-        id: line.vendorId,
-        name: line.vendorName,
-        latitude: line.vendorLatitude,
-        longitude: line.vendorLongitude,
-      },
-    ]),
-  ).values()];
+  const vendors = [
+    ...new Map(
+      view.lines.map((line) => [
+        line.vendorId,
+        {
+          id: line.vendorId,
+          name: line.vendorName,
+          latitude: line.vendorLatitude,
+          longitude: line.vendorLongitude,
+        },
+      ]),
+    ).values(),
+  ];
 
   return (
     <PageShell className="pt-10 sm:pt-14">
@@ -32,8 +34,8 @@ export default async function DeliveryPage() {
           Pin your delivery location
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Use your location to pin where the order should be delivered. Delivery prices are calculated
-          from your location to each studio in your cart.
+          Use your location to pin where the order should be delivered. Delivery prices are
+          calculated from your location to each studio in your cart.
         </p>
       </div>
 

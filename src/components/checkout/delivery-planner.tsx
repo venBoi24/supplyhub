@@ -49,9 +49,7 @@ export function DeliveryPlanner({
       }
 
       const parsed = JSON.parse(saved) as { latitude: number; longitude: number };
-      return Number.isFinite(parsed.latitude) && Number.isFinite(parsed.longitude)
-        ? parsed
-        : null;
+      return Number.isFinite(parsed.latitude) && Number.isFinite(parsed.longitude) ? parsed : null;
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
       return null;

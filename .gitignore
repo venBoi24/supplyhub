@@ -49,3 +49,6 @@ next-env.d.ts
 
 # local development artifacts (mail outbox, scratch files)
 /.local/
+
+# generated image originals kept out of the repository
+/vibe_images/

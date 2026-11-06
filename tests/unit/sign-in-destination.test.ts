@@ -11,8 +11,12 @@ describe("getPostSignInDestination", () => {
     expect(getPostSignInDestination("/cart", "REJECTED")).toBe("/cart");
   });
 
-  it("sends other accounts to their normal account page", () => {
-    expect(getPostSignInDestination(undefined, "PENDING")).toBe("/account");
+  it("sends approved and pending studios straight to their workspace", () => {
+    expect(getPostSignInDestination(undefined, "PENDING")).toBe("/vendor");
+    expect(getPostSignInDestination(undefined, "APPROVED")).toBe("/vendor");
+  });
+
+  it("sends buyers to their account page", () => {
     expect(getPostSignInDestination(undefined, null)).toBe("/account");
   });
 });

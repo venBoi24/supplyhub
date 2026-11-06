@@ -24,7 +24,7 @@ export function ProductCard({
 
   return (
     <article className={cn("group flex h-full flex-col", className)}>
-      <div className="relative overflow-hidden rounded-lg border border-border bg-surface-muted transition-colors duration-300 group-hover:border-border-strong">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-surface-muted transition-all duration-300 group-hover:border-accent/40 group-hover:shadow-sm">
         <Link href={`/products/${product.slug}`} aria-hidden="true" tabIndex={-1} className="block">
           <Image
             src={product.image.src}
@@ -33,8 +33,18 @@ export function ProductCard({
             height={product.image.height}
             priority={priority}
             sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 46vw"
-            className="aspect-[4/5] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.025]"
+            className="aspect-[4/5] w-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.025] group-hover:opacity-0"
           />
+          {product.images[1] ? (
+            <Image
+              src={product.images[1].src}
+              alt=""
+              width={product.images[1].width}
+              height={product.images[1].height}
+              sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 46vw"
+              className="absolute inset-0 aspect-[4/5] w-full object-cover opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
+            />
+          ) : null}
         </Link>
         <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           {product.availability !== "in-stock" ? (

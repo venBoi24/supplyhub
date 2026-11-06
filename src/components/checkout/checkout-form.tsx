@@ -76,15 +76,13 @@ export function CheckoutForm({
     }
   });
   const [deliveryMethod, setDeliveryMethod] = useState<"PICKUP" | "DELIVERY">(() =>
-    typeof window !== "undefined" &&
-    window.localStorage.getItem("supplyhub.deliveryLocation")
+    typeof window !== "undefined" && window.localStorage.getItem("supplyhub.deliveryLocation")
       ? "DELIVERY"
       : "PICKUP",
   );
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
   const [showDeliveryDialog, setShowDeliveryDialog] = useState(false);
-
 
   const ratePerKmCents = 20000;
   const minimumFeeCents = 50000;
@@ -374,7 +372,12 @@ export function CheckoutForm({
               <h3 className="font-display text-xl font-medium tracking-[-0.02em]">
                 Delivery location
               </h3>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setShowDeliveryDialog(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeliveryDialog(false)}
+              >
                 Close
               </Button>
             </div>
