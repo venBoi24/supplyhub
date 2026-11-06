@@ -4,10 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { Reveal } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { CategoryTile } from "@/components/storefront/category-tile";
-import { HeroSlider } from "@/components/storefront/hero-slider";
+import { HomeHero } from "@/components/storefront/home-hero";
 import { PageShell } from "@/components/storefront/page-shell";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { SectionHeading } from "@/components/storefront/section-heading";
@@ -21,9 +20,9 @@ import {
 } from "@/features/catalog/queries";
 
 export const metadata: Metadata = {
-  title: { absolute: "SupplyHub — objects with a maker's name on them" },
+  title: { absolute: "SupplyHub — independent sellers, one marketplace" },
   description:
-    "A curated marketplace preview for independent studios. Browse ceramics, leather goods, and textiles with provenance on every listing.",
+    "Shop home, fashion, beauty and more from independent studios and verified sellers — with the maker, materials and origin visible on every listing.",
   alternates: { canonical: "/" },
 };
 
@@ -80,49 +79,19 @@ async function HomeContent() {
         } in the current catalog.`
       : "");
 
+  const preferredCategorySlugs = ["home-living", "clothing-fashion", "jewelry-accessories"];
+  const preferredCategories = preferredCategorySlugs.flatMap((slug) => {
+    const category = categories.find((item) => item.slug === slug);
+    return category ? [{ name: category.name, slug: category.slug }] : [];
+  });
+  const popularCategories =
+    preferredCategories.length > 0
+      ? preferredCategories
+      : categories.slice(0, 3).map(({ name, slug }) => ({ name, slug }));
+
   return (
     <>
-      <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_16%,rgba(249,115,22,0.2),transparent_38%),radial-gradient(circle_at_90%_64%,rgba(249,115,22,0.1),transparent_30%)]"
-        />
-        <PageShell className="relative grid gap-10 py-10 sm:py-14 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-12 lg:py-16">
-          <Reveal className="max-w-xl">
-            <p className="eyebrow flex flex-wrap items-center gap-x-3 gap-y-2 text-primary-foreground/70">
-              <span aria-hidden="true" className="h-px w-6 bg-accent" />
-              Marketplace · {stats.products} objects · {stats.vendors} studios
-            </p>
-            <h1 className="mt-5 font-display text-[clamp(2.6rem,5.2vw,4rem)] leading-[0.98] font-semibold tracking-[-0.045em] text-balance">
-              Objects with a maker&rsquo;s name on them.
-            </h1>
-            <p className="mt-5 max-w-md text-base leading-7 text-primary-foreground/70 sm:text-lg">
-              Ceramics, leather and cloth from independent workshops — with the maker, materials and
-              origin visible on every listing.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="px-6">
-                <Link href="/products">
-                  Shop all objects
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="secondary"
-                className="border-white/30 bg-transparent px-6 text-primary-foreground hover:border-white/60 hover:bg-white/10 hover:text-white"
-              >
-                <Link href="/vendors">Meet the studios</Link>
-              </Button>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.06}>
-            <HeroSlider />
-          </Reveal>
-        </PageShell>
-      </section>
+      <HomeHero stats={stats} popularCategories={popularCategories} />
 
       <div className="border-b border-border bg-surface">
         <PageShell>

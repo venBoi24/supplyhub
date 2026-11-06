@@ -34,23 +34,23 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "SupplyHub",
-    title: "SupplyHub — objects with a maker's name on them",
+    title: "SupplyHub — independent sellers, one marketplace",
     description:
-      "A curated marketplace for independent studios. Know who made the piece and where it came from.",
+      "Shop home, fashion, beauty and more from independent studios and verified sellers.",
     images: [
       {
         url: "/images/demo/hero.jpg",
         width: 1024,
-        height: 1536,
-        alt: "A still life of handmade ceramics, linen, and leather.",
+        height: 1280,
+        alt: "A studio still life of stoneware ceramics, folded linen, and a tan leather tote.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SupplyHub — objects with a maker's name on them",
+    title: "SupplyHub — independent sellers, one marketplace",
     description:
-      "A curated marketplace for independent studios. Know who made the piece and where it came from.",
+      "Shop home, fashion, beauty and more from independent studios and verified sellers.",
     images: ["/images/demo/hero.jpg"],
   },
 };

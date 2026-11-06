@@ -10,10 +10,12 @@ test("sign-in explains how rejected applicants and unverified users can continue
 
 test("guest can browse the storefront and open the catalog", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /objects with a maker's name/i })).toBeVisible();
-  await page.getByRole("link", { name: /browse the catalog/i }).click();
-  await expect(page).toHaveURL(/\/products/);
-  await expect(page.getByRole("heading", { name: /all objects/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /independent sellers/i })).toBeVisible();
+  await page.getByRole("link", { name: "Home & Living", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/categories\/home-living/);
+  await expect(
+    page.getByRole("heading", { name: "Home & Living", exact: true }).first(),
+  ).toBeVisible();
 });
 
 test("manifest works and private routes are not cached for offline access", async ({
