@@ -1,10 +1,9 @@
-import { ArrowRight, Search, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import { Reveal } from "@/components/motion/reveal";
 import { PageShell } from "@/components/storefront/page-shell";
-import { Button } from "@/components/ui/button";
 import type { CategorySummary } from "@/features/catalog/types";
 
 export interface HomeHeroProps {
@@ -45,38 +44,8 @@ export function HomeHero({ stats, popularCategories }: HomeHeroProps) {
             the maker, materials and origin visible on every listing.
           </p>
 
-          <form
-            role="search"
-            action="/search"
-            method="get"
-            aria-label="Search the marketplace"
-            className="mt-6 flex items-center gap-2.5 rounded-xl border border-border bg-surface p-1.5 pl-3.5 shadow-[0_10px_24px_rgba(16,26,58,0.14)] transition-[border-color,box-shadow] focus-within:border-border-strong focus-within:ring-2 focus-within:ring-ring/30"
-          >
-            <Search className="size-[17px] shrink-0 text-muted-foreground" aria-hidden="true" />
-            <label htmlFor="hero-search" className="sr-only">
-              Search objects, materials or studios
-            </label>
-            <input
-              id="hero-search"
-              name="q"
-              type="search"
-              autoComplete="off"
-              placeholder="Search objects, materials or studios"
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
-            />
-            <Button
-              type="submit"
-              size="sm"
-              aria-label="Search"
-              className="h-10 shrink-0 rounded-lg px-3 text-xs focus-visible:ring-offset-surface sm:px-4"
-            >
-              <span className="hidden sm:inline">Search</span>
-              <ArrowRight className="size-3.5" aria-hidden="true" />
-            </Button>
-          </form>
-
           {popularCategories.length > 0 ? (
-            <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[0.6875rem] text-muted-foreground">
+            <div className="mt-6 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[0.6875rem] text-muted-foreground">
               <span className="font-medium text-foreground">Popular</span>
               {popularCategories.map((category, index) => (
                 <span key={category.slug} className="inline-flex items-center gap-2.5">
