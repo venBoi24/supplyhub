@@ -281,10 +281,21 @@ async function AccountContent({
                   <Link href="/vendor">Open studio workspace</Link>
                 </Button>
               </div>
+            ) : profile.role === "CUSTOMER" ? (
+              <div className="mt-5 space-y-4">
+                <p className="text-sm leading-6 text-muted-foreground">
+                  You can apply for a studio at any time. Tell us what you make, and an
+                  administrator reviews the application before selling tools open. Your buyer
+                  account keeps its orders and checkout while the application is reviewed.
+                </p>
+                <Button asChild size="sm" className="w-fit">
+                  <Link href="/vendor/apply">Apply for a studio</Link>
+                </Button>
+              </div>
             ) : (
               <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                This account is for shopping on SupplyHub. Studio workspaces are separate and are
-                reviewed by an administrator before activation.
+                Studio workspaces are managed by administrators. This account cannot submit a studio
+                application.
               </p>
             )}
           </section>
