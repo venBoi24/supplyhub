@@ -113,8 +113,8 @@ async function ProductsContent({
                   src={product.image?.src ?? "/images/demo/placeholder.jpg"}
                   alt={product.image?.alt ?? ""}
                   width={64}
-                  height={80}
-                  className="h-16 w-14 shrink-0 rounded-lg object-cover"
+                  height={64}
+                  className="size-16 shrink-0 rounded-lg object-cover"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{product.name}</p>

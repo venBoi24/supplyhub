@@ -24,29 +24,31 @@ export function ProductCard({
 
   return (
     <article className={cn("group flex h-full flex-col", className)}>
-      <div className="relative overflow-hidden rounded-xl border border-border bg-surface-muted transition-all duration-300 group-hover:border-accent/40 group-hover:shadow-sm">
+      <div className="relative overflow-hidden rounded-xl border border-border bg-surface-muted transition-[border-color,box-shadow] duration-300 group-hover:border-border-strong group-hover:shadow-[0_10px_30px_-18px_rgb(11_16_32/0.35)]">
         <Link href={`/products/${product.slug}`} aria-hidden="true" tabIndex={-1} className="block">
-          <Image
-            src={product.image.src}
-            alt=""
-            width={product.image.width}
-            height={product.image.height}
-            priority={priority}
-            sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 46vw"
-            className="aspect-[4/5] w-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.025] group-hover:opacity-0"
-          />
-          {product.images[1] ? (
+          <div className="media-square relative w-full overflow-hidden">
             <Image
-              src={product.images[1].src}
+              src={product.image.src}
               alt=""
-              width={product.images[1].width}
-              height={product.images[1].height}
-              sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 46vw"
-              className="absolute inset-0 aspect-[4/5] w-full object-cover opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
+              width={product.image.width}
+              height={product.image.height}
+              priority={priority}
+              sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 46vw"
+              className="size-full object-cover transition-[transform,opacity] duration-500 ease-out group-hover:scale-[1.035] group-hover:opacity-0"
             />
-          ) : null}
+            {product.images[1] ? (
+              <Image
+                src={product.images[1].src}
+                alt=""
+                width={product.images[1].width}
+                height={product.images[1].height}
+                sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 46vw"
+                className="absolute inset-0 size-full object-cover opacity-0 transition-[transform,opacity] duration-500 ease-out group-hover:scale-[1.035] group-hover:opacity-100"
+              />
+            ) : null}
+          </div>
         </Link>
-        <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+        <div className="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
           {product.availability !== "in-stock" ? (
             <AvailabilityBadge availability={product.availability} />
           ) : (
@@ -56,28 +58,26 @@ export function ProductCard({
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col pt-3.5 sm:pt-4">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-          <h3 className="min-w-0 font-display text-base leading-snug font-medium tracking-[-0.015em] sm:text-lg">
-            <Link
-              href={`/products/${product.slug}`}
-              className="decoration-border-strong underline-offset-4 transition-colors hover:text-accent hover:underline"
-            >
-              {product.name}
-            </Link>
-          </h3>
-          <Price
-            amountCents={product.priceCents}
-            compareAtPriceCents={product.compareAtPriceCents}
-            currency={product.currency}
-            size="sm"
-            className="sm:shrink-0 sm:pt-0.5"
-          />
-        </div>
-        <p className="mt-1.5 line-clamp-2 text-[0.8125rem] leading-5 text-muted-foreground">
+      <div className="flex flex-1 flex-col pt-3">
+        <Price
+          amountCents={product.priceCents}
+          compareAtPriceCents={product.compareAtPriceCents}
+          currency={product.currency}
+          size="md"
+          className="font-semibold"
+        />
+        <h3 className="mt-1.5 line-clamp-2 text-sm leading-5 font-medium tracking-[-0.01em] sm:text-[0.9375rem] sm:leading-6">
+          <Link
+            href={`/products/${product.slug}`}
+            className="underline-offset-4 transition-colors hover:text-accent hover:underline"
+          >
+            {product.name}
+          </Link>
+        </h3>
+        <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground sm:text-[0.8125rem]">
           {product.summary}
         </p>
-        <MakerLabel vendor={product.vendor} className="mt-auto pt-3" />
+        <MakerLabel vendor={product.vendor} className="mt-auto pt-2.5" />
       </div>
     </article>
   );

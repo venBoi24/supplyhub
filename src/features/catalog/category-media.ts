@@ -1,6 +1,6 @@
 import type { CatalogImage } from "./types";
 
-const EDITORIAL_SIZE = { width: 1200, height: 900 } as const;
+const EDITORIAL_SIZE = { width: 1024, height: 768 } as const;
 
 interface EditorialPhoto {
   readonly src: string;
@@ -120,7 +120,7 @@ const EDITORIAL_PHOTOS: Record<string, readonly EditorialPhoto[]> = {
     },
     {
       src: "/images/categories/automotive-2.jpg",
-      alt: "Close view of car care tools and a leather key fob",
+      alt: "Close view of car care brushes, microfiber cloths, and a tyre gauge",
     },
   ],
   "pet-supplies": [

@@ -185,7 +185,7 @@ async function OrderContent({
                           src={item.imageSrc}
                           alt={item.productName}
                           width={1024}
-                          height={1280}
+                          height={1024}
                           sizes="64px"
                           className="size-full object-cover"
                         />

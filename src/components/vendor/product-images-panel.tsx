@@ -125,9 +125,9 @@ function ImageRow({
       <Image
         src={image.src}
         alt={image.alt}
-        width={72}
-        height={90}
-        className="h-24 w-[4.5rem] rounded-sm object-cover"
+        width={96}
+        height={96}
+        className="size-24 rounded-lg object-cover"
       />
 
       <div className="min-w-0 flex-1">

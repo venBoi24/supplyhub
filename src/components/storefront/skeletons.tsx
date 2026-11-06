@@ -4,20 +4,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 function ProductCardSkeleton() {
   return (
     <div>
-      <Skeleton className="aspect-[4/5] w-full rounded-lg" />
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-4 w-12" />
-      </div>
-      <Skeleton className="mt-2 h-3 w-full" />
+      <Skeleton className="media-square w-full rounded-xl" />
+      <Skeleton className="mt-3 h-4 w-20" />
+      <Skeleton className="mt-2 h-4 w-3/4" />
+      <Skeleton className="mt-1.5 h-3 w-full" />
       <Skeleton className="mt-3 h-3 w-1/2" />
     </div>
   );
 }
 
-export function ProductGridSkeleton({ count = 6 }: { count?: number }) {
+export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
       {Array.from({ length: count }, (_, index) => (
         <ProductCardSkeleton key={index} />
       ))}
@@ -100,7 +98,14 @@ export function ProductDetailSkeleton() {
         aria-label="Loading this object"
         className="grid gap-10 lg:grid-cols-2 lg:gap-16"
       >
-        <Skeleton className="aspect-[4/5] w-full rounded-xl" />
+        <div className="flex flex-col gap-3">
+          <Skeleton className="media-square w-full rounded-xl" />
+          <div className="flex gap-3">
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton key={index} className="size-16 rounded-lg sm:size-20" />
+            ))}
+          </div>
+        </div>
         <div className="max-w-xl">
           <Skeleton className="h-14 w-36" />
           <Skeleton className="mt-6 h-12 w-3/4" />

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Plus } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -11,6 +10,7 @@ import { AddToCartForm } from "@/components/storefront/add-to-cart-form";
 import { AvailabilityBadge } from "@/components/storefront/availability-badge";
 import { MakerLabel } from "@/components/storefront/maker-label";
 import { PageShell } from "@/components/storefront/page-shell";
+import { ProductGallery } from "@/components/storefront/product-gallery";
 import { ProductGrid } from "@/components/storefront/product-grid";
 import { SectionHeading } from "@/components/storefront/section-heading";
 import { ShareButton } from "@/components/storefront/share-button";
@@ -94,46 +94,12 @@ async function ProductDetail({ product }: { product: ProductListing }) {
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:gap-16">
         <div>
-          <div className="relative overflow-hidden rounded-xl border border-border bg-surface-muted">
-            <Image
-              src={product.image.src}
-              alt={product.image.alt}
-              width={product.image.width}
-              height={product.image.height}
-              priority
-              sizes="(min-width: 1024px) 55vw, 100vw"
-              className="aspect-[4/5] w-full object-cover"
-            />
-            {soldOut ? (
-              <div className="absolute top-4 left-4">
-                <AvailabilityBadge availability="sold-out" />
-              </div>
-            ) : null}
-          </div>
-          {product.images.length > 1 ? (
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              {product.images.slice(1).map((image) => (
-                <div
-                  key={image.src}
-                  className="overflow-hidden rounded-lg border border-border bg-surface-muted"
-                >
-                  <Image
-                    src={image.src}
-                    alt={image.alt}
-                    width={image.width}
-                    height={image.height}
-                    sizes="(min-width: 1024px) 27vw, 45vw"
-                    className="aspect-[4/5] w-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <ProductGallery images={product.images} name={product.name} soldOut={soldOut} />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
             <p>
               Made by {product.vendor.name} · {product.vendor.location}
             </p>
-            <p className="eyebrow">Catalog photography</p>
+            <p className="eyebrow">Studio photography</p>
           </div>
         </div>
 

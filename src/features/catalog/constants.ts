@@ -14,12 +14,12 @@ export const HERO_IMAGE = {
   src: "/images/demo/hero.jpg",
   alt: "A cream stoneware vessel, two speckled cups, a folded linen throw, and a tan leather tote arranged on a limestone plinth in warm daylight.",
   width: 1024,
-  height: 1536,
+  height: 1280,
 } as const;
 
 /**
- * Uploaded photos keep a fixed 4:5 editorial crop. Storing the intrinsic size here keeps
- * next/image deterministic without persisting image dimensions for every upload.
+ * Product photos are displayed inside a fixed square frame. Storing a square intrinsic size
+ * here keeps next/image deterministic without persisting dimensions for every upload.
  */
 export const PRODUCT_IMAGE_WIDTH = 1024;
-export const PRODUCT_IMAGE_HEIGHT = 1280;
+export const PRODUCT_IMAGE_HEIGHT = 1024;

@@ -184,7 +184,7 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
                               src={line.image?.src ?? "/images/demo/placeholder.jpg"}
                               alt={line.image?.alt ?? line.name}
                               width={line.image?.width ?? 1024}
-                              height={line.image?.height ?? 1280}
+                              height={line.image?.height ?? 1024}
                               sizes="96px"
                               className="size-full object-cover"
                             />

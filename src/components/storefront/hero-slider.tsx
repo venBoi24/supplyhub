@@ -10,12 +10,12 @@ const slides = [
     alt: "A cream stoneware vessel, two speckled cups, a folded linen throw, and a tan leather tote arranged on a limestone plinth.",
   },
   {
-    src: "/images/demo/ridge-carafe.jpg",
-    alt: "A speckled ceramic carafe with a curved handle on a neutral background.",
+    src: "/images/demo/hero-carafe.jpg",
+    alt: "A speckled stoneware carafe with a pinched spout on a neutral studio backdrop.",
   },
   {
-    src: "/images/demo/linen-throw.jpg",
-    alt: "A folded stonewashed linen throw in a warm neutral tone.",
+    src: "/images/demo/hero-throw.jpg",
+    alt: "A folded stonewashed linen throw with a fringed edge in a warm neutral tone.",
   },
 ] as const;
 

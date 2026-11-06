@@ -188,9 +188,9 @@ async function AdminProductsContent({
                   <Image
                     src={product.images[0]?.src ?? "/images/demo/placeholder.jpg"}
                     alt={product.images[0]?.alt ?? ""}
-                    width={88}
-                    height={110}
-                    className="h-28 w-[4.5rem] shrink-0 rounded-sm object-cover"
+                    width={96}
+                    height={96}
+                    className="size-24 shrink-0 rounded-lg object-cover"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">

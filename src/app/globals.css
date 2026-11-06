@@ -154,6 +154,12 @@
 }
 
 @layer utilities {
+  /* Square media frame shared by product cards, galleries, and thumbnails. Kept as an explicit
+     utility so every product surface uses the same 1:1 crop. */
+  .media-square {
+    aspect-ratio: 1 / 1;
+  }
+
   .hero-wash {
     background-image:
       radial-gradient(

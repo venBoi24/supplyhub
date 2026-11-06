@@ -121,7 +121,7 @@ async function VendorContent({
                   width={product.image.width}
                   height={product.image.height}
                   sizes="(min-width: 1024px) 22vw, 45vw"
-                  className="aspect-[4/5] w-full object-cover"
+                  className="media-square w-full object-cover"
                 />
               </div>
             ))}
