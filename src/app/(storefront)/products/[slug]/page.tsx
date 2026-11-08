@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus } from "lucide-react";
+import { Plus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -15,8 +15,11 @@ import { ProductGrid } from "@/components/storefront/product-grid";
 import { SectionHeading } from "@/components/storefront/section-heading";
 import { ShareButton } from "@/components/storefront/share-button";
 import { ProductDetailSkeleton } from "@/components/storefront/skeletons";
+import { VerifiedStudioBadge } from "@/components/storefront/verified-studio-badge";
 import { getProductBySlug, getRelatedProducts } from "@/features/catalog/queries";
 import type { ProductListing } from "@/features/catalog/types";
+import { StudioChatButton } from "@/features/experience/widgets/studio-chat-button";
+import { WishlistButton } from "@/features/experience/widgets/wishlist-button";
 
 export async function generateMetadata({
   params,
@@ -104,7 +107,10 @@ async function ProductDetail({ product }: { product: ProductListing }) {
         </div>
 
         <div className="max-w-xl">
-          <MakerLabel vendor={product.vendor} variant="tag" />
+          <div className="flex flex-wrap items-center gap-3">
+            <MakerLabel vendor={product.vendor} variant="tag" />
+            <VerifiedStudioBadge />
+          </div>
           <h1 className="mt-6 font-display text-4xl leading-[0.98] font-medium tracking-[-0.04em] text-balance sm:text-5xl">
             {product.name}
           </h1>
@@ -156,6 +162,27 @@ async function ProductDetail({ product }: { product: ProductListing }) {
                 </p>
               </>
             )}
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <WishlistButton
+              className="size-11 rounded-lg"
+              item={{
+                slug: product.slug,
+                name: product.name,
+                priceCents: product.priceCents,
+                inventory: product.inventory,
+                image: product.image.src,
+                currency: product.currency,
+              }}
+            />
+            <StudioChatButton vendorSlug={product.vendor.slug} vendorName={product.vendor.name} />
+            <Link
+              href="/experience"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#0f766e]/30 bg-[#0f766e]/5 px-4 py-2.5 text-sm font-semibold text-[#0f766e] transition hover:bg-[#0f766e]/10"
+            >
+              <ShieldCheck className="size-4" aria-hidden="true" /> Buyer protection
+            </Link>
           </div>
 
           <div className="mt-8 border-t border-border">

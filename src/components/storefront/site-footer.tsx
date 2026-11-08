@@ -87,6 +87,11 @@ export async function SiteFooter() {
                   Live delivery tracking
                 </Link>
               </li>
+              <li>
+                <Link href="/experience" className={footerLinkClassName}>
+                  Buyer protection hub
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

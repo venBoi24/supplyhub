@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { listCategorySummaries, listVendorSummaries } from "@/features/catalog/queries";
+import { NotificationBell } from "@/features/experience/widgets/notification-bell";
+import { SearchAutocomplete } from "@/features/experience/widgets/search-autocomplete";
 
 import { AnnouncementBar } from "./announcement-bar";
 import { AccountMenu } from "./account-menu";
@@ -10,7 +12,6 @@ import { CartLink } from "./cart-link";
 import { DepartmentMenu } from "./department-menu";
 import { MobileNav } from "./mobile-nav";
 import { PageShell } from "./page-shell";
-import { SearchForm } from "./search-form";
 import { Wordmark } from "./wordmark";
 
 export async function SiteHeader() {
@@ -41,11 +42,14 @@ export async function SiteHeader() {
           <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
             <Link href="/vendors">Studios</Link>
           </Button>
+          <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
+            <Link href="/experience">Buyer protection</Link>
+          </Button>
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <div className="hidden flex-1 justify-center md:flex">
-            <SearchForm inputId="header-catalog-search" className="w-full max-w-xl" />
+            <SearchAutocomplete inputId="header-catalog-search" className="w-full max-w-xl" />
           </div>
           <Link
             href="/search"
@@ -54,6 +58,7 @@ export async function SiteHeader() {
           >
             <Search className="size-5" aria-hidden="true" />
           </Link>
+          <NotificationBell />
           <AccountMenu />
           <CartLink />
         </div>

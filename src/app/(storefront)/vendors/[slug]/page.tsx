@@ -11,9 +11,11 @@ import { SectionHeading } from "@/components/storefront/section-heading";
 import { CatalogPageSkeleton } from "@/components/storefront/skeletons";
 import { SortLinks } from "@/components/storefront/sort-links";
 import { StudioCompactCard } from "@/components/storefront/studio-card";
+import { VerifiedStudioBadge } from "@/components/storefront/verified-studio-badge";
 import { getVendorBySlug, listProductPage, listVendorSummaries } from "@/features/catalog/queries";
 import { parseCatalogQuery } from "@/features/catalog/search-params";
 import type { VendorSummary } from "@/features/catalog/types";
+import { StudioChatButton } from "@/features/experience/widgets/studio-chat-button";
 
 export async function generateMetadata({
   params,
@@ -102,6 +104,24 @@ async function VendorContent({
             Independent studio · {vendor.productCount}{" "}
             {vendor.productCount === 1 ? "object" : "objects"} in this edit
           </p>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <VerifiedStudioBadge />
+            <StudioChatButton vendorSlug={vendor.slug} vendorName={vendor.name} />
+          </div>
+          <ul className="mt-5 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+            <li className="rounded-lg border border-border bg-surface px-3 py-2">
+              <span className="block font-semibold text-foreground">Approved</span>
+              Marketplace-verified studio
+            </li>
+            <li className="rounded-lg border border-border bg-surface px-3 py-2">
+              <span className="block font-semibold text-foreground">{vendor.productCount}</span>
+              Live {vendor.productCount === 1 ? "listing" : "listings"}
+            </li>
+            <li className="rounded-lg border border-border bg-surface px-3 py-2">
+              <span className="block font-semibold text-foreground">Protected</span>
+              Escrow on every order
+            </li>
+          </ul>
         </div>
 
         {mosaic.length > 0 ? (

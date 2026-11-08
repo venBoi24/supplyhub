@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Pagination } from "@/components/storefront/pagination";
 import { ProductGrid } from "@/components/storefront/product-grid";
-import { SearchForm } from "@/components/storefront/search-form";
 import { CatalogPageSkeleton } from "@/components/storefront/skeletons";
 import { SortLinks } from "@/components/storefront/sort-links";
 import {
@@ -16,7 +15,8 @@ import {
   listProductPage,
   listVendorSummaries,
 } from "@/features/catalog/queries";
-import { parseCatalogQuery } from "@/features/catalog/search-params";
+import { catalogHref, parseCatalogQuery } from "@/features/catalog/search-params";
+import { SearchAutocomplete } from "@/features/experience/widgets/search-autocomplete";
 
 export const metadata: Metadata = {
   title: "Search",
@@ -43,7 +43,13 @@ async function SearchContent({
   const query = parseCatalogQuery(params);
   const [categories, vendors] = await Promise.all([listCategorySummaries(), listVendorSummaries()]);
   const results = query.q
-    ? await listProductPage({ query: query.q, sort: query.sort, page: query.page })
+    ? await listProductPage({
+        query: query.q,
+        sort: query.sort,
+        page: query.page,
+        category: query.category,
+        vendor: query.vendor,
+      })
     : null;
 
   return (
@@ -57,12 +63,76 @@ async function SearchContent({
           Find an object by name, material, studio, or city. The catalog is small enough to browse
           from start to finish, too.
         </p>
-        <SearchForm
+        <SearchAutocomplete
           defaultValue={query.q ?? ""}
           inputId="search-page-input"
           className="mt-6 max-w-xl"
         />
       </div>
+
+      {query.q ? (
+        <div className="mt-5 flex scrollbar-thin gap-2 overflow-x-auto pb-1">
+          <Link
+            href={catalogHref("/search", { ...query, category: undefined, page: 1 })}
+            aria-current={!query.category ? "true" : undefined}
+            className={
+              !query.category
+                ? "shrink-0 rounded-full border border-[#0f766e] bg-[#0f766e]/10 px-3 py-1.5 text-xs font-semibold text-[#0f766e]"
+                : "shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground transition hover:border-border-strong hover:text-foreground"
+            }
+          >
+            All departments
+          </Link>
+          {categories.map((category) => (
+            <Link
+              key={category.slug}
+              href={catalogHref("/search", {
+                ...query,
+                category: query.category === category.slug ? undefined : category.slug,
+                page: 1,
+              })}
+              aria-current={query.category === category.slug ? "true" : undefined}
+              className={
+                query.category === category.slug
+                  ? "shrink-0 rounded-full border border-[#0f766e] bg-[#0f766e]/10 px-3 py-1.5 text-xs font-semibold text-[#0f766e]"
+                  : "shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground transition hover:border-border-strong hover:text-foreground"
+              }
+            >
+              {category.name}
+            </Link>
+          ))}
+          <span className="mx-1 w-px shrink-0 bg-border" aria-hidden="true" />
+          <Link
+            href={catalogHref("/search", { ...query, vendor: undefined, page: 1 })}
+            aria-current={!query.vendor ? "true" : undefined}
+            className={
+              !query.vendor
+                ? "shrink-0 rounded-full border border-[#0f766e] bg-[#0f766e]/10 px-3 py-1.5 text-xs font-semibold text-[#0f766e]"
+                : "shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground transition hover:border-border-strong hover:text-foreground"
+            }
+          >
+            All studios
+          </Link>
+          {vendors.map((vendor) => (
+            <Link
+              key={vendor.slug}
+              href={catalogHref("/search", {
+                ...query,
+                vendor: query.vendor === vendor.slug ? undefined : vendor.slug,
+                page: 1,
+              })}
+              aria-current={query.vendor === vendor.slug ? "true" : undefined}
+              className={
+                query.vendor === vendor.slug
+                  ? "shrink-0 rounded-full border border-[#0f766e] bg-[#0f766e]/10 px-3 py-1.5 text-xs font-semibold text-[#0f766e]"
+                  : "shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground transition hover:border-border-strong hover:text-foreground"
+              }
+            >
+              {vendor.name}
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       {!query.q ? (
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ProductListing } from "@/features/catalog/types";
 import { Badge } from "@/components/ui/badge";
 import { Price } from "@/components/ui/price";
+import { WishlistButton } from "@/features/experience/widgets/wishlist-button";
 import { cn } from "@/lib/utils/cn";
 
 import { AvailabilityBadge } from "./availability-badge";
@@ -54,7 +55,19 @@ export function ProductCard({
           ) : (
             <span />
           )}
-          {hasDiscount ? <Badge tone="accent">Sale</Badge> : null}
+          <div className="flex items-center gap-1.5">
+            {hasDiscount ? <Badge tone="accent">Sale</Badge> : null}
+            <WishlistButton
+              item={{
+                slug: product.slug,
+                name: product.name,
+                priceCents: product.priceCents,
+                inventory: product.inventory,
+                image: product.image.src,
+                currency: product.currency,
+              }}
+            />
+          </div>
         </div>
       </div>
 

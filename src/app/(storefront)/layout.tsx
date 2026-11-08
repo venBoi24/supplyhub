@@ -10,25 +10,28 @@ import {
 } from "@/components/storefront/skeletons";
 import { SkipLink } from "@/components/storefront/skip-link";
 import { ToasterProvider } from "@/components/ui/toaster";
+import { ExperienceProvider } from "@/features/experience/store";
 
 export default function StorefrontLayout({ children }: LayoutProps<"/">) {
   return (
     <ToasterProvider>
-      <SkipLink />
-      <div className="flex min-h-dvh flex-col">
-        <Suspense fallback={<SiteHeaderSkeleton />}>
-          <SiteHeader />
-        </Suspense>
-        <main id="main" className="bottom-nav-clearance flex-1">
-          {children}
-        </main>
-        <Suspense fallback={<SiteFooterSkeleton />}>
-          <SiteFooter />
-        </Suspense>
-        <Suspense fallback={<BottomNavSkeleton />}>
-          <BottomNav />
-        </Suspense>
-      </div>
+      <ExperienceProvider>
+        <SkipLink />
+        <div className="flex min-h-dvh flex-col">
+          <Suspense fallback={<SiteHeaderSkeleton />}>
+            <SiteHeader />
+          </Suspense>
+          <main id="main" className="bottom-nav-clearance flex-1">
+            {children}
+          </main>
+          <Suspense fallback={<SiteFooterSkeleton />}>
+            <SiteFooter />
+          </Suspense>
+          <Suspense fallback={<BottomNavSkeleton />}>
+            <BottomNav />
+          </Suspense>
+        </div>
+      </ExperienceProvider>
     </ToasterProvider>
   );
 }
