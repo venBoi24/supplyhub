@@ -82,6 +82,11 @@ export async function SiteFooter() {
                   Lowest price first
                 </Link>
               </li>
+              <li>
+                <Link href="/delivery-live?persona=buyer" className={footerLinkClassName}>
+                  Live delivery tracking
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

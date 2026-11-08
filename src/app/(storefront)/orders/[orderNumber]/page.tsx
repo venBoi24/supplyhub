@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Box, CreditCard, MapPin } from "lucide-react";
+import { ArrowLeft, Box, CreditCard, MapPin, Navigation } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -324,6 +324,12 @@ async function OrderContent({
                 <p className="text-muted-foreground">{order.address.contactPhone}</p>
               ) : null}
             </address>
+            <Button asChild variant="secondary" className="mt-5 w-full">
+              <Link href="/delivery-live?persona=buyer">
+                <Navigation className="size-4" aria-hidden="true" />
+                Track live delivery
+              </Link>
+            </Button>
           </section>
 
           <section className="rounded-xl border border-border bg-surface p-6">

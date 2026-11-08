@@ -22,6 +22,11 @@ const tabs = [
     active: (pathname: string) => pathname.startsWith("/vendor/orders"),
   },
   {
+    href: "/delivery-live?persona=seller",
+    label: "Deliveries",
+    active: () => false,
+  },
+  {
     href: "/vendor/earnings",
     label: "Earnings",
     active: (pathname: string) => pathname.startsWith("/vendor/earnings"),
