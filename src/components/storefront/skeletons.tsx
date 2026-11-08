@@ -87,7 +87,30 @@ export function SiteHeaderSkeleton() {
 }
 
 export function SiteFooterSkeleton() {
-  return <div aria-hidden="true" className="mt-20 h-72 border-t border-border bg-primary" />;
+  return (
+    <div
+      aria-hidden="true"
+      className="mt-20 hidden h-72 border-t border-border bg-primary md:block"
+    />
+  );
+}
+
+export function BottomNavSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+    >
+      <div className="mx-auto flex h-16 max-w-lg items-center justify-between px-2">
+        {Array.from({ length: 5 }, (_, index) => (
+          <div key={index} className="flex flex-1 flex-col items-center gap-1.5">
+            <Skeleton className="h-7 w-12 rounded-full" />
+            <Skeleton className="h-2 w-8" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function ProductDetailSkeleton() {

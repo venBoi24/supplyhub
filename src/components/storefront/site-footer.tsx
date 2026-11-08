@@ -13,7 +13,7 @@ export async function SiteFooter() {
   const [categories, vendors] = await Promise.all([listCategorySummaries(), listVendorSummaries()]);
 
   return (
-    <footer className="mt-20 border-t border-border bg-primary text-primary-foreground">
+    <footer className="mt-20 hidden border-t border-border bg-primary text-primary-foreground md:block">
       <PageShell className="py-14 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.8fr_1fr_1fr_1fr]">
           <div className="max-w-sm">

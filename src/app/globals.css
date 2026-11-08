@@ -206,6 +206,14 @@
   .scroll-x::-webkit-scrollbar-thumb:hover {
     background-color: var(--muted-foreground);
   }
+
+  /* Clearance so page content is never hidden behind the fixed mobile bottom nav.
+     Scoped below the md breakpoint, where the bottom nav is visible. */
+  @media (width < 48rem) {
+    .bottom-nav-clearance {
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    }
+  }
 }
 
 @keyframes overlay-fade-in {
