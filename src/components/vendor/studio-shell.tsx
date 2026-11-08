@@ -1,7 +1,9 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
+import { BottomNav } from "@/components/storefront/bottom-nav";
+import { BottomNavSkeleton } from "@/components/storefront/skeletons";
 import { Wordmark } from "@/components/storefront/wordmark";
 import { Button } from "@/components/ui/button";
 import { StudioNav } from "@/components/vendor/studio-nav";
@@ -76,9 +78,13 @@ export function StudioShell({ studio, children }: StudioShellProps) {
 
       {approved ? <StudioNav /> : null}
 
-      <main id="main" className="flex-1">
+      <main id="main" className="bottom-nav-clearance flex-1">
         <div className="mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6 sm:py-8">{children}</div>
       </main>
+
+      <Suspense fallback={<BottomNavSkeleton />}>
+        <BottomNav />
+      </Suspense>
     </div>
   );
 }

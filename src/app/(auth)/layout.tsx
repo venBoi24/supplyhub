@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 
+import { BottomNav } from "@/components/storefront/bottom-nav";
+import { BottomNavSkeleton } from "@/components/storefront/skeletons";
 import { SkipLink } from "@/components/storefront/skip-link";
 import { Wordmark } from "@/components/storefront/wordmark";
 import { listVendorSummaries } from "@/features/catalog/queries";
@@ -42,7 +44,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        <div className="flex min-h-dvh flex-col">
+        <div className="bottom-nav-clearance flex min-h-dvh flex-col">
           <header className="flex items-center justify-between gap-4 px-5 py-5 sm:px-8">
             <Link
               href="/"
@@ -66,6 +68,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <footer className="px-5 pb-8 text-center text-xs text-muted-foreground sm:px-8">
             Sessions expire after seven days. SupplyHub never stores card details.
           </footer>
+
+          <Suspense fallback={<BottomNavSkeleton />}>
+            <BottomNav />
+          </Suspense>
         </div>
       </div>
     </>
