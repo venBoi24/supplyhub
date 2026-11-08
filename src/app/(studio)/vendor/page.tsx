@@ -267,7 +267,7 @@ async function VendorContent({
               No orders yet. Paid orders containing your objects will appear here.
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="scroll-x">
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className="border-b border-border bg-surface-muted/60">

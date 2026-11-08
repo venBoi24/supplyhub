@@ -85,7 +85,7 @@ async function AdminProductsContent({
           </p>
         </div>
 
-        <dl className="grid grid-cols-3 gap-x-8 gap-y-3 text-sm sm:grid-cols-5">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-3 lg:grid-cols-5">
           <div>
             <dt className="eyebrow text-muted-foreground">Review</dt>
             <dd className="mt-1 font-display text-2xl font-medium">{counts.PENDING_REVIEW}</dd>

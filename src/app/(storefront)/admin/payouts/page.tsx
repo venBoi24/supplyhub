@@ -104,7 +104,7 @@ async function AdminPayoutsContent() {
               className="mt-4"
             />
           ) : (
-            <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-surface">
+            <div className="scroll-x mt-4 rounded-xl border border-border bg-surface">
               <table className="w-full min-w-[40rem] text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs text-muted-foreground">

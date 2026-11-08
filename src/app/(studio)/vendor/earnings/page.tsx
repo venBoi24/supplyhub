@@ -63,7 +63,7 @@ async function VendorEarningsContent() {
             No payout records yet.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-xl border border-border bg-surface">
+          <div className="scroll-x mt-3 rounded-xl border border-border bg-surface">
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead className="bg-surface-muted/60">
                 <tr>

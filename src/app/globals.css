@@ -129,6 +129,9 @@
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Guard against any stray horizontal overflow on small screens without creating a
+       scroll container (clip keeps sticky headers working). */
+    overflow-x: clip;
   }
 
   ::selection {
@@ -176,6 +179,32 @@
     line-height: 1rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
+  }
+
+  /* Horizontal scroll regions (tab strips, wide tables) with a slim, palette-matched
+     scrollbar and momentum scrolling on touch devices. */
+  .scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  .scroll-x::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .scroll-x::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scroll-x::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border-radius: 9999px;
+  }
+
+  .scroll-x::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
   }
 }
 

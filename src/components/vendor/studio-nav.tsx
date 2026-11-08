@@ -38,7 +38,7 @@ export function StudioNav() {
 
   return (
     <nav aria-label="Studio navigation" className="border-b border-border bg-surface">
-      <div className="mx-auto flex w-full max-w-[1180px] gap-0.5 overflow-x-auto px-4 sm:px-6">
+      <div className="scroll-x mx-auto flex w-full max-w-[1180px] gap-0.5 px-4 sm:px-6">
         {tabs.map((tab) => {
           const active = tab.active(pathname);
 

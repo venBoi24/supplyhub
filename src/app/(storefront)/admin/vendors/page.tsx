@@ -111,7 +111,7 @@ async function AdminVendorsContent({
 
       <form
         action="/admin/vendors"
-        className="mt-8 grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_14rem_auto] sm:items-end"
+        className="mt-8 grid gap-3 rounded-xl border border-border bg-surface p-4 md:grid-cols-[minmax(0,1fr)_14rem_auto] md:items-end"
       >
         <label className="grid gap-2 text-sm">
           Studio, owner, or email

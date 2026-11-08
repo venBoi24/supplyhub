@@ -63,7 +63,7 @@ async function OrdersContent({
       </div>
       <form
         action="/admin/orders"
-        className="mt-7 grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_14rem_auto] sm:items-end"
+        className="mt-7 grid gap-3 rounded-xl border border-border bg-surface p-4 md:grid-cols-[minmax(0,1fr)_14rem_auto] md:items-end"
       >
         <label className="grid gap-2 text-sm">
           Order number, customer, or email
@@ -88,9 +88,9 @@ async function OrdersContent({
         {orders.map((order) => (
           <li key={order.id} className="rounded-xl border border-border bg-surface p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <h2 className="font-mono text-sm font-medium">{order.orderNumber}</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs break-all text-muted-foreground">
                   {order.customer.name} · {order.customer.email}
                 </p>
               </div>

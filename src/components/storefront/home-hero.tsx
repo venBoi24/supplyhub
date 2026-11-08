@@ -63,7 +63,7 @@ export function HomeHero({ stats, popularCategories }: HomeHeroProps) {
             </div>
           ) : null}
 
-          <dl className="mt-7 grid grid-cols-3 gap-4 border-t border-border pt-4">
+          <dl className="mt-7 grid grid-cols-3 gap-3 border-t border-border pt-4 sm:gap-4">
             {[
               { label: "Objects", value: stats.products },
               { label: "Studios", value: stats.vendors },

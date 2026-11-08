@@ -26,7 +26,8 @@ export async function SiteHeader() {
           href="/"
           className="mr-1 inline-flex shrink-0 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         >
-          <Wordmark />
+          <Wordmark compact className="sm:hidden" />
+          <Wordmark className="hidden sm:inline-flex" />
         </Link>
 
         <nav aria-label="Primary" className="ml-4 hidden items-center gap-1 lg:flex">

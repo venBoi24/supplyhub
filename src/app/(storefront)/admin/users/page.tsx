@@ -67,7 +67,7 @@ async function UsersContent({
       </div>
       <form
         action="/admin/users"
-        className="mt-7 grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_12rem_12rem_auto] sm:items-end"
+        className="mt-7 grid gap-3 rounded-xl border border-border bg-surface p-4 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto] md:items-end"
       >
         <label className="grid gap-2 text-sm">
           Name or email
@@ -99,7 +99,7 @@ async function UsersContent({
           Filter
         </Button>
       </form>
-      <div className="mt-6 overflow-x-auto rounded-xl border border-border bg-surface">
+      <div className="scroll-x mt-6 rounded-xl border border-border bg-surface">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="bg-surface-muted text-xs text-muted-foreground">
             <tr>
