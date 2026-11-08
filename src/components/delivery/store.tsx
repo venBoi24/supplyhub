@@ -3,14 +3,16 @@
 import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 
 import {
+  fetchRoadRoute,
   legProgress,
   makeSeed,
   type Delivery,
   type DeliveryAgent,
   type DeliveryState,
+  type Point,
 } from "./model";
 
-const STORAGE_KEY = "supplyhub-delivery-live-v1";
+const STORAGE_KEY = "supplyhub-delivery-live-v2";
 const CHANNEL = "supplyhub-delivery-live";
 const TICK_MS = 500;
 
@@ -78,6 +80,29 @@ function mutate(fn: (prev: DeliveryState) => DeliveryState) {
   commitState(fn(snapshot.state));
 }
 
+// Resolve free road geometry for a leg in the background. The delivery keeps a
+// fallback route until this lands; a stale response (status changed meanwhile)
+// is ignored so a finished leg never snaps back onto an old path.
+function resolveRoute(id: string, a: Point, b: Point, expectStatus: Delivery["status"]) {
+  void fetchRoadRoute(a, b).then((route) => {
+    if (!route) return;
+    mutate((prev) => ({
+      ...prev,
+      deliveries: prev.deliveries.map((d) =>
+        d.id === id && d.status === expectStatus ? { ...d, route } : d,
+      ),
+    }));
+  });
+}
+
+function resolveActiveRoutes(state: DeliveryState) {
+  for (const d of state.deliveries) {
+    if (d.status === "to_pickup" && !d.route)
+      resolveRoute(d.id, d.agentStart, d.pickup, "to_pickup");
+    if (d.status === "transit" && !d.route) resolveRoute(d.id, d.pickup, d.dropoff, "transit");
+  }
+}
+
 function start() {
   if (started || typeof window === "undefined") return;
   started = true;
@@ -85,6 +110,7 @@ function start() {
   const startTime = Date.now();
   const stored = readStored();
   snapshot = { state: stored ?? makeSeed(startTime), now: startTime };
+  resolveActiveRoutes(snapshot.state);
 
   if (typeof BroadcastChannel !== "undefined") {
     channel = new BroadcastChannel(CHANNEL);
@@ -181,11 +207,25 @@ function acceptDelivery(id: string) {
 }
 
 function startPickup(id: string) {
-  setDelivery(id, { status: "to_pickup", legStartedAt: Date.now(), legDurationMs: 25_000 });
+  const d = snapshot.state.deliveries.find((x) => x.id === id);
+  setDelivery(id, {
+    status: "to_pickup",
+    legStartedAt: Date.now(),
+    legDurationMs: 25_000,
+    route: null,
+  });
+  if (d) resolveRoute(id, d.agentStart, d.pickup, "to_pickup");
 }
 
 function confirmPickup(id: string) {
-  setDelivery(id, { status: "transit", legStartedAt: Date.now(), legDurationMs: 60_000 });
+  const d = snapshot.state.deliveries.find((x) => x.id === id);
+  setDelivery(id, {
+    status: "transit",
+    legStartedAt: Date.now(),
+    legDurationMs: 60_000,
+    route: null,
+  });
+  if (d) resolveRoute(id, d.pickup, d.dropoff, "transit");
 }
 
 function completeDelivery(id: string) {
@@ -193,7 +233,9 @@ function completeDelivery(id: string) {
 }
 
 function resetDemo() {
-  commitState(makeSeed(Date.now()));
+  const seed = makeSeed(Date.now());
+  commitState(seed);
+  resolveActiveRoutes(seed);
 }
 
 export function DeliveryProvider({ children }: { children: ReactNode }) {
