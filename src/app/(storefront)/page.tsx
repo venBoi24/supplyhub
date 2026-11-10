@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { ArrowRight, FileText, Heart, ShieldCheck, Sparkles, Store, Truck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -75,6 +76,10 @@ export default function StorefrontHomePage({ searchParams }: PageProps<"/">) {
 }
 
 async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
+  // New arrivals are time-relative, so compute the window at request time. Without
+  // this dynamic access, `new Date()` inside newArrivalsSince would run during the
+  // static prerender and Next.js blocks it as an unstable value.
+  await connection();
   const params = await searchParams;
   const period = parseNewArrivalPeriod(params.new);
   const [{ t }, stats, categories, vendors, featuredProducts, newArrivals] = await Promise.all([
