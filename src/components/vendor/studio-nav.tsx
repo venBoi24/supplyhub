@@ -1,40 +1,49 @@
 "use client";
 
+import { LayoutDashboard, Package, ReceiptText, Truck, UserRound, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
-const tabs = [
+// Shared by the desktop top tab bar (StudioNav) and the mobile bottom bar
+// (StudioBottomNav) so both stay in sync. Overview is always first and clickable.
+export const studioTabs = [
   {
     href: "/vendor",
     labelKey: "studio.overview",
+    icon: LayoutDashboard,
     active: (pathname: string) => pathname === "/vendor",
   },
   {
     href: "/vendor/products",
     labelKey: "studio.products",
+    icon: Package,
     active: (pathname: string) => pathname.startsWith("/vendor/products"),
   },
   {
     href: "/vendor/orders",
     labelKey: "studio.orders",
+    icon: ReceiptText,
     active: (pathname: string) => pathname.startsWith("/vendor/orders"),
   },
   {
     href: "/delivery-live?persona=seller",
     labelKey: "studio.deliveries",
+    icon: Truck,
     active: () => false,
   },
   {
     href: "/vendor/earnings",
     labelKey: "studio.earnings",
+    icon: Wallet,
     active: (pathname: string) => pathname.startsWith("/vendor/earnings"),
   },
   {
     href: "/vendor/profile",
     labelKey: "studio.profile",
+    icon: UserRound,
     active: (pathname: string) => pathname.startsWith("/vendor/profile"),
   },
 ] as const;
@@ -44,9 +53,9 @@ export function StudioNav() {
   const { t } = useI18n();
 
   return (
-    <nav aria-label={t("studio.nav")} className="border-b border-border bg-surface">
+    <nav aria-label={t("studio.nav")} className="hidden border-b border-border bg-surface md:block">
       <div className="scroll-x mx-auto flex w-full max-w-[1180px] gap-0.5 px-4 sm:px-6">
-        {tabs.map((tab) => {
+        {studioTabs.map((tab) => {
           const active = tab.active(pathname);
 
           return (

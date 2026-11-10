@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Wordmark } from "@/components/storefront/wordmark";
 import { Button } from "@/components/ui/button";
 import { StudioNav } from "@/components/vendor/studio-nav";
+import { StudioBottomNav } from "@/components/vendor/studio-bottom-nav";
 import { VendorStatusBadge } from "@/components/vendors/vendor-status-badge";
 import { signOutAction } from "@/features/identity/actions";
 import type { VendorStatus } from "@/generated/prisma/enums";
@@ -95,9 +96,11 @@ export async function StudioShell({ studio, children }: StudioShellProps) {
 
       {approved ? <StudioNav /> : null}
 
-      <main id="main" className="flex-1">
+      <main id="main" className="bottom-nav-clearance flex-1">
         <div className="mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6 sm:py-8">{children}</div>
       </main>
+
+      {approved ? <StudioBottomNav /> : null}
     </div>
   );
 }
