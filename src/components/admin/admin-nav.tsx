@@ -13,24 +13,26 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 const links = [
-  { href: "/admin/vendors", label: "Vendors", icon: Store },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/audit", label: "Audit log", icon: ClipboardList },
-  { href: "/admin/products", label: "Catalog", icon: ShieldCheck },
-  { href: "/admin/categories", label: "Departments", icon: FolderTree },
-  { href: "/admin/payments", label: "Payments", icon: Wallet },
-  { href: "/admin/payouts", label: "Payouts", icon: Banknote },
+  { href: "/admin/vendors", labelKey: "admin.vendors", icon: Store },
+  { href: "/admin/orders", labelKey: "admin.orders", icon: ShoppingBag },
+  { href: "/admin/users", labelKey: "admin.users", icon: Users },
+  { href: "/admin/audit", labelKey: "admin.audit", icon: ClipboardList },
+  { href: "/admin/products", labelKey: "admin.catalog", icon: ShieldCheck },
+  { href: "/admin/categories", labelKey: "admin.departments", icon: FolderTree },
+  { href: "/admin/payments", labelKey: "admin.payments", icon: Wallet },
+  { href: "/admin/payouts", labelKey: "admin.payouts", icon: Banknote },
 ];
 
 export function AdminNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
-    <nav aria-label="Administration" className="scroll-x -mx-1 flex items-center gap-1 px-1 py-1">
+    <nav aria-label={t("admin.nav")} className="scroll-x -mx-1 flex items-center gap-1 px-1 py-1">
       {links.map((link) => {
         const active = pathname.startsWith(link.href);
 
@@ -47,7 +49,7 @@ export function AdminNav() {
             )}
           >
             <link.icon className="size-4" aria-hidden="true" />
-            {link.label}
+            {t(link.labelKey)}
           </Link>
         );
       })}

@@ -12,7 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { DEMO_CATALOG_NOTICE } from "@/features/catalog/constants";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { SearchForm } from "./search-form";
@@ -27,18 +27,17 @@ const linkClassName =
   "flex items-center justify-between border-b border-border py-3.5 font-display text-lg font-medium tracking-[-0.02em] transition-colors hover:text-accent";
 
 export function MobileNav({ categories, vendors }: MobileNavProps) {
+  const { t } = useI18n();
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation menu">
+        <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("nav.openMenu")}>
           <Menu className="size-5" aria-hidden="true" />
         </Button>
       </SheetTrigger>
       <SheetContent>
-        <SheetTitle className="sr-only">Menu</SheetTitle>
-        <SheetDescription className="sr-only">
-          Browse departments, studios, and search the SupplyHub preview catalog.
-        </SheetDescription>
+        <SheetTitle className="sr-only">{t("nav.menu")}</SheetTitle>
+        <SheetDescription className="sr-only">{t("nav.menuDescription")}</SheetDescription>
 
         <SheetClose asChild>
           <Link href="/" className="inline-flex w-fit" aria-label="SupplyHub home">
@@ -50,26 +49,26 @@ export function MobileNav({ categories, vendors }: MobileNavProps) {
           <SearchForm inputId="mobile-catalog-search" />
         </div>
 
-        <nav aria-label="Mobile navigation" className="mt-8 flex flex-col">
+        <nav aria-label={t("nav.mobile")} className="mt-8 flex flex-col">
           <SheetClose asChild>
             <Link href="/products" className={linkClassName}>
-              Shop all <span aria-hidden="true">→</span>
+              {t("nav.shopAll")} <span aria-hidden="true">→</span>
             </Link>
           </SheetClose>
           <SheetClose asChild>
             <Link href="/delivery" className={linkClassName}>
-              Delivery <span aria-hidden="true">→</span>
+              {t("nav.delivery")} <span aria-hidden="true">→</span>
             </Link>
           </SheetClose>
           <SheetClose asChild>
             <Link href="/vendors" className={linkClassName}>
-              Studios <span aria-hidden="true">→</span>
+              {t("nav.studios")} <span aria-hidden="true">→</span>
             </Link>
           </SheetClose>
         </nav>
 
         <div className="mt-8">
-          <p className="eyebrow text-muted-foreground">Departments</p>
+          <p className="eyebrow text-muted-foreground">{t("nav.departments")}</p>
           <ul className="mt-3 space-y-1">
             {categories.map((category) => (
               <li key={category.slug}>
@@ -80,7 +79,7 @@ export function MobileNav({ categories, vendors }: MobileNavProps) {
                   >
                     <span>{category.name}</span>
                     <span className="font-mono text-[0.625rem] tracking-[0.12em] text-muted-foreground uppercase">
-                      {category.productCount} pieces
+                      {t("nav.pieces", { count: category.productCount })}
                     </span>
                   </Link>
                 </SheetClose>
@@ -90,7 +89,7 @@ export function MobileNav({ categories, vendors }: MobileNavProps) {
         </div>
 
         <div className="mt-7">
-          <p className="eyebrow text-muted-foreground">Studios</p>
+          <p className="eyebrow text-muted-foreground">{t("nav.studios")}</p>
           <ul className="mt-3 space-y-1">
             {vendors.map((vendor) => (
               <li key={vendor.slug}>
@@ -108,7 +107,7 @@ export function MobileNav({ categories, vendors }: MobileNavProps) {
         </div>
 
         <p className={cn("mt-auto pt-8 text-xs leading-5 text-muted-foreground")}>
-          {DEMO_CATALOG_NOTICE}
+          {t("announcement.notice")}
         </p>
       </SheetContent>
     </Sheet>

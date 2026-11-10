@@ -1,8 +1,11 @@
+"use client";
+
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import type { ProductListing, VendorSummary } from "@/features/catalog/types";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 export function StudioFeatureCard({
@@ -16,6 +19,8 @@ export function StudioFeatureCard({
   priority?: boolean;
   className?: string;
 }) {
+  const t = useT();
+
   return (
     <Link
       href={`/vendors/${vendor.slug}`}
@@ -47,7 +52,7 @@ export function StudioFeatureCard({
               {vendor.name}
             </h3>
             <p className="mt-2 text-sm text-white/75">
-              {vendor.productCount} objects · Visit the studio
+              {t("vendor.objectsVisit", { count: vendor.productCount })}
             </p>
           </div>
           <span className="grid size-10 shrink-0 place-items-center rounded-md border border-white/25 bg-white/10 text-white transition-colors duration-300 group-hover:bg-white group-hover:text-[#0b1020]">
@@ -66,6 +71,8 @@ export function StudioCompactCard({
   vendor: VendorSummary;
   className?: string;
 }) {
+  const t = useT();
+
   return (
     <Link
       href={`/vendors/${vendor.slug}`}
@@ -92,7 +99,7 @@ export function StudioCompactCard({
         </p>
         <h3 className="mt-2 font-display text-2xl font-medium tracking-[-0.03em]">{vendor.name}</h3>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          {vendor.productCount} objects in this edit
+          {t("vendor.objectsInEdit", { count: vendor.productCount })}
         </p>
       </div>
     </Link>

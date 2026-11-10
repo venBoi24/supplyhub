@@ -223,7 +223,7 @@ async function VendorContent({
         hasProfile={Boolean((vendor.story ?? vendor.description) && vendor.departments.length)}
         hasLocation={vendor.latitude !== null && vendor.longitude !== null}
         objectCount={stats.total}
-        submittedCount={stats.published + stats.pendingReview}
+        submittedCount={stats.total}
       />
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -237,11 +237,7 @@ async function VendorContent({
           }
         />
         <StudioKpi label="Published" value={stats.published} note="Visible in the catalog" />
-        <StudioKpi
-          label="Pending review"
-          value={stats.pendingReview}
-          note="Waiting on an administrator"
-        />
+        <StudioKpi label="Drafts" value={stats.drafts} note="Not yet published" />
         <StudioKpi label="Low stock" value={stats.lowStock} note="Published items at 4 or fewer" />
       </div>
 
@@ -319,21 +315,22 @@ async function VendorContent({
               </h2>
             </div>
             <ul className="px-4 py-1">
-              {stats.pendingReview > 0 ? (
+              {stats.drafts > 0 ? (
                 <AttentionRow
                   icon={AlertCircle}
                   tone="bg-warning/10 text-warning"
-                  title={`${stats.pendingReview} ${
-                    stats.pendingReview === 1 ? "object" : "objects"
-                  } pending review`}
-                  copy="Wait for approval before editing."
+                  title={`${stats.drafts} ${
+                    stats.drafts === 1 ? "draft" : "drafts"
+                  } not yet published`}
+                  copy="Publish them when they are ready."
+                  href="/vendor/products"
                 />
               ) : (
                 <AttentionRow
                   icon={BadgeCheck}
                   tone="bg-sage-soft text-sage"
-                  title="No objects awaiting review"
-                  copy="Everything in the catalog is reviewed."
+                  title="All objects are live"
+                  copy="Every object in your catalog is published."
                 />
               )}
 

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import type { ProductListing } from "@/features/catalog/types";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { ExperienceProvider, useExperience } from "./store";
@@ -28,15 +29,15 @@ import { SavedPanel } from "./panels/saved-panel";
 import { SecurityPanel } from "./panels/security-panel";
 import { ShopPanel } from "./panels/shop-panel";
 
-const TABS: { id: ExperienceTab; label: string; icon: typeof ShieldCheck }[] = [
-  { id: "shop", label: "Shop & checkout", icon: ShoppingBag },
-  { id: "orders", label: "Orders & tracking", icon: PackageCheck },
-  { id: "protection", label: "Protection & returns", icon: ShieldCheck },
-  { id: "reviews", label: "Reviews", icon: Star },
-  { id: "inbox", label: "Inbox", icon: Inbox },
-  { id: "security", label: "Security", icon: Lock },
-  { id: "saved", label: "Saved & alerts", icon: Heart },
-  { id: "alerts", label: "Notifications", icon: Bell },
+const TABS: { id: ExperienceTab; labelKey: string; icon: typeof ShieldCheck }[] = [
+  { id: "shop", labelKey: "experience.tabs.shop", icon: ShoppingBag },
+  { id: "orders", labelKey: "experience.tabs.orders", icon: PackageCheck },
+  { id: "protection", labelKey: "experience.tabs.protection", icon: ShieldCheck },
+  { id: "reviews", labelKey: "experience.tabs.reviews", icon: Star },
+  { id: "inbox", labelKey: "experience.tabs.inbox", icon: Inbox },
+  { id: "security", labelKey: "experience.tabs.security", icon: Lock },
+  { id: "saved", labelKey: "experience.tabs.saved", icon: Heart },
+  { id: "alerts", labelKey: "experience.tabs.alerts", icon: Bell },
 ];
 
 function CenterInner({
@@ -47,6 +48,7 @@ function CenterInner({
   initialTab: ExperienceTab;
 }) {
   const [tab, setTab] = useState<ExperienceTab>(initialTab);
+  const { t } = useI18n();
   const { state, resetExperience } = useExperience();
   const unread = state.notifications.filter((n) => !n.read).length;
   const chatUnread = Object.values(state.chats).reduce((sum, t) => sum + t.unread, 0);
@@ -55,53 +57,52 @@ function CenterInner({
     <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-10">
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6">
         <div>
-          <p className="eyebrow text-muted-foreground">Trust &amp; experience</p>
+          <p className="eyebrow text-muted-foreground">{t("experience.eyebrow")}</p>
           <h1 className="mt-2 font-display text-3xl font-medium tracking-[-0.03em] sm:text-4xl">
-            Buy with confidence
+            {t("experience.title")}
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
-            Every purchase is covered end to end: protected payment, live courier tracking with a
-            hand-over code, easy returns, verified reviews and a direct line to the studio.
+            {t("experience.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0f766e]/30 bg-[#0f766e]/10 px-3 py-1.5 text-[0.6875rem] font-semibold text-[#0f766e]">
-            <ShieldCheck className="size-3.5" /> Sandbox · no real charges
+            <ShieldCheck className="size-3.5" /> {t("experience.sandbox")}
           </span>
           <button
             type="button"
             onClick={resetExperience}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-border-strong hover:text-foreground"
           >
-            <RotateCcw className="size-3.5" /> Reset
+            <RotateCcw className="size-3.5" /> {t("experience.reset")}
           </button>
         </div>
       </header>
 
       <nav
-        aria-label="Experience sections"
+        aria-label={t("experience.sections")}
         className="mt-6 flex scrollbar-thin gap-1 overflow-x-auto rounded-xl border border-border bg-surface p-1"
       >
-        {TABS.map((t) => (
+        {TABS.map((item) => (
           <button
-            key={t.id}
+            key={item.id}
             type="button"
-            onClick={() => setTab(t.id)}
-            aria-pressed={tab === t.id}
+            onClick={() => setTab(item.id)}
+            aria-pressed={tab === item.id}
             className={cn(
               "relative inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition",
-              tab === t.id
+              tab === item.id
                 ? "bg-[#0f766e] text-white"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <t.icon className="size-4" /> {t.label}
-            {t.id === "alerts" && unread > 0 ? (
+            <item.icon className="size-4" /> {t(item.labelKey)}
+            {item.id === "alerts" && unread > 0 ? (
               <span className="ml-0.5 grid min-w-4 place-items-center rounded-full bg-accent px-1 text-[0.625rem] font-bold text-white">
                 {unread}
               </span>
             ) : null}
-            {t.id === "inbox" && chatUnread > 0 ? (
+            {item.id === "inbox" && chatUnread > 0 ? (
               <span className="ml-0.5 grid min-w-4 place-items-center rounded-full bg-accent px-1 text-[0.625rem] font-bold text-white">
                 {chatUnread}
               </span>
@@ -123,8 +124,7 @@ function CenterInner({
 
       <p className="mt-10 flex items-center gap-2 border-t border-border pt-5 text-xs text-muted-foreground">
         <MessageSquare className="size-4" aria-hidden="true" />
-        This experience runs on your device so you can try every protection feature safely. Real
-        catalog prices and studios are used; payments are simulated and never charge an account.
+        {t("experience.footnote")}
       </p>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { Heart } from "lucide-react";
 
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
@@ -9,14 +10,19 @@ import type { WatchSnapshot } from "../types";
 
 export function WishlistButton({ item, className }: { item: WatchSnapshot; className?: string }) {
   const { state, toggleWishlist } = useExperience();
+  const t = useT();
   const saved = state.wishlist.includes(item.slug);
 
   return (
     <button
       type="button"
       aria-pressed={saved}
-      aria-label={saved ? `Remove ${item.name} from wishlist` : `Save ${item.name} to wishlist`}
-      title={saved ? "Saved · watching price & stock" : "Save & watch price"}
+      aria-label={
+        saved
+          ? t("product.removeNamedFromWishlist", { name: item.name })
+          : t("product.saveNamedToWishlist", { name: item.name })
+      }
+      title={saved ? t("product.savedWatching") : t("product.saveWatchPrice")}
       onClick={() => toggleWishlist(item)}
       className={cn(
         "pointer-events-auto grid size-9 place-items-center rounded-full border border-border bg-surface/90 text-muted-foreground shadow-sm backdrop-blur transition hover:scale-105 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",

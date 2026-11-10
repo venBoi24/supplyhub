@@ -3,10 +3,11 @@
 import { useState, type FormEvent } from "react";
 import { ShieldCheck, Undo2 } from "lucide-react";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
-import { formatCents, ORDER_STATUS_LABEL } from "../types";
+import { formatCents } from "../types";
 
 const input =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-[#0f766e] focus:outline-none";
@@ -21,6 +22,7 @@ const RETURN_REASONS = [
 ];
 
 export function ProtectionPanel() {
+  const { t } = useI18n();
   const { state, requestReturn } = useExperience();
   const [orderId, setOrderId] = useState("");
   const [reason, setReason] = useState(RETURN_REASONS[0]!);
@@ -69,11 +71,11 @@ export function ProtectionPanel() {
       <div className="space-y-6">
         <form onSubmit={submit} className="rounded-2xl border border-border bg-surface p-5">
           <h2 className="flex items-center gap-2 font-display text-lg font-medium">
-            <Undo2 className="size-5 text-[#0f766e]" /> Open a return or dispute
+            <Undo2 className="size-5 text-[#0f766e]" /> {t("experience.protection.returnTitle")}
           </h2>
           {eligible.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">
-              Returns open once an order is delivered. Complete a purchase first.
+              {t("experience.protection.noOrders")}
             </p>
           ) : (
             <div className="mt-4 space-y-3">
@@ -97,7 +99,7 @@ export function ProtectionPanel() {
               </div>
               <div>
                 <label className={label} htmlFor="ret-reason">
-                  Reason
+                  {t("experience.protection.reason")}
                 </label>
                 <select
                   id="ret-reason"
@@ -112,7 +114,7 @@ export function ProtectionPanel() {
               </div>
               <div>
                 <label className={label} htmlFor="ret-detail">
-                  Details (optional)
+                  {t("experience.protection.detail")} ({t("common.optional")})
                 </label>
                 <textarea
                   id="ret-detail"
@@ -120,7 +122,7 @@ export function ProtectionPanel() {
                   rows={3}
                   value={detail}
                   onChange={(e) => setDetail(e.target.value)}
-                  placeholder="Tell us what happened…"
+                  placeholder={`${t("experience.protection.detail")}…`}
                 />
               </div>
               <button
@@ -128,16 +130,18 @@ export function ProtectionPanel() {
                 disabled={!orderId}
                 className="w-full rounded-lg bg-[#0f766e] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
               >
-                Submit return request
+                {t("experience.protection.submitReturn")}
               </button>
             </div>
           )}
         </form>
 
         <section className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="font-display text-lg font-medium">Protection &amp; return status</h2>
+          <h2 className="font-display text-lg font-medium">
+            {t("experience.protection.statusTitle")}
+          </h2>
           {state.orders.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">No orders yet.</p>
+            <p className="mt-3 text-sm text-muted-foreground">{t("experience.orders.empty")}</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {state.orders.map((o) => (
@@ -145,7 +149,7 @@ export function ProtectionPanel() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-mono text-xs font-semibold">{o.number}</span>
                     <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[0.6875rem] font-semibold text-muted-foreground">
-                      {ORDER_STATUS_LABEL[o.status]}
+                      {t(`experience.orders.status.${o.status}`)}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FormMessage } from "@/components/ui/form-message";
 import { removeCartLineAction, updateCartLineAction } from "@/features/cart/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export interface CartLineControlsProps {
   productId: string;
@@ -16,6 +17,7 @@ export interface CartLineControlsProps {
 
 export function CartLineControls({ productId, quantity, maxQuantity }: CartLineControlsProps) {
   const [state, formAction] = useActionState(updateCartLineAction, initialFormState);
+  const t = useT();
 
   return (
     <form action={formAction} className="space-y-3">
@@ -27,10 +29,10 @@ export function CartLineControls({ productId, quantity, maxQuantity }: CartLineC
           max={Math.max(quantity, maxQuantity)}
         />
         <Button type="submit" variant="secondary" size="sm">
-          Update
+          {t("common.update")}
         </Button>
         <Button type="submit" formAction={removeCartLineAction} variant="ghost" size="sm">
-          Remove
+          {t("common.remove")}
         </Button>
       </div>
       <FormMessage state={state} />

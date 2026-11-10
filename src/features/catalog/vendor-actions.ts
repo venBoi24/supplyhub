@@ -251,7 +251,9 @@ export async function saveProductAction(
               ...data,
               vendorId,
               stock: parsed.data.initialStock,
-              status: "DRAFT",
+              // Objects go live immediately — no administrator approval step.
+              status: "PUBLISHED",
+              publishedAt: new Date(),
             },
             select: { id: true },
           });
@@ -302,7 +304,7 @@ export async function saveProductAction(
             action: "PRODUCT_CREATED",
             targetType: "product",
             targetId: product.id,
-            metadata: { slug: product.id, status: "DRAFT" },
+            metadata: { slug: product.id, status: "PUBLISHED" },
           });
 
           return product;
@@ -317,9 +319,9 @@ export async function saveProductAction(
       logger.info("product.created", { actorId: actor.id, productId: created.id });
       revalidateCatalog();
       if (adminManaged) {
-        return { status: "success", message: "Product draft created for this vendor." };
+        return { status: "success", message: "Product published for this vendor." };
       }
-      redirect(`/vendor/products/${created.id}?saved=1`);
+      redirect(`/vendor/products/${created.id}?published=1`);
     }
 
     const existing = await database.product.findFirst({
@@ -374,7 +376,7 @@ export async function saveProductAction(
   }
 }
 
-export async function submitProductAction(
+export async function publishProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
@@ -403,25 +405,28 @@ export async function submitProductAction(
   }
 
   if (product.status !== "DRAFT" && product.status !== "REJECTED") {
-    return { status: "error", message: "Only drafts or rejected objects can be submitted." };
+    return { status: "error", message: "Only drafts or rejected objects can be published." };
   }
 
   if (product.category.status !== "ACTIVE") {
-    return { status: "error", message: "Choose an active department before submitting." };
+    return { status: "error", message: "Choose an active department before publishing." };
   }
 
   if (product._count.images === 0) {
-    return { status: "error", message: "Add at least one image before submitting for review." };
+    return { status: "error", message: "Add at least one image before publishing." };
   }
 
+  const now = new Date();
   const updated = await database.product.updateMany({
     where: { id: product.id, vendorId, status: product.status },
     data: {
-      status: "PENDING_REVIEW",
-      submittedAt: new Date(),
+      status: "PUBLISHED",
+      publishedAt: now,
+      submittedAt: now,
       reviewNote: null,
       reviewedAt: null,
       reviewedById: null,
+      archivedAt: null,
     },
   });
 
@@ -432,17 +437,17 @@ export async function submitProductAction(
   await database.$transaction((transaction) =>
     recordAuditEvent(transaction, {
       actorId: actor.id,
-      action: "PRODUCT_SUBMITTED",
+      action: "PRODUCT_PUBLISHED",
       targetType: "product",
       targetId: product.id,
-      metadata: { previousStatus: product.status, newStatus: "PENDING_REVIEW" },
+      metadata: { previousStatus: product.status, newStatus: "PUBLISHED", selfPublished: true },
     }),
   );
 
-  logger.info("product.submitted", { actorId: actor.id, productId: product.id });
+  logger.info("product.published", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
-  if (adminManaged) return { status: "success", message: "Product sent for review." };
-  redirect("/vendor/products?sent=1");
+  if (adminManaged) return { status: "success", message: "Product published." };
+  redirect("/vendor/products?published=1");
 }
 
 export async function archiveProductAction(

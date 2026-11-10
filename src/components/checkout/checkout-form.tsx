@@ -11,6 +11,7 @@ import { DeliveryPlanner } from "./delivery-planner";
 import { formatMoney } from "@/features/catalog/money";
 import { placeOrderAction } from "@/features/checkout/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 function haversineKm(
   latitude1: number,
@@ -56,6 +57,7 @@ export function CheckoutForm({
   vendors,
 }: CheckoutFormProps) {
   const [state, formAction] = useActionState(placeOrderAction, initialFormState);
+  const t = useT();
   const errors = state.fieldErrors ?? {};
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(() => {
     if (typeof window === "undefined") {
@@ -89,7 +91,7 @@ export function CheckoutForm({
 
   function requestLocation() {
     if (!navigator.geolocation) {
-      setLocationError("This browser does not support location access.");
+      setLocationError(t("checkout.locationUnsupported"));
       return;
     }
 
@@ -104,7 +106,7 @@ export function CheckoutForm({
         setRequestingLocation(false);
       },
       () => {
-        setLocationError("Location access was denied or unavailable.");
+        setLocationError(t("checkout.locationDenied"));
         setRequestingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
@@ -146,7 +148,7 @@ export function CheckoutForm({
   return (
     <form action={formAction} className="space-y-6">
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Full name" htmlFor="recipientName" error={errors.recipientName}>
+        <Field label={t("checkout.fullName")} htmlFor="recipientName" error={errors.recipientName}>
           <Input
             id="recipientName"
             name="recipientName"
@@ -156,7 +158,7 @@ export function CheckoutForm({
             {...inputProps("recipientName")}
           />
         </Field>
-        <Field label="Email" htmlFor="contactEmail" error={errors.contactEmail}>
+        <Field label={t("checkout.email")} htmlFor="contactEmail" error={errors.contactEmail}>
           <Input
             id="contactEmail"
             name="contactEmail"
@@ -168,9 +170,9 @@ export function CheckoutForm({
           />
         </Field>
         <Field
-          label="Phone"
+          label={t("checkout.phoneLabel")}
           htmlFor="contactPhone"
-          hint="Optional"
+          hint={t("common.optional")}
           error={errors.contactPhone}
           className="sm:col-span-2"
         >
@@ -184,7 +186,7 @@ export function CheckoutForm({
           />
         </Field>
         <Field
-          label="Street address"
+          label={t("checkout.streetAddress")}
           htmlFor="addressLine1"
           error={errors.addressLine1}
           className="sm:col-span-2"
@@ -198,9 +200,9 @@ export function CheckoutForm({
           />
         </Field>
         <Field
-          label="Apartment, suite, or unit"
+          label={t("checkout.addressLine2")}
           htmlFor="addressLine2"
-          hint="Optional"
+          hint={t("common.optional")}
           error={errors.addressLine2}
           className="sm:col-span-2"
         >
@@ -211,7 +213,7 @@ export function CheckoutForm({
             {...inputProps("addressLine2")}
           />
         </Field>
-        <Field label="City" htmlFor="city" error={errors.city}>
+        <Field label={t("checkout.city")} htmlFor="city" error={errors.city}>
           <Input
             id="city"
             name="city"
@@ -220,7 +222,7 @@ export function CheckoutForm({
             {...inputProps("city")}
           />
         </Field>
-        <Field label="State, region, or province" htmlFor="region" error={errors.region}>
+        <Field label={t("checkout.region")} htmlFor="region" error={errors.region}>
           <Input
             id="region"
             name="region"
@@ -229,7 +231,7 @@ export function CheckoutForm({
             {...inputProps("region")}
           />
         </Field>
-        <Field label="Postal code" htmlFor="postalCode" error={errors.postalCode}>
+        <Field label={t("checkout.postalCode")} htmlFor="postalCode" error={errors.postalCode}>
           <Input
             id="postalCode"
             name="postalCode"
@@ -239,9 +241,9 @@ export function CheckoutForm({
           />
         </Field>
         <Field
-          label="Country code"
+          label={t("checkout.countryCode")}
           htmlFor="countryCode"
-          hint="Two letters, e.g. US"
+          hint={t("checkout.countryHint")}
           error={errors.countryCode}
         >
           <Input
@@ -256,7 +258,7 @@ export function CheckoutForm({
       </div>
 
       <fieldset className="space-y-4 border-t border-border pt-6">
-        <legend className="eyebrow text-muted-foreground">Fulfillment</legend>
+        <legend className="eyebrow text-muted-foreground">{t("checkout.fulfillment")}</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-4">
             <input
@@ -271,9 +273,9 @@ export function CheckoutForm({
               className="mt-1"
             />
             <span>
-              <span className="block font-medium">Pickup from studio</span>
+              <span className="block font-medium">{t("checkout.pickup")}</span>
               <span className="block text-sm text-muted-foreground">
-                Collect the object directly from each studio. No delivery fee.
+                {t("checkout.pickupBody")}
               </span>
             </span>
           </label>
@@ -290,9 +292,9 @@ export function CheckoutForm({
               className="mt-1"
             />
             <span>
-              <span className="block font-medium">Delivery</span>
+              <span className="block font-medium">{t("checkout.delivery")}</span>
               <span className="block text-sm text-muted-foreground">
-                Delivered to the address above. Price depends on distance.
+                {t("checkout.deliveryBody")}
               </span>
             </span>
           </label>
@@ -315,17 +317,19 @@ export function CheckoutForm({
                 disabled={requestingLocation}
                 className="inline-flex items-center rounded-md border border-border px-3 py-2 text-sm font-medium transition-colors hover:border-border-strong disabled:opacity-50"
               >
-                {requestingLocation ? "Finding location…" : "Use my location"}
+                {requestingLocation ? t("checkout.findingLocation") : t("checkout.useMyLocation")}
               </button>
               {location ? (
                 <span className="text-sm text-muted-foreground">
-                  Location captured: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+                  {t("checkout.locationCaptured", {
+                    coordinates: `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`,
+                  })}
                 </span>
               ) : null}
             </div>
             {locationError ? <p className="text-sm text-danger">{locationError}</p> : null}
             <Button type="button" variant="secondary" onClick={() => setShowDeliveryDialog(true)}>
-              Open delivery map
+              {t("checkout.openDeliveryMap")}
             </Button>
             {quotes.length > 0 ? (
               <ul className="space-y-2 text-sm">
@@ -337,16 +341,14 @@ export function CheckoutForm({
                         {quote.distanceKm.toFixed(1)} km · {formatMoney(quote.feeCents, currency)}
                       </span>
                     ) : (
-                      <span className="text-danger">Delivery unavailable</span>
+                      <span className="text-danger">{t("checkout.deliveryUnavailable")}</span>
                     )}
                   </li>
                 ))}
               </ul>
             ) : null}
             {deliveryBlocked ? (
-              <p className="text-sm text-danger">
-                Use your location before placing a delivery order.
-              </p>
+              <p className="text-sm text-danger">{t("checkout.locationRequired")}</p>
             ) : null}
           </div>
         ) : null}
@@ -355,13 +357,11 @@ export function CheckoutForm({
       <FormMessage state={state} />
 
       <div className="border-t border-border pt-6">
-        <SubmitButton pendingLabel="Reserving your order…" size="lg" disabled={deliveryBlocked}>
-          Place order
+        <SubmitButton pendingLabel={t("checkout.reserving")} size="lg" disabled={deliveryBlocked}>
+          {t("checkout.placeOrder")}
         </SubmitButton>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          Payment is collected through LynxPay on the order page in Tanzanian shillings. The order
-          holds its stock reservation for {reservationMinutes} minutes while you pay. Delivery is
-          calculated when you choose delivery; tax is not calculated.
+          {t("checkout.paymentNote", { minutes: reservationMinutes })}
         </p>
       </div>
 
@@ -370,7 +370,7 @@ export function CheckoutForm({
           <div className="max-h-[90vh] w-full max-w-3xl overflow-auto rounded-xl border border-border bg-background p-6 shadow-xl">
             <div className="flex items-center justify-between gap-4">
               <h3 className="font-display text-xl font-medium tracking-[-0.02em]">
-                Delivery location
+                {t("checkout.deliveryLocation")}
               </h3>
               <Button
                 type="button"

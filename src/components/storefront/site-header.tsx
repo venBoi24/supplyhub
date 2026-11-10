@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { listCategorySummaries, listVendorSummaries } from "@/features/catalog/queries";
 import { NotificationBell } from "@/features/experience/widgets/notification-bell";
 import { SearchAutocomplete } from "@/features/experience/widgets/search-autocomplete";
+import { LanguageSwitcher } from "@/i18n/language-switcher";
+import { getServerI18n } from "@/i18n/server";
 
 import { AnnouncementBar } from "./announcement-bar";
 import { AccountMenu } from "./account-menu";
@@ -16,6 +18,7 @@ import { Wordmark } from "./wordmark";
 
 export async function SiteHeader() {
   const [categories, vendors] = await Promise.all([listCategorySummaries(), listVendorSummaries()]);
+  const { t } = await getServerI18n();
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
@@ -31,19 +34,19 @@ export async function SiteHeader() {
           <Wordmark className="hidden sm:inline-flex" />
         </Link>
 
-        <nav aria-label="Primary" className="ml-4 hidden items-center gap-1 lg:flex">
+        <nav aria-label={t("nav.primary")} className="ml-4 hidden items-center gap-1 lg:flex">
           <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
-            <Link href="/products">Shop all</Link>
+            <Link href="/products">{t("nav.shopAll")}</Link>
           </Button>
           <DepartmentMenu categories={categories} />
           <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
-            <Link href="/delivery">Delivery</Link>
+            <Link href="/delivery">{t("nav.delivery")}</Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
-            <Link href="/vendors">Studios</Link>
+            <Link href="/vendors">{t("nav.studios")}</Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
-            <Link href="/experience">Buyer protection</Link>
+            <Link href="/experience">{t("nav.buyerProtection")}</Link>
           </Button>
         </nav>
 
@@ -53,11 +56,12 @@ export async function SiteHeader() {
           </div>
           <Link
             href="/search"
-            aria-label="Search the catalog"
+            aria-label={t("nav.searchCatalog")}
             className="grid size-11 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none md:hidden"
           >
             <Search className="size-5" aria-hidden="true" />
           </Link>
+          <LanguageSwitcher compact />
           <NotificationBell />
           <AccountMenu />
           <CartLink />

@@ -49,8 +49,8 @@ async function NewProductContent() {
           Describe the object.
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-          Start with the name, price, and story. The draft stays private to your studio until it is
-          submitted and an administrator publishes it.
+          Start with the name, price, and story. Your object goes live on the storefront as soon as
+          you save it — no administrator approval needed.
         </p>
       </div>
 

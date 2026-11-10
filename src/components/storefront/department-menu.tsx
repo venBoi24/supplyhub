@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useI18n } from "@/i18n/client";
 
 export interface DepartmentMenuProps {
   categories: readonly {
@@ -24,16 +25,17 @@ export interface DepartmentMenuProps {
 }
 
 export function DepartmentMenu({ categories }: DepartmentMenuProps) {
+  const { t } = useI18n();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 px-3 font-normal">
-          Departments
+          {t("nav.departments")}
           <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Browse by department</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("nav.browseByDepartment")}</DropdownMenuLabel>
         {categories.map((category) => {
           const thumb = category.images?.[0];
 
@@ -59,7 +61,8 @@ export function DepartmentMenu({ categories }: DepartmentMenuProps) {
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">{category.name}</span>
                   <span className="block text-xs text-muted-foreground">
-                    {category.productCount} {category.productCount === 1 ? "object" : "objects"}
+                    {category.productCount}{" "}
+                    {category.productCount === 1 ? t("nav.object") : t("nav.objects")}
                   </span>
                 </span>
               </Link>
@@ -69,7 +72,7 @@ export function DepartmentMenu({ categories }: DepartmentMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/products" className="w-full justify-between">
-            All objects <span aria-hidden="true">→</span>
+            {t("footer.allObjects")} <span aria-hidden="true">→</span>
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

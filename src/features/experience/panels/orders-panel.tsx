@@ -5,10 +5,11 @@ import { KeyRound, PackageCheck, RefreshCw, ShieldCheck } from "lucide-react";
 
 import { DeliveryMap } from "@/components/delivery/delivery-map";
 import type { Delivery } from "@/components/delivery/model";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
-import { formatCents, ORDER_STATUS_LABEL, type SandboxOrder } from "../types";
+import { formatCents, type SandboxOrder } from "../types";
 
 const input =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-[#0f766e] focus:outline-none";
@@ -41,6 +42,7 @@ function toDelivery(o: SandboxOrder): Delivery {
 }
 
 export function OrdersPanel() {
+  const { t } = useI18n();
   const { state, verifyOtp, confirmReceipt, placeOrder } = useExperience();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [otpInput, setOtpInput] = useState("");
@@ -59,9 +61,9 @@ export function OrdersPanel() {
     return (
       <div className="rounded-2xl border border-border bg-surface p-10 text-center">
         <PackageCheck className="mx-auto size-8 text-muted-foreground" />
-        <p className="mt-3 font-display text-lg font-medium">No sandbox orders yet</p>
+        <p className="mt-3 font-display text-lg font-medium">{t("experience.orders.empty")}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Place an order in Shop &amp; checkout to watch protected payment and live courier
+          Place an order in {t("experience.tabs.shop")} to watch protected payment and live courier
           tracking.
         </p>
       </div>
@@ -101,7 +103,7 @@ export function OrdersPanel() {
             <div className="flex items-center justify-between gap-2">
               <p className="font-mono text-sm font-semibold">{selected.number}</p>
               <span className="rounded-full bg-[#0f766e]/10 px-2.5 py-1 text-[0.6875rem] font-semibold text-[#0f766e]">
-                {ORDER_STATUS_LABEL[selected.status]}
+                {t(`experience.orders.status.${selected.status}`)}
               </span>
             </div>
             <ol className="mt-4 space-y-2">
@@ -116,14 +118,14 @@ export function OrdersPanel() {
 
           <div className="rounded-2xl border border-border bg-surface p-5">
             <p className="flex items-center gap-2 text-sm font-semibold">
-              <KeyRound className="size-4 text-[#0f766e]" /> Hand-over code
+              <KeyRound className="size-4 text-[#0f766e]" /> {t("experience.orders.handover")}
             </p>
             <p className="mt-2 font-mono text-2xl font-bold tracking-[0.3em] text-[#0f766e]">
               {selected.otp}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              The courier must enter this code to mark delivered.{" "}
-              {selected.otpVerified ? "Verified." : "Not yet verified."}
+              {t("experience.orders.handoverNote")}{" "}
+              {selected.otpVerified ? t("common.verified") : "Not yet verified."}
             </p>
             {selected.status === "shipped" ? (
               <div className="mt-3 flex gap-2">
@@ -148,7 +150,7 @@ export function OrdersPanel() {
                   }}
                   className="shrink-0 rounded-lg bg-[#0f766e] px-3 py-2 text-xs font-semibold text-white"
                 >
-                  Confirm hand-over
+                  {t("experience.orders.verifyOtp")}
                 </button>
               </div>
             ) : null}
@@ -163,7 +165,7 @@ export function OrdersPanel() {
               onClick={() => confirmReceipt(selected.id)}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f766e] px-4 py-2.5 text-sm font-semibold text-white"
             >
-              <ShieldCheck className="size-4" /> Confirm receipt &amp; release payment
+              <ShieldCheck className="size-4" /> {t("experience.orders.confirmReceipt")}
             </button>
           ) : null}
 
@@ -184,7 +186,7 @@ export function OrdersPanel() {
               }
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold"
             >
-              <RefreshCw className="size-4" /> Reorder these items
+              <RefreshCw className="size-4" /> {t("experience.orders.reorder")}
             </button>
           ) : null}
 

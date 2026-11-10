@@ -13,6 +13,7 @@ import { getCartView } from "@/features/cart/service";
 import { getAccountProfile } from "@/features/identity/queries";
 import type { CartLine } from "@/features/cart/types";
 import { formatMoney } from "@/features/catalog/money";
+import { getServerI18n } from "@/i18n/server";
 import { getServerEnv } from "@/lib/config/env";
 import { requireCustomer } from "@/server/auth/guards";
 
@@ -32,25 +33,29 @@ export default function CheckoutPage() {
 
 async function CheckoutContent() {
   const actor = await requireCustomer("/checkout");
-  const [view, profile] = await Promise.all([getCartView(), getAccountProfile(actor.id)]);
+  const [{ t }, view, profile] = await Promise.all([
+    getServerI18n(),
+    getCartView(),
+    getAccountProfile(actor.id),
+  ]);
 
   if (view.lines.length === 0) {
     return (
       <PageShell className="pt-10 sm:pt-14">
         <div className="border-b border-border pb-8">
-          <p className="eyebrow text-muted-foreground">Checkout</p>
+          <p className="eyebrow text-muted-foreground">{t("checkout.title")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] sm:text-5xl">
-            Nothing to check out
+            {t("checkout.nothingTitle")}
           </h1>
         </div>
         <div className="mt-8">
           <EmptyState
             icon={<Lock className="size-5" aria-hidden="true" />}
-            title="Your cart is empty"
-            description="Add an object from the catalog before checking out. Your delivery details are only requested at this step."
+            title={t("cart.emptyTitle")}
+            description={t("checkout.emptyDescription")}
           >
             <Button asChild>
-              <Link href="/products">Browse the catalog</Link>
+              <Link href="/products">{t("common.browseCatalog")}</Link>
             </Button>
           </EmptyState>
         </div>
@@ -71,23 +76,22 @@ async function CheckoutContent() {
   return (
     <PageShell className="pt-10 sm:pt-14">
       <div className="border-b border-border pb-8">
-        <p className="eyebrow text-muted-foreground">Checkout</p>
+        <p className="eyebrow text-muted-foreground">{t("checkout.title")}</p>
         <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] sm:text-5xl">
-          Confirm your order
+          {t("checkout.confirmTitle")}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Prices and stock are checked again on the server when you place the order. Your cart may
-          be split into one order per studio.
+          {t("checkout.confirmIntro")}
         </p>
       </div>
 
       {!view.canCheckout ? (
         <Notice tone="warning" className="mt-6">
-          Some objects in your cart are unavailable or priced differently.{" "}
+          {t("checkout.unavailableNotice")}{" "}
           <Link href="/cart" className="font-medium underline underline-offset-4">
-            Review your cart
+            {t("checkout.reviewCart")}
           </Link>{" "}
-          before checking out.
+          {t("checkout.beforeCheckout")}
         </Notice>
       ) : null}
 
@@ -97,10 +101,10 @@ async function CheckoutContent() {
           className="rounded-xl border border-border bg-surface p-6 sm:p-8"
         >
           <h2 id="delivery-heading" className="font-display text-xl font-medium tracking-[-0.02em]">
-            Delivery details
+            {t("checkout.deliveryDetails")}
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            These details are stored with the order. Payment details are never collected here.
+            {t("checkout.deliveryNote")}
           </p>
           <div className="mt-6">
             <CheckoutForm
@@ -127,7 +131,9 @@ async function CheckoutContent() {
         </section>
 
         <aside className="rounded-xl border border-border bg-surface p-6">
-          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Order summary</h2>
+          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+            {t("checkout.summary")}
+          </h2>
           <div className="mt-5 space-y-5">
             {[...groups.entries()].map(([vendorName, lines]) => (
               <div key={vendorName}>
@@ -153,22 +159,22 @@ async function CheckoutContent() {
 
           <dl className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
             <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">Subtotal</dt>
+              <dt className="text-muted-foreground">{t("common.subtotal")}</dt>
               <dd className="font-medium tabular-nums">
                 {formatMoney(view.subtotalCents, view.currency)}
               </dd>
             </div>
             <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">Shipping</dt>
-              <dd className="text-muted-foreground">Not calculated</dd>
+              <dt className="text-muted-foreground">{t("common.shipping")}</dt>
+              <dd className="text-muted-foreground">{t("common.notCalculated")}</dd>
             </div>
             <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">Tax</dt>
-              <dd className="text-muted-foreground">Not calculated</dd>
+              <dt className="text-muted-foreground">{t("common.tax")}</dt>
+              <dd className="text-muted-foreground">{t("common.notCalculated")}</dd>
             </div>
           </dl>
           <div className="mt-5 flex items-baseline justify-between gap-4 border-t border-border pt-5">
-            <p className="font-medium">Total</p>
+            <p className="font-medium">{t("common.total")}</p>
             <p className="font-display text-2xl font-medium tracking-[-0.02em] tabular-nums">
               {formatMoney(view.subtotalCents, view.currency)}
             </p>
@@ -176,8 +182,7 @@ async function CheckoutContent() {
 
           <p className="mt-5 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
             <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-            LynxPay sandbox checkout: payment is collected in Tanzanian shillings on the next step.
-            Shipping and tax are not calculated in this phase.
+            {t("checkout.sandboxNote")}
           </p>
         </aside>
       </div>

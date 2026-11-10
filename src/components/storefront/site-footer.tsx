@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { DEMO_CATALOG_NOTICE } from "@/features/catalog/constants";
 import { listCategorySummaries, listVendorSummaries } from "@/features/catalog/queries";
+import { getServerI18n } from "@/i18n/server";
 
 import { PageShell } from "./page-shell";
 import { Wordmark } from "./wordmark";
@@ -11,6 +11,7 @@ const footerLinkClassName =
 
 export async function SiteFooter() {
   const [categories, vendors] = await Promise.all([listCategorySummaries(), listVendorSummaries()]);
+  const { t } = await getServerI18n();
 
   return (
     <footer className="mt-20 hidden border-t border-border bg-primary text-primary-foreground md:block">
@@ -18,22 +19,19 @@ export async function SiteFooter() {
         <div className="grid gap-10 lg:grid-cols-[1.8fr_1fr_1fr_1fr]">
           <div className="max-w-sm">
             <Wordmark />
-            <p className="mt-5 text-sm leading-6 text-primary-foreground/70">
-              A preview of a curated marketplace for independent studios. Every listing carries the
-              name of the person or workshop that made it.
-            </p>
-            <p className="eyebrow mt-8 text-primary-foreground/60">Demo catalog</p>
+            <p className="mt-5 text-sm leading-6 text-primary-foreground/70">{t("footer.blurb")}</p>
+            <p className="eyebrow mt-8 text-primary-foreground/60">{t("footer.demoCatalog")}</p>
             <p className="mt-2 text-xs leading-5 text-primary-foreground/55">
-              {DEMO_CATALOG_NOTICE}
+              {t("announcement.notice")}
             </p>
           </div>
 
           <div>
-            <h2 className="eyebrow text-primary-foreground/60">Shop</h2>
+            <h2 className="eyebrow text-primary-foreground/60">{t("footer.shop")}</h2>
             <ul className="mt-4 space-y-2.5">
               <li>
                 <Link href="/products" className={footerLinkClassName}>
-                  All objects
+                  {t("footer.allObjects")}
                 </Link>
               </li>
               {categories.map((category) => (
@@ -47,7 +45,7 @@ export async function SiteFooter() {
           </div>
 
           <div>
-            <h2 className="eyebrow text-primary-foreground/60">Studios</h2>
+            <h2 className="eyebrow text-primary-foreground/60">{t("footer.studios")}</h2>
             <ul className="mt-4 space-y-2.5">
               {vendors.map((vendor) => (
                 <li key={vendor.slug}>
@@ -58,38 +56,38 @@ export async function SiteFooter() {
               ))}
               <li>
                 <Link href="/vendors" className={footerLinkClassName}>
-                  All studios
+                  {t("footer.allStudios")}
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h2 className="eyebrow text-primary-foreground/60">Browse</h2>
+            <h2 className="eyebrow text-primary-foreground/60">{t("footer.browse")}</h2>
             <ul className="mt-4 space-y-2.5">
               <li>
                 <Link href="/search" className={footerLinkClassName}>
-                  Search
+                  {t("footer.search")}
                 </Link>
               </li>
               <li>
                 <Link href="/products?sort=newest" className={footerLinkClassName}>
-                  Newest arrivals
+                  {t("footer.newestArrivals")}
                 </Link>
               </li>
               <li>
                 <Link href="/products?sort=price-asc" className={footerLinkClassName}>
-                  Lowest price first
+                  {t("footer.lowestPrice")}
                 </Link>
               </li>
               <li>
                 <Link href="/delivery-live?persona=buyer" className={footerLinkClassName}>
-                  Live delivery tracking
+                  {t("footer.liveTracking")}
                 </Link>
               </li>
               <li>
                 <Link href="/experience" className={footerLinkClassName}>
-                  Buyer protection hub
+                  {t("footer.protectionHub")}
                 </Link>
               </li>
             </ul>
@@ -97,8 +95,8 @@ export async function SiteFooter() {
         </div>
 
         <div className="mt-12 flex flex-col gap-2 border-t border-primary-foreground/15 pt-6 text-xs text-primary-foreground/55 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 SupplyHub. An independent demo project.</p>
-          <p className="font-mono tracking-[0.12em] uppercase">Next.js · Prisma · PostgreSQL</p>
+          <p>{t("footer.copyright")}</p>
+          <p className="font-mono tracking-[0.12em] uppercase">{t("footer.stack")}</p>
         </div>
       </PageShell>
     </footer>

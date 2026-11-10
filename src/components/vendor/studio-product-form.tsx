@@ -230,7 +230,7 @@ export function StudioProductForm({
           <legend className="eyebrow text-muted-foreground">Product photo</legend>
           <p className="text-sm text-muted-foreground">
             Add a JPEG, PNG, WebP, GIF, AVIF, or BMP cover image up to 5 MB. You can add more photos
-            after creating the draft.
+            after publishing.
           </p>
           <Field label="Image file" htmlFor="new-image" error={errors?.image}>
             <Input
@@ -246,11 +246,12 @@ export function StudioProductForm({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-6">
-        <SubmitButton pendingLabel={editing ? "Saving…" : "Creating…"} className="w-auto">
-          {editing ? "Save changes" : "Create draft"}
+        <SubmitButton pendingLabel={editing ? "Saving…" : "Publishing…"} className="w-auto">
+          {editing ? "Save changes" : "Publish object"}
         </SubmitButton>
         <p className="text-xs leading-5 text-muted-foreground">
-          New objects start as drafts. Add a cover image now; more images can be added after saving.
+          New objects go live on the storefront immediately. Add a cover image now; more images can
+          be added after saving.
         </p>
       </div>
     </form>

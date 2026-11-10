@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CornerDownLeft, Search, Store, Tag } from "lucide-react";
 
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 interface SuggestResponse {
@@ -41,6 +42,7 @@ export function SearchAutocomplete({
   autoFocus?: boolean;
 }) {
   const router = useRouter();
+  const t = useT();
   const generatedId = useId();
   const id = inputId ?? generatedId;
   const [value, setValue] = useState(defaultValue);
@@ -153,7 +155,7 @@ export function SearchAutocomplete({
     <div ref={boxRef} className={cn("relative", className)}>
       <form role="search" action="/search" method="get" onSubmit={submit} className="relative">
         <label htmlFor={id} className="sr-only">
-          Search objects and studios
+          {t("common.searchObjectsAndStudios")}
         </label>
         <Search
           className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
@@ -170,7 +172,7 @@ export function SearchAutocomplete({
           autoComplete="off"
           autoFocus={autoFocus}
           value={value}
-          placeholder="Search objects, studios, materials"
+          placeholder={t("nav.searchPlaceholder")}
           onChange={(e) => {
             setValue(e.target.value);
             setOpen(true);
@@ -183,7 +185,7 @@ export function SearchAutocomplete({
           type="submit"
           className="absolute top-1/2 right-1.5 h-8 -translate-y-1/2 rounded px-2.5 font-mono text-[0.625rem] tracking-[0.12em] text-muted-foreground uppercase transition hover:text-foreground"
         >
-          {loading ? "…" : "Search"}
+          {loading ? "…" : t("common.search")}
         </button>
       </form>
 
@@ -202,19 +204,19 @@ export function SearchAutocomplete({
               }}
               className="mb-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-muted-foreground transition hover:bg-surface-muted"
             >
-              Did you mean <span className="font-semibold text-[#0f766e]">{data.corrected}</span>?
+              {t("search.didYouMean", { suggestion: data.corrected })}
             </button>
           ) : null}
 
           {!hasResults && !loading ? (
             <p className="px-3 py-4 text-sm text-muted-foreground">
-              No matches. Press Enter to search the full catalog for “{value.trim()}”.
+              {t("search.noMatches", { query: value.trim() })}
             </p>
           ) : null}
 
           {data.products.length > 0 ? (
             <p className="px-3 pt-2 pb-1 font-mono text-[0.625rem] tracking-[0.12em] text-muted-foreground uppercase">
-              Objects
+              {t("search.objects")}
             </p>
           ) : null}
           {data.products.map((p, i) => {
@@ -249,7 +251,7 @@ export function SearchAutocomplete({
 
           {data.studios.length > 0 ? (
             <p className="px-3 pt-2 pb-1 font-mono text-[0.625rem] tracking-[0.12em] text-muted-foreground uppercase">
-              Studios
+              {t("search.studiosGroup")}
             </p>
           ) : null}
           {data.studios.map((s, i) => {
@@ -278,7 +280,7 @@ export function SearchAutocomplete({
 
           {data.departments.length > 0 ? (
             <p className="px-3 pt-2 pb-1 font-mono text-[0.625rem] tracking-[0.12em] text-muted-foreground uppercase">
-              Departments
+              {t("search.departmentsGroup")}
             </p>
           ) : null}
           {data.departments.map((d, i) => {
@@ -308,7 +310,7 @@ export function SearchAutocomplete({
             className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-border px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground transition hover:bg-surface-muted hover:text-foreground"
           >
             <CornerDownLeft className="size-3.5" aria-hidden="true" />
-            See all results for “{data.corrected ?? value.trim()}”
+            {t("search.seeAllResults", { query: data.corrected ?? value.trim() })}
           </button>
         </div>
       ) : null}

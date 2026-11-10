@@ -14,6 +14,8 @@ import { getCartView } from "@/features/cart/service";
 import type { CartLine } from "@/features/cart/types";
 import { clearCartAction } from "@/features/cart/actions";
 import { formatMoney } from "@/features/catalog/money";
+import { getServerI18n } from "@/i18n/server";
+import type { Translator } from "@/i18n/dictionary";
 import { canCheckout } from "@/server/auth/policies";
 import { getSessionActor } from "@/server/auth/session";
 
@@ -27,14 +29,16 @@ function searchParamValue(value: string | string[] | undefined): string | undefi
   return Array.isArray(value) ? value[0] : value;
 }
 
-function problemText(line: CartLine): string | null {
+function problemText(line: CartLine, t: Translator): string | null {
   switch (line.problem) {
     case "unavailable":
-      return "No longer available";
+      return t("cart.problemUnavailable");
     case "insufficient-stock":
-      return line.availableQuantity === 0 ? "Sold out" : `Only ${line.availableQuantity} available`;
+      return line.availableQuantity === 0
+        ? t("common.soldOut")
+        : t("cart.problemOnly", { count: line.availableQuantity });
     case "currency-mismatch":
-      return "Priced in another currency";
+      return t("cart.problemCurrency");
     default:
       return null;
   }
@@ -49,7 +53,12 @@ export default function CartPage({ searchParams }: PageProps<"/cart">) {
 }
 
 async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">["searchParams"] }) {
-  const [params, view, actor] = await Promise.all([searchParams, getCartView(), getSessionActor()]);
+  const [params, { t }, view, actor] = await Promise.all([
+    searchParams,
+    getServerI18n(),
+    getCartView(),
+    getSessionActor(),
+  ]);
   const updated = searchParamValue(params.updated) === "1";
   const removed = searchParamValue(params.removed) === "1";
   const cleared = searchParamValue(params.cleared) === "1";
@@ -69,27 +78,23 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
     return (
       <PageShell className="pt-10 sm:pt-14">
         <div className="border-b border-border pb-8">
-          <p className="eyebrow text-muted-foreground">Cart</p>
+          <p className="eyebrow text-muted-foreground">{t("cart.cart")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] sm:text-5xl">
-            Your cart
+            {t("cart.title")}
           </h1>
         </div>
         <div className="mt-8">
           <EmptyState
             icon={<ShoppingBag className="size-5" aria-hidden="true" />}
-            title="Your cart is empty"
-            description={
-              actor
-                ? "Objects you add from the catalog appear here and stay with your account."
-                : "Objects you add from the catalog appear here. This cart is saved on this device for 30 days — sign in to keep it across devices."
-            }
+            title={t("cart.emptyTitle")}
+            description={actor ? t("cart.emptySignedIn") : t("cart.emptyGuest")}
           >
             <Button asChild>
-              <Link href="/products">Browse the catalog</Link>
+              <Link href="/products">{t("common.browseCatalog")}</Link>
             </Button>
             {!actor ? (
               <Button asChild variant="secondary">
-                <Link href="/sign-in?next=%2Fcart">Sign in</Link>
+                <Link href="/sign-in?next=%2Fcart">{t("account.signIn")}</Link>
               </Button>
             ) : null}
           </EmptyState>
@@ -102,62 +107,61 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
     <PageShell className="pt-10 sm:pt-14">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-8">
         <div>
-          <p className="eyebrow text-muted-foreground">Cart</p>
+          <p className="eyebrow text-muted-foreground">{t("cart.cart")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] sm:text-5xl">
-            Your cart
+            {t("cart.title")}
           </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            {view.itemCount} {view.itemCount === 1 ? "object" : "objects"} from {groups.size}{" "}
-            {groups.size === 1 ? "studio" : "studios"}
+            {t("cart.summaryLine", {
+              objects: t("products.objectCount", {
+                count: view.itemCount,
+                objects: view.itemCount === 1 ? t("nav.object") : t("nav.objects"),
+              }),
+              studios: t("common.studioCount", {
+                count: groups.size,
+                studios: groups.size === 1 ? t("common.studioOne") : t("common.studioMany"),
+              }),
+            })}
           </p>
         </div>
         <Button asChild variant="ghost" size="sm">
-          <Link href="/products">Keep browsing</Link>
+          <Link href="/products">{t("cart.keepBrowsing")}</Link>
         </Button>
       </div>
 
       <div className="mt-6 space-y-3">
-        {updated ? <Notice tone="success">Quantity updated.</Notice> : null}
-        {removed ? <Notice tone="success">Object removed from your cart.</Notice> : null}
-        {cleared ? <Notice tone="success">Your cart is now empty.</Notice> : null}
-        {inactive ? (
-          <Notice tone="warning">This account cannot use the cart while it is suspended.</Notice>
-        ) : null}
-        {issue ? (
-          <Notice tone="warning">
-            That quantity is not available. Adjust the line and try again.
-          </Notice>
-        ) : null}
+        {updated ? <Notice tone="success">{t("cart.quantityUpdated")}</Notice> : null}
+        {removed ? <Notice tone="success">{t("cart.removed")}</Notice> : null}
+        {cleared ? <Notice tone="success">{t("cart.cleared")}</Notice> : null}
+        {inactive ? <Notice tone="warning">{t("cart.suspended")}</Notice> : null}
+        {issue ? <Notice tone="warning">{t("cart.issue")}</Notice> : null}
         {!actor ? (
           <Notice tone="info">
-            This cart is saved on this device for 30 days.{" "}
+            {t("cart.guestNotice")}{" "}
             <Link href="/sign-in?next=%2Fcart" className="font-medium underline underline-offset-4">
-              Sign in
+              {t("account.signIn")}
             </Link>{" "}
-            to keep it with your account and check out.
+            {t("cart.guestNoticeTail")}
           </Notice>
         ) : null}
-        {view.hasIssues ? (
-          <Notice tone="warning">
-            Some objects need attention before checkout. Remove them or adjust the quantity below.
-          </Notice>
-        ) : null}
+        {view.hasIssues ? <Notice tone="warning">{t("cart.hasIssues")}</Notice> : null}
       </div>
 
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12">
         <div className="space-y-8">
           {[...groups.entries()].map(([key, lines]) => {
-            const [vendorName, vendorSlug] = key.split("|");
+            // Both fields are required on CartLine, so the compound key always has two parts.
+            const [vendorName, vendorSlug] = key.split("|") as [string, string];
 
             return (
               <section
                 key={key}
-                aria-label={`Objects from ${vendorName}`}
+                aria-label={t("cart.objectsFrom", { studio: vendorName })}
                 className="rounded-xl border border-border bg-surface"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-4 sm:px-6">
                   <div>
-                    <p className="eyebrow text-muted-foreground">Studio</p>
+                    <p className="eyebrow text-muted-foreground">{t("products.studio")}</p>
                     <p className="mt-1 font-display text-lg font-medium tracking-[-0.02em]">
                       {vendorName}
                     </p>
@@ -166,12 +170,12 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
                     href={`/vendors/${vendorSlug}`}
                     className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
                   >
-                    Visit studio
+                    {t("common.visitStudio")}
                   </Link>
                 </div>
                 <ul className="divide-y divide-border">
                   {lines.map((line) => {
-                    const problem = problemText(line);
+                    const problem = problemText(line, t);
 
                     return (
                       <li key={line.productId} className="p-5 sm:p-6">
@@ -204,7 +208,7 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
                                 </p>
                                 {problem ? (
                                   <p className="mt-2 text-sm text-danger">
-                                    {problem}. Remove it or reduce the quantity to continue.
+                                    {problem}. {t("cart.problemAction")}
                                   </p>
                                 ) : null}
                               </div>
@@ -231,31 +235,33 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
 
           <form action={clearCartAction}>
             <Button type="submit" variant="ghost" size="sm">
-              Clear cart
+              {t("cart.clear")}
             </Button>
           </form>
         </div>
 
         <aside className="rounded-xl border border-border bg-surface p-6">
-          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Summary</h2>
+          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+            {t("cart.summaryHeading")}
+          </h2>
           <dl className="mt-5 space-y-3 border-b border-border pb-5 text-sm">
             <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">Subtotal</dt>
+              <dt className="text-muted-foreground">{t("common.subtotal")}</dt>
               <dd className="font-medium tabular-nums">
                 {formatMoney(view.subtotalCents, view.currency)}
               </dd>
             </div>
             <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">Shipping</dt>
-              <dd className="text-muted-foreground">Not calculated</dd>
+              <dt className="text-muted-foreground">{t("common.shipping")}</dt>
+              <dd className="text-muted-foreground">{t("common.notCalculated")}</dd>
             </div>
             <div className="flex items-baseline justify-between gap-4">
-              <dt className="text-muted-foreground">Tax</dt>
-              <dd className="text-muted-foreground">Not calculated</dd>
+              <dt className="text-muted-foreground">{t("common.tax")}</dt>
+              <dd className="text-muted-foreground">{t("common.notCalculated")}</dd>
             </div>
           </dl>
           <div className="mt-5 flex items-baseline justify-between gap-4">
-            <p className="font-medium">Total</p>
+            <p className="font-medium">{t("common.total")}</p>
             <p className="font-display text-2xl font-medium tracking-[-0.02em] tabular-nums">
               {formatMoney(view.subtotalCents, view.currency)}
             </p>
@@ -264,28 +270,24 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
           <div className="mt-6">
             {!actor ? (
               <Button asChild className="w-full">
-                <Link href="/sign-in?next=%2Fcheckout">Sign in to check out</Link>
+                <Link href="/sign-in?next=%2Fcheckout">{t("cart.signInToCheckout")}</Link>
               </Button>
             ) : !canCheckout(actor) ? (
               <p className="rounded-md border border-border bg-surface-muted px-3.5 py-3 text-xs leading-5 text-muted-foreground">
-                Only customer accounts can place orders. Operational studio and administrator
-                accounts cannot check out.
+                {t("cart.onlyCustomers")}
               </p>
             ) : view.canCheckout ? (
               <Button asChild className="w-full">
-                <Link href="/checkout">Continue to checkout</Link>
+                <Link href="/checkout">{t("common.continueCheckout")}</Link>
               </Button>
             ) : (
               <Button disabled className="w-full">
-                Resolve cart issues to continue
+                {t("cart.resolveIssues")}
               </Button>
             )}
           </div>
 
-          <p className="mt-4 text-xs leading-5 text-muted-foreground">
-            Shipping and tax are not calculated in this phase. Checkout reserves stock, then LynxPay
-            confirms payment in Tanzanian shillings.
-          </p>
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">{t("cart.phaseNote")}</p>
         </aside>
       </div>
     </PageShell>

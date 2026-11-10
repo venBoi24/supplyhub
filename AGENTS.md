@@ -14,6 +14,18 @@ SupplyHub is a multi-vendor marketplace. The authoritative product, architecture
 phase requirements live in `docs/`. Read `docs/07-development-phases.md` and
 `docs/08-security.md` before making changes, and respect phase gates.
 
+## Current platform behavior
+
+- Studio products publish instantly: saving a product writes `PUBLISHED` with `publishedAt`, with no
+  administrator approval gate. Legacy `DRAFT`/`REJECTED` objects can be self-published or deleted;
+  any live object can be archived. Administrators moderate only legacy `PENDING_REVIEW` items.
+- The storefront home shows new arrivals filtered by today / this week / this month
+  (`src/features/catalog/new-arrivals.ts`, calendar windows on `publishedAt`).
+- The studio shell has a Sign out button and renders only studio navigation — no buyer bottom nav.
+- The UI ships in five locales (en, sw, ar, zh, fr). Server components use `getServerI18n()`; client
+  components use `useI18n()` / `useT()`. The locale persists in a cookie + localStorage with no URL
+  routing.
+
 ## Commands
 
 ```bash
@@ -52,6 +64,8 @@ Run `format:check`, `lint`, `typecheck`, `test`, and `build` before reporting wo
 - Do not add a second animation library, authentication library, or UI kit. Motion for React,
   Lucide, and accessible Radix/shadcn primitives are the approved choices when their phase
   begins.
+- Route user-facing strings through the i18n dictionaries in `src/i18n/messages/`. Add every new key
+  to all five locales; `tests/unit/i18n.test.ts` fails on key parity. Do not hardcode English in UI.
 - Keep PWA caching to public, versioned assets and explicitly reviewed catalog responses. Never
   cache authenticated, checkout, payment, vendor, admin, or order responses.
 - Record migrations in `prisma/migrations`; never edit applied migrations.

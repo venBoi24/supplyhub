@@ -50,7 +50,7 @@ async function ProductsContent({
     getStudioProductStats(vendorId),
   ]);
 
-  const sent = searchParamValue(params.sent) === "1";
+  const published = searchParamValue(params.published) === "1";
   const archived = searchParamValue(params.archived) === "1";
   const deleted = searchParamValue(params.deleted) === "1";
 
@@ -60,7 +60,7 @@ async function ProductsContent({
         title="Products"
         description={`${stats.total} ${
           stats.total === 1 ? "object" : "objects"
-        } in your catalog · ${stats.published} published · ${stats.pendingReview} in review.`}
+        } in your catalog · ${stats.published} live on the storefront.`}
         action={
           <Button asChild size="sm">
             <Link href="/vendor/products/new">
@@ -71,9 +71,9 @@ async function ProductsContent({
         }
       />
 
-      {sent ? (
+      {published ? (
         <Notice tone="success" className="mb-4">
-          Object submitted. An administrator will review it before it appears on the storefront.
+          Object published. It is now live on the storefront.
         </Notice>
       ) : null}
       {archived ? (
@@ -91,7 +91,7 @@ async function ProductsContent({
         <EmptyState
           icon={<Package className="size-5" aria-hidden="true" />}
           title="No objects yet."
-          description="Create a draft, describe the object, and add an image. You can submit it for review when it is ready."
+          description="Describe the object, set a price, and add an image. It goes live on the storefront as soon as you save it."
         >
           <Link
             href="/vendor/products/new"

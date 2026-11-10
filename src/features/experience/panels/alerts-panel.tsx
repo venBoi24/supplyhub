@@ -14,6 +14,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
@@ -50,6 +51,7 @@ const when = (at: number) =>
   });
 
 export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) => void }) {
+  const { t } = useI18n();
   const { state, markRead, markAllRead, clearNotifications } = useExperience();
   const notifications = state.notifications;
   const unread = notifications.filter((n) => !n.read).length;
@@ -58,7 +60,7 @@ export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) =
     <section className="rounded-2xl border border-border bg-surface p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 font-display text-lg font-medium">
-          <Bell className="size-5 text-[#0f766e]" /> Notifications
+          <Bell className="size-5 text-[#0f766e]" /> {t("experience.alerts.title")}
           {unread > 0 ? (
             <span className="grid min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[0.625rem] font-bold text-white">
               {unread}
@@ -72,7 +74,7 @@ export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) =
             disabled={unread === 0}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-border-strong hover:text-foreground disabled:opacity-40"
           >
-            <CheckCheck className="size-3.5" /> Mark all read
+            <CheckCheck className="size-3.5" /> {t("experience.alerts.markAll")}
           </button>
           <button
             type="button"
@@ -80,7 +82,7 @@ export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) =
             disabled={notifications.length === 0}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-border-strong hover:text-foreground disabled:opacity-40"
           >
-            <Trash2 className="size-3.5" /> Clear
+            <Trash2 className="size-3.5" /> {t("experience.alerts.clear")}
           </button>
         </div>
       </div>
@@ -92,7 +94,8 @@ export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) =
         <div className="mt-4 rounded-xl border border-dashed border-border p-8 text-center">
           <Bell className="mx-auto size-7 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">
-            You&apos;re all caught up. Place a sandbox order or save a piece to see alerts arrive.
+            {t("experience.alerts.empty")} Place a sandbox order or save a piece to see alerts
+            arrive.
           </p>
         </div>
       ) : (
@@ -133,7 +136,7 @@ export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) =
                     <span className="mt-0.5 block text-xs text-muted-foreground">{n.body}</span>
                     <span className="mt-1 block text-[0.625rem] text-muted-foreground">
                       {when(n.at)}
-                      {n.tab ? " · tap to open" : ""}
+                      {n.tab ? ` · ${t("experience.alerts.tapToOpen")}` : ""}
                     </span>
                   </span>
                 </button>

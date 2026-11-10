@@ -3,46 +3,48 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 const tabs = [
   {
     href: "/vendor",
-    label: "Overview",
+    labelKey: "studio.overview",
     active: (pathname: string) => pathname === "/vendor",
   },
   {
     href: "/vendor/products",
-    label: "Products",
+    labelKey: "studio.products",
     active: (pathname: string) => pathname.startsWith("/vendor/products"),
   },
   {
     href: "/vendor/orders",
-    label: "Orders",
+    labelKey: "studio.orders",
     active: (pathname: string) => pathname.startsWith("/vendor/orders"),
   },
   {
     href: "/delivery-live?persona=seller",
-    label: "Deliveries",
+    labelKey: "studio.deliveries",
     active: () => false,
   },
   {
     href: "/vendor/earnings",
-    label: "Earnings",
+    labelKey: "studio.earnings",
     active: (pathname: string) => pathname.startsWith("/vendor/earnings"),
   },
   {
     href: "/vendor/profile",
-    label: "Studio profile",
+    labelKey: "studio.profile",
     active: (pathname: string) => pathname.startsWith("/vendor/profile"),
   },
 ] as const;
 
 export function StudioNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
-    <nav aria-label="Studio navigation" className="border-b border-border bg-surface">
+    <nav aria-label={t("studio.nav")} className="border-b border-border bg-surface">
       <div className="scroll-x mx-auto flex w-full max-w-[1180px] gap-0.5 px-4 sm:px-6">
         {tabs.map((tab) => {
           const active = tab.active(pathname);
@@ -59,7 +61,7 @@ export function StudioNav() {
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </Link>
           );
         })}

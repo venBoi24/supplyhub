@@ -14,6 +14,7 @@ import {
 
 import type { ProductListing } from "@/features/catalog/types";
 import { MAP_CENTER } from "@/components/delivery/model";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
@@ -24,6 +25,7 @@ const input =
 const label = "text-[0.6875rem] font-semibold tracking-[0.1em] uppercase text-muted-foreground";
 
 export function ShopPanel({ products }: { products: ProductListing[] }) {
+  const { t } = useI18n();
   const { state, addAddress, removeAddress, placeOrder, setGuestEmail } = useExperience();
   const [cart, setCart] = useState<Record<string, number>>({});
   const [email, setEmail] = useState(state.guestEmail);
@@ -112,7 +114,7 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
           delivery.
         </p>
         <div className="mx-auto mt-5 w-fit rounded-xl border border-border bg-surface px-6 py-4">
-          <p className={label}>Your hand-over code</p>
+          <p className={label}>{t("experience.shop.code")}</p>
           <p className="mt-1 font-mono text-3xl font-bold tracking-[0.3em] text-[#0f766e]">
             {placedOrder.otp}
           </p>
@@ -121,7 +123,8 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
           </p>
         </div>
         <p className="mt-5 text-sm text-muted-foreground">
-          Open <strong>Orders &amp; tracking</strong> to watch the courier live and confirm receipt.
+          Open <strong>{t("experience.tabs.orders")}</strong> to watch the courier live and confirm
+          receipt.
         </p>
       </div>
     );
@@ -138,7 +141,7 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
           yet.
         </p>
         <p className="mt-4 font-mono text-xs text-muted-foreground">
-          Sandbox STK push · simulating…
+          {t("experience.shop.processing")}
         </p>
       </div>
     );
@@ -147,7 +150,7 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
       <section aria-label="Catalog">
-        <h2 className="font-display text-lg font-medium">Add pieces to your sandbox order</h2>
+        <h2 className="font-display text-lg font-medium">{t("experience.shop.addItems")}</h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {products.slice(0, 8).map((p) => (
             <li key={p.slug} className="flex gap-3 rounded-xl border border-border bg-surface p-3">
@@ -193,11 +196,11 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
         className="space-y-4 rounded-2xl border border-border bg-surface p-5"
       >
         <h2 className="flex items-center gap-2 font-display text-lg font-medium">
-          <ShieldCheck className="size-5 text-[#0f766e]" /> Guest checkout
+          <ShieldCheck className="size-5 text-[#0f766e]" /> {t("checkout.guest")}
         </h2>
         <div>
           <label className={label} htmlFor="ck-email">
-            Email for receipts
+            {t("experience.shop.guestEmail")}
           </label>
           <input
             id="ck-email"
@@ -211,7 +214,7 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
         </div>
         <div>
           <label className={label} htmlFor="ck-addr">
-            Deliver to
+            {t("experience.shop.address")}
           </label>
           <select
             id="ck-addr"
@@ -219,7 +222,7 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
             value={addressId}
             onChange={(e) => setAddressId(e.target.value)}
           >
-            <option value="new">New address…</option>
+            <option value="new">{t("checkout.newAddress")}…</option>
             {state.addresses.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.label} · {a.line1}, {a.city}
@@ -275,7 +278,7 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
           </button>
         )}
         <fieldset>
-          <legend className={label}>Pay with</legend>
+          <legend className={label}>{t("experience.shop.payment")}</legend>
           <div className="mt-2 grid grid-cols-2 gap-2">
             {(Object.keys(PAYMENT_LABEL) as SandboxPaymentMethod[]).map((m) => (
               <button
@@ -303,7 +306,7 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
         {method !== "card" ? (
           <div>
             <label className={label} htmlFor="ck-phone">
-              Mobile money number
+              {t("experience.shop.phone")}
             </label>
             <input
               id="ck-phone"
@@ -316,21 +319,21 @@ export function ShopPanel({ products }: { products: ProductListing[] }) {
         ) : null}
         <div className="rounded-lg border border-border bg-surface-muted p-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">{t("common.subtotal")}</span>
             <span>{formatCents(subtotal)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Delivery</span>
+            <span className="text-muted-foreground">{t("common.shipping")}</span>
             <span>{formatCents(shipping)}</span>
           </div>
           <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold">
-            <span>Total</span>
+            <span>{t("common.total")}</span>
             <span>{formatCents(subtotal + shipping)}</span>
           </div>
         </div>
         <p className="flex items-start gap-2 text-xs text-muted-foreground">
           <MapPin className="mt-0.5 size-3.5 shrink-0 text-[#0f766e]" />
-          Protected by buyer guarantee: we hold your payment until you confirm the order arrived.
+          {t("experience.protection.escrowBody")}
         </p>
         <button
           type="submit"

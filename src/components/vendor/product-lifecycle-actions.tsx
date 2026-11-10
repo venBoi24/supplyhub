@@ -8,7 +8,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import {
   archiveProductAction,
   deleteProductAction,
-  submitProductAction,
+  publishProductAction,
 } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
 import type { ProductStatus } from "@/generated/prisma/enums";
@@ -26,32 +26,32 @@ export function ProductLifecycleActions({
   imageCount: number;
   adminVendorId?: string;
 }) {
-  const [submitState, submitAction] = useActionState(submitProductAction, initialFormState);
+  const [publishState, publishAction] = useActionState(publishProductAction, initialFormState);
   const [archiveState, archiveAction] = useActionState(archiveProductAction, initialFormState);
   const [deleteState, deleteAction] = useActionState(deleteProductAction, initialFormState);
 
-  const canSubmit = status === "DRAFT" || status === "REJECTED";
+  const canPublish = status === "DRAFT" || status === "REJECTED";
   const canArchive = status !== "ARCHIVED";
   const canDelete = status === "DRAFT" || status === "REJECTED";
 
-  if (!canSubmit && !canArchive && !canDelete) {
+  if (!canPublish && !canArchive && !canDelete) {
     return null;
   }
 
   return (
     <div className="space-y-4">
-      {canSubmit ? (
-        <form action={submitAction} className="space-y-2">
+      {canPublish ? (
+        <form action={publishAction} className="space-y-2">
           <input type="hidden" name="productId" value={productId} />
           {adminVendorId ? (
             <input type="hidden" name="adminVendorId" value={adminVendorId} />
           ) : null}
-          <FormMessage state={submitState} />
-          <SubmitButton pendingLabel="Submitting…" disabled={imageCount === 0}>
-            Submit for review
+          <FormMessage state={publishState} />
+          <SubmitButton pendingLabel="Publishing…" disabled={imageCount === 0}>
+            Publish object
           </SubmitButton>
           {imageCount === 0 ? (
-            <p className="text-xs text-muted-foreground">Add an image before submitting.</p>
+            <p className="text-xs text-muted-foreground">Add an image before publishing.</p>
           ) : null}
         </form>
       ) : null}

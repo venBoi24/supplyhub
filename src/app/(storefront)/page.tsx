@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { ArrowRight, FileText, Heart, ShieldCheck, Store, Truck } from "lucide-react";
+import { ArrowRight, FileText, Heart, ShieldCheck, Sparkles, Store, Truck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { CategoryTile } from "@/components/storefront/category-tile";
+import { FilterChip } from "@/components/storefront/filter-chip";
 import { HomeHero } from "@/components/storefront/home-hero";
 import { PageShell } from "@/components/storefront/page-shell";
 import { ProductGrid } from "@/components/storefront/product-grid";
@@ -13,11 +15,18 @@ import { SectionHeading } from "@/components/storefront/section-heading";
 import { HomePageSkeleton } from "@/components/storefront/skeletons";
 
 import {
+  NEW_ARRIVAL_PERIODS,
+  newArrivalsSince,
+  parseNewArrivalPeriod,
+  type NewArrivalPeriod,
+} from "@/features/catalog/new-arrivals";
+import {
   getCatalogStats,
   listCategorySummaries,
   listProducts,
   listVendorSummaries,
 } from "@/features/catalog/queries";
+import { getServerI18n } from "@/i18n/server";
 
 export const metadata: Metadata = {
   title: { absolute: "SupplyHub — independent sellers, one marketplace" },
@@ -27,44 +36,54 @@ export const metadata: Metadata = {
 };
 
 const trustItems = [
-  { icon: Truck, label: "Delivery priced by distance" },
-  { icon: ShieldCheck, label: "Secure checkout" },
-  { icon: Heart, label: "Named makers" },
-  { icon: Store, label: "Studio-direct orders" },
+  { icon: Truck, key: "home.trustDelivery" },
+  { icon: ShieldCheck, key: "home.trustCheckout" },
+  { icon: Heart, key: "home.trustMakers" },
+  { icon: Store, key: "home.trustDirect" },
 ] as const;
 
 const benefits = [
   {
     icon: ShieldCheck,
-    title: "Maker provenance",
-    copy: "Every listing carries the studio, location, and maker behind the object.",
+    titleKey: "home.benefitProvenance",
+    copyKey: "home.benefitProvenanceBody",
   },
   {
     icon: FileText,
-    title: "Clear product detail",
-    copy: "Materials, dimensions and care notes stay visible, not buried.",
+    titleKey: "home.benefitDetail",
+    copyKey: "home.benefitDetailBody",
   },
   {
     icon: Truck,
-    title: "Delivery that fits",
-    copy: "Pickup or distance-based delivery, shown clearly before checkout.",
+    titleKey: "home.benefitDelivery",
+    copyKey: "home.benefitDeliveryBody",
   },
 ] as const;
 
-export default function StorefrontHomePage() {
+const periodLabelKey: Record<NewArrivalPeriod, string> = {
+  day: "home.newToday",
+  week: "home.newThisWeek",
+  month: "home.newThisMonth",
+};
+
+export default function StorefrontHomePage({ searchParams }: PageProps<"/">) {
   return (
     <Suspense fallback={<HomePageSkeleton />}>
-      <HomeContent />
+      <HomeContent searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function HomeContent() {
-  const [stats, categories, vendors, featuredProducts] = await Promise.all([
+async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
+  const params = await searchParams;
+  const period = parseNewArrivalPeriod(params.new);
+  const [{ t }, stats, categories, vendors, featuredProducts, newArrivals] = await Promise.all([
+    getServerI18n(),
     getCatalogStats(),
     listCategorySummaries(),
     listVendorSummaries(),
     listProducts({ sort: "featured", limit: 8 }),
+    listProducts({ sort: "newest", limit: 8, publishedAfter: newArrivalsSince(period) }),
   ]);
 
   const featureVendor = vendors[0];
@@ -74,9 +93,11 @@ async function HomeContent() {
   const featureStory =
     featureVendor?.story.trim() ||
     (featureVendor
-      ? `${featureVendor.name} is an approved studio with ${featureVendor.productCount} ${
-          featureVendor.productCount === 1 ? "object" : "objects"
-        } in the current catalog.`
+      ? t("home.spotlightFallback", {
+          studio: featureVendor.name,
+          count: featureVendor.productCount,
+          objects: featureVendor.productCount === 1 ? t("nav.object") : t("nav.objects"),
+        })
       : "");
 
   const preferredCategorySlugs = ["home-living", "clothing-fashion", "jewelry-accessories"];
@@ -91,20 +112,81 @@ async function HomeContent() {
 
   return (
     <>
-      <HomeHero stats={stats} popularCategories={popularCategories} />
+      <HomeHero stats={stats} popularCategories={popularCategories} t={t} />
 
       <div className="border-b border-border bg-surface">
         <PageShell>
           <ul className="grid grid-cols-2 gap-x-6 gap-y-3 py-4 sm:grid-cols-4">
-            {trustItems.map(({ icon: Icon, label }) => (
-              <li key={label} className="flex items-center gap-2.5 text-xs text-muted-foreground">
+            {trustItems.map(({ icon: Icon, key }) => (
+              <li key={key} className="flex items-center gap-2.5 text-xs text-muted-foreground">
                 <Icon className="size-4 shrink-0 text-sage" aria-hidden="true" />
-                {label}
+                {t(key)}
               </li>
             ))}
           </ul>
         </PageShell>
       </div>
+
+      <section
+        id="new-arrivals"
+        aria-labelledby="new-arrivals-heading"
+        className="scroll-mt-20 border-b border-border bg-surface py-12 sm:py-16"
+      >
+        <PageShell>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="max-w-xl">
+              <p className="eyebrow text-muted-foreground">{t("home.freshFromStudios")}</p>
+              <h2
+                id="new-arrivals-heading"
+                className="mt-2 font-display text-2xl font-semibold tracking-[-0.03em] sm:text-3xl"
+              >
+                {t("home.newArrivals")}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {t("home.newArrivalsDescription")}
+              </p>
+            </div>
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/products?sort=newest">
+                {t("common.viewAllObjects")}
+                <ArrowRight className="size-3.5" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+
+          <div
+            className="mt-6 flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label={t("home.newArrivalsPeriod")}
+          >
+            {NEW_ARRIVAL_PERIODS.map((value) => (
+              <FilterChip
+                key={value}
+                href={`/?new=${value}#new-arrivals`}
+                active={period === value}
+              >
+                {t(periodLabelKey[value])}
+              </FilterChip>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            {newArrivals.length > 0 ? (
+              <ProductGrid products={newArrivals} priorityCount={4} />
+            ) : (
+              <EmptyState
+                icon={<Sparkles className="size-5" aria-hidden="true" />}
+                title={t("home.newArrivalsEmpty")}
+                description={t("home.newArrivalsEmptyBody")}
+              >
+                <Button asChild>
+                  <Link href="/products?sort=newest">{t("common.browseAllObjects")}</Link>
+                </Button>
+              </EmptyState>
+            )}
+          </div>
+        </PageShell>
+      </section>
 
       <section
         id="departments"
@@ -114,17 +196,17 @@ async function HomeContent() {
         <PageShell className="py-10 sm:py-14">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="eyebrow text-muted-foreground">Shop by department</p>
+              <p className="eyebrow text-muted-foreground">{t("home.shopByDepartment")}</p>
               <h2
                 id="departments-heading"
                 className="mt-2 font-display text-2xl font-semibold tracking-[-0.03em] sm:text-3xl"
               >
-                Browse categories
+                {t("home.browseCategories")}
               </h2>
             </div>
             <Button asChild variant="link" size="sm">
               <Link href="/products">
-                All objects
+                {t("products.title")}
                 <ArrowRight className="size-3.5" aria-hidden="true" />
               </Link>
             </Button>
@@ -141,12 +223,12 @@ async function HomeContent() {
       <section className="border-b border-border bg-surface py-12 sm:py-16">
         <PageShell>
           <SectionHeading
-            eyebrow="Discover products"
-            title="Featured objects"
-            description="Real products from the catalog, with prices, availability, and maker information."
+            eyebrow={t("home.discoverProducts")}
+            title={t("home.featured")}
+            description={t("home.featuredDescription")}
             action={
               <Button asChild variant="secondary" size="sm">
-                <Link href="/products">View all objects</Link>
+                <Link href="/products">{t("common.viewAllObjects")}</Link>
               </Button>
             }
           />
@@ -179,7 +261,7 @@ async function HomeContent() {
               </div>
 
               <div className="flex flex-col justify-center p-7 sm:p-10">
-                <p className="eyebrow text-sage">Studio spotlight</p>
+                <p className="eyebrow text-sage">{t("home.studioSpotlight")}</p>
                 <h2 className="mt-3 font-display text-3xl leading-[1.05] font-semibold tracking-[-0.035em] text-balance">
                   {featureVendor.name}
                 </h2>
@@ -194,9 +276,9 @@ async function HomeContent() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{featureVendor.name}</p>
                     <p className="mt-0.5 text-xs text-sand-ink/70">
-                      {featureVendor.location || "Independent studio"} ·{" "}
+                      {featureVendor.location || t("common.independentStudio")} ·{" "}
                       {featureVendor.productCount}{" "}
-                      {featureVendor.productCount === 1 ? "object" : "objects"}
+                      {featureVendor.productCount === 1 ? t("nav.object") : t("nav.objects")}
                     </p>
                   </div>
                 </div>
@@ -204,7 +286,7 @@ async function HomeContent() {
                 <div className="mt-7">
                   <Button asChild variant="secondary" className="bg-surface">
                     <Link href={`/vendors/${featureVendor.slug}`}>
-                      Visit the studio
+                      {t("home.visitTheStudio")}
                       <ArrowRight className="size-4" aria-hidden="true" />
                     </Link>
                   </Button>
@@ -218,8 +300,8 @@ async function HomeContent() {
       <section className="bg-surface py-12 sm:py-16">
         <PageShell>
           <div className="grid gap-8 sm:grid-cols-3">
-            {benefits.map(({ icon: Icon, title, copy }, index) => (
-              <div key={title}>
+            {benefits.map(({ icon: Icon, titleKey, copyKey }, index) => (
+              <div key={titleKey}>
                 <span
                   className={
                     index === 0
@@ -232,9 +314,11 @@ async function HomeContent() {
                   <Icon className="size-4" aria-hidden="true" />
                 </span>
                 <h2 className="mt-4 font-display text-lg font-semibold tracking-[-0.02em]">
-                  {title}
+                  {t(titleKey)}
                 </h2>
-                <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">{copy}</p>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+                  {t(copyKey)}
+                </p>
               </div>
             ))}
           </div>

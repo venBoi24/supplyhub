@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MessageSquare, Send } from "lucide-react";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
@@ -11,6 +12,7 @@ const time = (at: number) =>
   new Date(at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
 export function InboxPanel() {
+  const { t } = useI18n();
   const { state, sendChat, markChatRead } = useExperience();
   const threads = Object.values(state.chats).sort(
     (a, b) => (b.messages.at(-1)?.at ?? 0) - (a.messages.at(-1)?.at ?? 0),
@@ -40,10 +42,10 @@ export function InboxPanel() {
     return (
       <div className="rounded-2xl border border-border bg-surface p-10 text-center">
         <MessageSquare className="mx-auto size-8 text-muted-foreground" />
-        <h2 className="mt-3 font-display text-lg font-medium">No conversations yet</h2>
+        <h2 className="mt-3 font-display text-lg font-medium">{t("experience.inbox.empty")}</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Open a studio from any product page and tap <strong>Message studio</strong> to start a
-          chat. Ask about materials, custom sizes or delivery before you buy.
+          Open a studio from any product page and tap <strong>{t("product.messageStudio")}</strong>{" "}
+          to start a chat. Ask about materials, custom sizes or delivery before you buy.
         </p>
       </div>
     );
@@ -118,14 +120,14 @@ export function InboxPanel() {
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Message the studio…"
-            aria-label="Message"
+            placeholder={t("experience.inbox.placeholder")}
+            aria-label={t("experience.inbox.placeholder")}
             className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-[#0f766e] focus:outline-none"
           />
           <button
             type="submit"
             disabled={!draft.trim()}
-            aria-label="Send message"
+            aria-label={t("experience.inbox.send")}
             className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#0f766e] text-white transition hover:bg-[#0f766e]/90 disabled:opacity-40"
           >
             <Send className="size-4" />

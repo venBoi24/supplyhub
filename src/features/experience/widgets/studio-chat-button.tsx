@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { MessageSquare } from "lucide-react";
 
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
@@ -18,6 +19,7 @@ export function StudioChatButton({
 }) {
   const { openChat } = useExperience();
   const router = useRouter();
+  const t = useT();
 
   return (
     <button
@@ -31,7 +33,7 @@ export function StudioChatButton({
         className,
       )}
     >
-      <MessageSquare className="size-4" aria-hidden="true" /> Message studio
+      <MessageSquare className="size-4" aria-hidden="true" /> {t("product.messageStudio")}
     </button>
   );
 }

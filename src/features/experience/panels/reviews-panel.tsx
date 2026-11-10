@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Camera, Star } from "lucide-react";
 
 import type { ProductListing } from "@/features/catalog/types";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
@@ -12,6 +13,7 @@ const input =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-[#0f766e] focus:outline-none";
 
 export function ReviewsPanel({ products }: { products: ProductListing[] }) {
+  const { t } = useI18n();
   const { state, submitReview } = useExperience();
   const [target, setTarget] = useState("");
   const [rating, setRating] = useState(5);
@@ -74,13 +76,13 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
       <form onSubmit={submit} className="rounded-2xl border border-border bg-surface p-5">
-        <h2 className="font-display text-lg font-medium">Write a verified review</h2>
+        <h2 className="font-display text-lg font-medium">{t("experience.reviews.write")}</h2>
         <p className="mt-1 text-xs text-muted-foreground">
           Only buyers who confirmed receipt can review — keeps ratings honest.
         </p>
         {reviewable.length === 0 ? (
           <p className="mt-4 rounded-lg border border-border bg-surface-muted p-3 text-sm text-muted-foreground">
-            Confirm receipt on a delivered order to unlock reviewing.
+            {t("experience.reviews.gate")}
           </p>
         ) : (
           <div className="mt-4 space-y-3">
@@ -97,7 +99,11 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
                 </option>
               ))}
             </select>
-            <div className="flex items-center gap-1" role="radiogroup" aria-label="Rating">
+            <div
+              className="flex items-center gap-1"
+              role="radiogroup"
+              aria-label={t("experience.reviews.rating")}
+            >
               {[1, 2, 3, 4, 5].map((s) => (
                 <button
                   key={s}
@@ -121,11 +127,11 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
               rows={3}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="How was the piece and the delivery?"
-              aria-label="Review text"
+              placeholder={t("experience.reviews.text")}
+              aria-label={t("experience.reviews.text")}
             />
             <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-              <Camera className="size-4" /> Add a photo
+              <Camera className="size-4" /> {t("experience.reviews.photo")}
               <input
                 type="file"
                 accept="image/*"
@@ -146,7 +152,7 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
               disabled={!target || !text.trim()}
               className="w-full rounded-lg bg-[#0f766e] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
             >
-              Publish review
+              {t("experience.reviews.publish")}
             </button>
           </div>
         )}
@@ -154,7 +160,7 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-medium">Community reviews</h2>
+          <h2 className="font-display text-lg font-medium">{t("experience.reviews.title")}</h2>
           <span className="flex items-center gap-1 text-sm font-semibold">
             <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" /> {avg} · {totalReviews}
           </span>
@@ -174,7 +180,7 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
           ))}
         </div>
         {allReviews.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">No reviews yet on this device.</p>
+          <p className="mt-4 text-sm text-muted-foreground">{t("experience.reviews.empty")}</p>
         ) : (
           <ul className="mt-4 space-y-4">
             {allReviews.map((r) => (
@@ -201,7 +207,9 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
                 ) : null}
                 {r.sellerReply ? (
                   <p className="mt-2 rounded-lg bg-surface-muted p-2 text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground">Studio reply:</span>{" "}
+                    <span className="font-semibold text-foreground">
+                      {t("experience.reviews.sellerReply")}:
+                    </span>{" "}
                     {r.sellerReply}
                   </p>
                 ) : null}

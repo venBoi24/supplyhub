@@ -12,19 +12,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOutAction } from "@/features/identity/actions";
+import { useI18n } from "@/i18n/client";
 import { initialsFor } from "@/lib/utils/initials";
 import type { Actor } from "@/server/auth/actor";
 
 export function AccountMenuView({ actor }: { actor: Actor | null }) {
+  const { t } = useI18n();
   if (!actor) {
     return (
       <Link
         href="/sign-in"
-        aria-label="Sign in"
+        aria-label={t("account.signIn")}
         className="inline-flex h-11 items-center gap-2 rounded-md px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none sm:px-3"
       >
         <UserRound className="size-5" aria-hidden="true" />
-        <span className="hidden sm:inline">Sign in</span>
+        <span className="hidden sm:inline">{t("account.signIn")}</span>
       </Link>
     );
   }
@@ -34,7 +36,7 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label={`Account menu for ${actor.name}`}
+          aria-label={`${t("account.menu")}: ${actor.name}`}
           className="inline-flex h-11 items-center gap-2 rounded-md px-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none sm:px-2.5"
         >
           <span
@@ -48,7 +50,7 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-64">
-        <DropdownMenuLabel>Signed in</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("account.signedIn")}</DropdownMenuLabel>
         <div className="px-3 pb-2">
           <p className="truncate text-sm font-medium text-foreground">{actor.name}</p>
           <p className="truncate text-xs text-muted-foreground">{actor.email}</p>
@@ -57,14 +59,14 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
         <DropdownMenuItem asChild>
           <Link href="/account" className="w-full">
             <UserRound className="size-4" aria-hidden="true" />
-            Account
+            {t("account.account")}
           </Link>
         </DropdownMenuItem>
         {actor.vendor || actor.role === "VENDOR" ? (
           <DropdownMenuItem asChild>
             <Link href="/vendor" className="w-full">
               <LayoutDashboard className="size-4" aria-hidden="true" />
-              Studio workspace
+              {t("account.studioWorkspace")}
             </Link>
           </DropdownMenuItem>
         ) : null}
@@ -72,14 +74,14 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
           <DropdownMenuItem asChild>
             <Link href="/admin/vendors" className="w-full">
               <ShieldCheck className="size-4" aria-hidden="true" />
-              Vendor applications
+              {t("account.vendorApplications")}
             </Link>
           </DropdownMenuItem>
         ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOutAction()}>
           <LogOut className="size-4" aria-hidden="true" />
-          Sign out
+          {t("account.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -2,11 +2,18 @@ import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 import { getCartItemCount } from "@/features/cart/service";
+import { getServerI18n } from "@/i18n/server";
 import { cn } from "@/lib/utils/cn";
 
 export async function CartLink() {
   const count = await getCartItemCount();
-  const label = count === 0 ? "Cart, empty" : `Cart, ${count} ${count === 1 ? "item" : "items"}`;
+  const { t } = await getServerI18n();
+  const label =
+    count === 0
+      ? t("cart.empty")
+      : count === 1
+        ? t("cart.countOne", { count })
+        : t("cart.count", { count });
 
   return (
     <Link

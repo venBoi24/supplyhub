@@ -20,6 +20,7 @@ import { getProductBySlug, getRelatedProducts } from "@/features/catalog/queries
 import type { ProductListing } from "@/features/catalog/types";
 import { StudioChatButton } from "@/features/experience/widgets/studio-chat-button";
 import { WishlistButton } from "@/features/experience/widgets/wishlist-button";
+import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({
   params,
@@ -66,17 +67,23 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 }
 
 async function ProductDetail({ product }: { product: ProductListing }) {
-  const related = await getRelatedProducts(product.slug, 3);
+  const [{ t }, related] = await Promise.all([
+    getServerI18n(),
+    getRelatedProducts(product.slug, 3),
+  ]);
   const soldOut = product.availability === "sold-out";
 
   return (
     <PageShell className="pt-6 sm:pt-8">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs">
+      <nav
+        aria-label={t("common.breadcrumb")}
+        className="flex flex-wrap items-center gap-2 text-xs"
+      >
         <Link
           href="/products"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
-          All objects
+          {t("products.title")}
         </Link>
         <span aria-hidden="true" className="text-border-strong">
           /
@@ -100,9 +107,12 @@ async function ProductDetail({ product }: { product: ProductListing }) {
           <ProductGallery images={product.images} name={product.name} soldOut={soldOut} />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
             <p>
-              Made by {product.vendor.name} · {product.vendor.location}
+              {t("product.madeByLine", {
+                studio: product.vendor.name,
+                location: product.vendor.location,
+              })}
             </p>
-            <p className="eyebrow">Studio photography</p>
+            <p className="eyebrow">{t("product.studioPhotography")}</p>
           </div>
         </div>
 
@@ -135,15 +145,15 @@ async function ProductDetail({ product }: { product: ProductListing }) {
             {soldOut ? (
               <div className="rounded-xl border border-border bg-surface-muted/60 p-5">
                 <p className="font-display text-lg font-medium tracking-[-0.02em]">
-                  This piece has found a home.
+                  {t("product.soldOutTitle")}
                 </p>
                 <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                  The listing is no longer available. Explore related objects from the studio below.
+                  {t("product.soldOutBody")}
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Button asChild variant="secondary">
                     <Link href={`/vendors/${product.vendor.slug}`}>
-                      Visit {product.vendor.name}
+                      {t("product.visitNamedStudio", { studio: product.vendor.name })}
                     </Link>
                   </Button>
                   <ShareButton />
@@ -157,9 +167,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
                   </div>
                   <ShareButton className="h-12" />
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Checkout reserves stock and opens LynxPay payment in Tanzanian shillings.
-                </p>
+                <p className="mt-3 text-xs text-muted-foreground">{t("product.checkoutNote")}</p>
               </>
             )}
           </div>
@@ -181,7 +189,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
               href="/experience"
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#0f766e]/30 bg-[#0f766e]/5 px-4 py-2.5 text-sm font-semibold text-[#0f766e] transition hover:bg-[#0f766e]/10"
             >
-              <ShieldCheck className="size-4" aria-hidden="true" /> Buyer protection
+              <ShieldCheck className="size-4" aria-hidden="true" /> {t("product.buyerProtection")}
             </Link>
           </div>
 
@@ -189,7 +197,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
             {product.materials.length > 0 || product.dimensions ? (
               <details open className="group border-b border-border py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
-                  Materials &amp; dimensions
+                  {t("product.materialsDimensions")}
                   <Plus
                     className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-45"
                     aria-hidden="true"
@@ -205,7 +213,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
             {product.care ? (
               <details className="group border-b border-border py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
-                  Care
+                  {t("product.care")}
                   <Plus
                     className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-45"
                     aria-hidden="true"
@@ -217,7 +225,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
 
             <details className="group border-b border-border py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
-                The studio
+                {t("product.theStudio")}
                 <Plus
                   className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-45"
                   aria-hidden="true"
@@ -229,7 +237,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
                   href={`/vendors/${product.vendor.slug}`}
                   className="mt-3 inline-flex w-fit items-center gap-1.5 font-medium text-accent underline-offset-4 hover:underline"
                 >
-                  Visit {product.vendor.name}
+                  {t("product.visitNamedStudio", { studio: product.vendor.name })}
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -238,7 +246,7 @@ async function ProductDetail({ product }: { product: ProductListing }) {
 
           {product.makerNote ? (
             <blockquote className="mt-8 border-l-2 border-clay bg-paper px-5 py-4 text-paper-foreground">
-              <p className="eyebrow text-clay">Studio note</p>
+              <p className="eyebrow text-clay">{t("product.studioNote")}</p>
               <p className="mt-2 text-sm leading-6">{product.makerNote}</p>
             </blockquote>
           ) : null}
@@ -248,13 +256,13 @@ async function ProductDetail({ product }: { product: ProductListing }) {
       {related.length > 0 ? (
         <section className="mt-16 border-t border-border pt-10 sm:mt-20">
           <SectionHeading
-            eyebrow="Keep looking"
-            title="In the same orbit"
-            description="Related by department or studio. Every object has a maker, and every maker has more to see."
+            eyebrow={t("product.keepLooking")}
+            title={t("product.sameOrbit")}
+            description={t("product.relatedDescription")}
             action={
               <Button asChild variant="secondary" size="sm">
                 <Link href={`/categories/${product.category.slug}`}>
-                  More {product.category.name.toLowerCase()}
+                  {t("product.moreCategory", { category: product.category.name.toLowerCase() })}
                 </Link>
               </Button>
             }

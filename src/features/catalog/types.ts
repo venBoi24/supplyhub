@@ -71,6 +71,8 @@ export interface CatalogFilters {
   sort?: ProductSort;
   page?: number;
   limit?: number;
+  /** Only include objects published at or after this instant (new-arrivals windows). */
+  publishedAfter?: Date;
 }
 
 export interface ProductPage {

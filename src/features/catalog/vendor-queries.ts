@@ -173,6 +173,7 @@ export async function getStudioProductStats(vendorId: string): Promise<{
   total: number;
   published: number;
   pendingReview: number;
+  drafts: number;
   lowStock: number;
 }> {
   await connection();
@@ -194,6 +195,7 @@ export async function getStudioProductStats(vendorId: string): Promise<{
     total: grouped.reduce((total, entry) => total + entry._count._all, 0),
     published: counts.get("PUBLISHED") ?? 0,
     pendingReview: counts.get("PENDING_REVIEW") ?? 0,
+    drafts: counts.get("DRAFT") ?? 0,
     lowStock,
   };
 }

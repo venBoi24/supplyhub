@@ -1,14 +1,15 @@
-import { Plus } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
-import { BottomNav } from "@/components/storefront/bottom-nav";
-import { BottomNavSkeleton } from "@/components/storefront/skeletons";
 import { Wordmark } from "@/components/storefront/wordmark";
 import { Button } from "@/components/ui/button";
 import { StudioNav } from "@/components/vendor/studio-nav";
 import { VendorStatusBadge } from "@/components/vendors/vendor-status-badge";
+import { signOutAction } from "@/features/identity/actions";
 import type { VendorStatus } from "@/generated/prisma/enums";
+import { LanguageSwitcher } from "@/i18n/language-switcher";
+import { getServerI18n } from "@/i18n/server";
 
 export interface StudioShellProps {
   studio: {
@@ -20,8 +21,9 @@ export interface StudioShellProps {
   children: ReactNode;
 }
 
-export function StudioShell({ studio, children }: StudioShellProps) {
+export async function StudioShell({ studio, children }: StudioShellProps) {
   const approved = studio.status === "APPROVED";
+  const { t } = await getServerI18n();
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -48,11 +50,14 @@ export function StudioShell({ studio, children }: StudioShellProps) {
               <p className="truncate text-[0.8125rem] leading-tight font-semibold tracking-[-0.01em]">
                 {studio.name}
               </p>
-              <p className="text-[0.625rem] leading-tight text-muted-foreground">Owner account</p>
+              <p className="text-[0.625rem] leading-tight text-muted-foreground">
+                {t("studio.ownerAccount")}
+              </p>
             </div>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            <LanguageSwitcher compact />
             {studio.status ? (
               <VendorStatusBadge
                 status={studio.status}
@@ -61,30 +66,38 @@ export function StudioShell({ studio, children }: StudioShellProps) {
             ) : null}
             {approved && studio.slug ? (
               <Button asChild variant="secondary" size="sm" className="hidden lg:inline-flex">
-                <Link href={`/vendors/${studio.slug}`}>View storefront</Link>
+                <Link href={`/vendors/${studio.slug}`}>{t("studio.viewStorefront")}</Link>
               </Button>
             ) : null}
             {approved ? (
               <Button asChild size="sm">
                 <Link href="/vendor/products/new">
                   <Plus className="size-4" aria-hidden="true" />
-                  Add object
+                  {t("studio.addObject")}
                 </Link>
               </Button>
             ) : null}
+            <form action={signOutAction}>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="sm"
+                aria-label={t("account.signOut")}
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{t("account.signOut")}</span>
+              </Button>
+            </form>
           </div>
         </div>
       </header>
 
       {approved ? <StudioNav /> : null}
 
-      <main id="main" className="bottom-nav-clearance flex-1">
+      <main id="main" className="flex-1">
         <div className="mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6 sm:py-8">{children}</div>
       </main>
-
-      <Suspense fallback={<BottomNavSkeleton />}>
-        <BottomNav />
-      </Suspense>
     </div>
   );
 }

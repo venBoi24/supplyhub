@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { AvailabilityBadge } from "@/components/storefront/availability-badge";
 import type { CatalogImage } from "@/features/catalog/types";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 export interface ProductGalleryProps {
@@ -18,6 +19,7 @@ export interface ProductGalleryProps {
  * stretch or jump between angles, and thumbnails only appear when a listing has more than one.
  */
 export function ProductGallery({ images, name, soldOut = false }: ProductGalleryProps) {
+  const t = useT();
   const [active, setActive] = useState(0);
 
   if (images.length === 0) {
@@ -56,13 +58,16 @@ export function ProductGallery({ images, name, soldOut = false }: ProductGallery
       </div>
 
       {showThumbnails ? (
-        <ul aria-label={`${name} images`} className="mt-3 flex flex-wrap gap-2.5 sm:gap-3">
+        <ul
+          aria-label={t("product.galleryImages", { name })}
+          className="mt-3 flex flex-wrap gap-2.5 sm:gap-3"
+        >
           {frames.map((image, index) => (
             <li key={image.src}>
               <button
                 type="button"
                 onClick={() => setActive(index)}
-                aria-label={`View image ${index + 1} of ${frames.length}`}
+                aria-label={t("product.viewImage", { index: index + 1, total: frames.length })}
                 aria-current={index === active}
                 className={cn(
                   "relative block size-16 overflow-hidden rounded-lg border bg-surface-muted transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none sm:size-20",

@@ -75,6 +75,7 @@ function StudioProductContent({
   const canEdit =
     product.status === "DRAFT" || product.status === "REJECTED" || product.status === "PUBLISHED";
   const saved = searchParamValue(query.saved) === "1";
+  const published = searchParamValue(query.published) === "1";
 
   return (
     <>
@@ -103,6 +104,12 @@ function StudioProductContent({
       {saved ? (
         <Notice tone="success" className="mt-4">
           Changes saved.
+        </Notice>
+      ) : null}
+
+      {published ? (
+        <Notice tone="success" className="mt-4">
+          Your object is live on the storefront.
         </Notice>
       ) : null}
 
@@ -209,7 +216,8 @@ function StudioProductContent({
           <section className="rounded-xl border border-border bg-surface p-6">
             <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Publishing</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Submit the draft for review, archive it, or remove it entirely.
+              Objects go live instantly. Publish a draft, archive a live object, or remove it
+              entirely.
             </p>
             <div className="mt-5">
               <ProductLifecycleActions

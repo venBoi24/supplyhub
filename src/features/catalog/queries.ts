@@ -179,6 +179,10 @@ export async function listProductPage(filters: CatalogFilters = {}): Promise<Pro
     where.vendor = { status: "APPROVED", slug: filters.vendor };
   }
 
+  if (filters.publishedAfter) {
+    where.publishedAt = { gte: filters.publishedAfter };
+  }
+
   if (filters.query) {
     Object.assign(where, buildSearchFilter(filters.query));
   }

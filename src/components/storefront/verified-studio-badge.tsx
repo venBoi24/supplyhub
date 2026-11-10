@@ -1,5 +1,8 @@
+"use client";
+
 import { ShieldCheck } from "lucide-react";
 
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -8,6 +11,8 @@ import { cn } from "@/lib/utils/cn";
  * reflects a real, server-enforced verification — not client-supplied data.
  */
 export function VerifiedStudioBadge({ className }: { className?: string }) {
+  const t = useT();
+
   return (
     <span
       className={cn(
@@ -15,7 +20,7 @@ export function VerifiedStudioBadge({ className }: { className?: string }) {
         className,
       )}
     >
-      <ShieldCheck className="size-3.5" aria-hidden="true" /> Verified studio
+      <ShieldCheck className="size-3.5" aria-hidden="true" /> {t("product.verifiedStudio")}
     </span>
   );
 }

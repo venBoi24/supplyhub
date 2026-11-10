@@ -19,6 +19,7 @@ import {
 } from "@/features/catalog/queries";
 import { catalogHref, parseCatalogQuery } from "@/features/catalog/search-params";
 import { PRODUCTS_PER_PAGE } from "@/features/catalog/types";
+import { getServerI18n } from "@/i18n/server";
 
 export const metadata: Metadata = {
   title: "All objects",
@@ -42,7 +43,11 @@ async function ProductsContent({
 }) {
   const params = await searchParams;
   const query = parseCatalogQuery(params);
-  const [categories, vendors] = await Promise.all([listCategorySummaries(), listVendorSummaries()]);
+  const [{ t }, categories, vendors] = await Promise.all([
+    getServerI18n(),
+    listCategorySummaries(),
+    listVendorSummaries(),
+  ]);
   const activeCategory = query.category
     ? categories.find((item) => item.slug === query.category)
     : undefined;
@@ -69,13 +74,12 @@ async function ProductsContent({
     <PageShell className="pt-10 sm:pt-14">
       <div className="flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
         <div className="max-w-2xl">
-          <p className="eyebrow text-muted-foreground">The catalog</p>
+          <p className="eyebrow text-muted-foreground">{t("products.eyebrow")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] sm:text-5xl">
-            All objects
+            {t("products.title")}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-            A considered edit from {vendors.length} independent studios. Filter by department or
-            studio, then follow the maker&apos;s name on each listing.
+            {t("products.catalogIntro", { count: vendors.length })}
           </p>
         </div>
         <div className="w-full lg:max-w-sm">
@@ -85,9 +89,9 @@ async function ProductsContent({
 
       <div className="border-b border-border py-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="eyebrow mr-1 text-muted-foreground">Department</span>
+          <span className="eyebrow mr-1 text-muted-foreground">{t("products.department")}</span>
           <FilterChip href={clearFiltersHref} active={!activeCategory && !activeVendor && !query.q}>
-            All
+            {t("common.all")}
           </FilterChip>
           {categories.map((category) => (
             <FilterChip
@@ -100,7 +104,7 @@ async function ProductsContent({
           ))}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/70 pt-3">
-          <span className="eyebrow mr-1 text-muted-foreground">Studio</span>
+          <span className="eyebrow mr-1 text-muted-foreground">{t("products.studio")}</span>
           {vendors.map((vendor) => (
             <FilterChip
               key={vendor.slug}
@@ -115,8 +119,15 @@ async function ProductsContent({
 
       <div className="flex flex-wrap items-center justify-between gap-3 py-4">
         <p className="text-xs text-muted-foreground">
-          {results.total} {results.total === 1 ? "object" : "objects"}
-          {query.q ? ` matching “${query.q}”` : ""}
+          {query.q
+            ? t(results.total === 1 ? "search.matching" : "search.matchingPlural", {
+                count: results.total,
+                query: query.q,
+              })
+            : t("products.objectCount", {
+                count: results.total,
+                objects: results.total === 1 ? t("nav.object") : t("nav.objects"),
+              })}
         </p>
         <SortLinks pathname="/products" query={filterQuery} />
       </div>
@@ -134,15 +145,15 @@ async function ProductsContent({
       ) : (
         <EmptyState
           icon={<SearchX className="size-5" aria-hidden="true" />}
-          title="No objects match those filters."
-          description="Try a different department or studio, clear the filters, or search the catalog for a material or maker."
+          title={t("products.noResults")}
+          description={t("products.noResultsBody")}
           className="mb-4"
         >
           <Button asChild>
-            <Link href="/products">Clear filters</Link>
+            <Link href="/products">{t("products.clearFilters")}</Link>
           </Button>
           <Button asChild variant="secondary">
-            <Link href="/search">Search the catalog</Link>
+            <Link href="/search">{t("search.searchTheCatalog")}</Link>
           </Button>
         </EmptyState>
       )}

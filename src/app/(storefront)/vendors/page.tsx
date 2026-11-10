@@ -8,6 +8,7 @@ import { PageShell } from "@/components/storefront/page-shell";
 import { CatalogPageSkeleton } from "@/components/storefront/skeletons";
 import { StudioFeatureCard } from "@/components/storefront/studio-card";
 import { getCatalogStats, listProducts, listVendorSummaries } from "@/features/catalog/queries";
+import { getServerI18n } from "@/i18n/server";
 
 export const metadata: Metadata = {
   title: "Studios",
@@ -25,7 +26,11 @@ export default function VendorsPage() {
 }
 
 async function VendorsContent() {
-  const [stats, vendors] = await Promise.all([getCatalogStats(), listVendorSummaries()]);
+  const [{ t }, stats, vendors] = await Promise.all([
+    getServerI18n(),
+    getCatalogStats(),
+    listVendorSummaries(),
+  ]);
   const studios = await Promise.all(
     vendors.map(async (vendor) => ({
       vendor,
@@ -37,15 +42,12 @@ async function VendorsContent() {
     <PageShell className="pt-10 sm:pt-14">
       <div className="border-b border-border pb-8">
         <p className="eyebrow text-muted-foreground">
-          The studios · {stats.vendors} makers · {stats.products} objects
+          {t("vendor.studiosEyebrow", { makers: stats.vendors, objects: stats.products })}
         </p>
         <h1 className="mt-3 max-w-3xl font-display text-4xl leading-[0.98] font-medium tracking-[-0.04em] text-balance sm:text-6xl">
-          Small workshops, named makers.
+          {t("vendor.headline")}
         </h1>
-        <p className="mt-5 max-w-xl text-sm leading-6 text-muted-foreground">
-          Every object in the catalog comes from one of these independent studios. Each has a
-          location, a discipline, and a story about how the work is made.
-        </p>
+        <p className="mt-5 max-w-xl text-sm leading-6 text-muted-foreground">{t("vendor.intro")}</p>
       </div>
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -69,14 +71,14 @@ async function VendorsContent() {
 
       <div className="mt-12 flex flex-col items-start justify-between gap-5 border-t border-border pt-8 sm:flex-row sm:items-center">
         <div>
-          <p className="eyebrow text-muted-foreground">The full catalog</p>
+          <p className="eyebrow text-muted-foreground">{t("vendor.fullCatalog")}</p>
           <p className="mt-2 font-display text-2xl font-medium tracking-[-0.03em]">
-            Follow an object back to its maker.
+            {t("vendor.followObject")}
           </p>
         </div>
         <Button asChild>
           <Link href="/products">
-            Browse all objects
+            {t("common.browseAllObjects")}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </Button>

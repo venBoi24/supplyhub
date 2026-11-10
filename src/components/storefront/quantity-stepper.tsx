@@ -3,6 +3,8 @@
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 
+import { useT } from "@/i18n/client";
+
 export interface QuantityStepperProps {
   max?: number;
   value?: number;
@@ -20,6 +22,7 @@ export function QuantityStepper({
   name,
   disabled = false,
 }: QuantityStepperProps) {
+  const t = useT();
   const [internal, setInternal] = useState(defaultValue);
   const quantity = value ?? internal;
   const limit = Math.max(1, Math.min(max, 10));
@@ -41,7 +44,7 @@ export function QuantityStepper({
         onClick={() => update(quantity - 1)}
         disabled={disabled || quantity <= 1}
         className="grid h-full w-11 place-items-center rounded-l-md text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-        aria-label="Decrease quantity"
+        aria-label={t("common.decreaseQuantity")}
       >
         <Minus className="size-4" aria-hidden="true" />
       </button>
@@ -56,7 +59,7 @@ export function QuantityStepper({
         onClick={() => update(quantity + 1)}
         disabled={disabled || quantity >= limit}
         className="grid h-full w-11 place-items-center rounded-r-md text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-        aria-label="Increase quantity"
+        aria-label={t("common.increaseQuantity")}
       >
         <Plus className="size-4" aria-hidden="true" />
       </button>

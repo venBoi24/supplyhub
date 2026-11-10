@@ -16,6 +16,7 @@ import { getVendorBySlug, listProductPage, listVendorSummaries } from "@/feature
 import { parseCatalogQuery } from "@/features/catalog/search-params";
 import type { VendorSummary } from "@/features/catalog/types";
 import { StudioChatButton } from "@/features/experience/widgets/studio-chat-button";
+import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({
   params,
@@ -58,7 +59,8 @@ async function VendorContent({
 }) {
   const rawQuery = await searchParams;
   const query = parseCatalogQuery(rawQuery);
-  const [results, mosaicResults, allStudios] = await Promise.all([
+  const [{ t }, results, mosaicResults, allStudios] = await Promise.all([
+    getServerI18n(),
     listProductPage({ vendor: vendor.slug, sort: query.sort, page: query.page }),
     listProductPage({ vendor: vendor.slug, sort: "featured", limit: 2 }),
     listVendorSummaries(),
@@ -68,12 +70,15 @@ async function VendorContent({
 
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs">
+      <nav
+        aria-label={t("common.breadcrumb")}
+        className="flex flex-wrap items-center gap-2 text-xs"
+      >
         <Link
           href="/vendors"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
-          Studios
+          {t("vendor.studiosTitle")}
         </Link>
         <span aria-hidden="true" className="text-border-strong">
           /
@@ -101,8 +106,8 @@ async function VendorContent({
           </h1>
           <p className="mt-5 text-base leading-7 text-muted-foreground">{vendor.story}</p>
           <p className="mt-6 font-mono text-[0.6875rem] tracking-[0.14em] text-muted-foreground uppercase">
-            Independent studio · {vendor.productCount}{" "}
-            {vendor.productCount === 1 ? "object" : "objects"} in this edit
+            {t("common.independentStudio")} ·{" "}
+            {t("vendor.objectsInEdit", { count: vendor.productCount })}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <VerifiedStudioBadge />
@@ -110,16 +115,16 @@ async function VendorContent({
           </div>
           <ul className="mt-5 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
             <li className="rounded-lg border border-border bg-surface px-3 py-2">
-              <span className="block font-semibold text-foreground">Approved</span>
-              Marketplace-verified studio
+              <span className="block font-semibold text-foreground">{t("vendor.approved")}</span>
+              {t("vendor.marketplaceVerifiedStudio")}
             </li>
             <li className="rounded-lg border border-border bg-surface px-3 py-2">
               <span className="block font-semibold text-foreground">{vendor.productCount}</span>
-              Live {vendor.productCount === 1 ? "listing" : "listings"}
+              {vendor.productCount === 1 ? t("vendor.liveListingOne") : t("vendor.liveListings")}
             </li>
             <li className="rounded-lg border border-border bg-surface px-3 py-2">
-              <span className="block font-semibold text-foreground">Protected</span>
-              Escrow on every order
+              <span className="block font-semibold text-foreground">{t("vendor.protected")}</span>
+              {t("vendor.escrowEvery")}
             </li>
           </ul>
         </div>
@@ -152,11 +157,11 @@ async function VendorContent({
       <section className="mt-8 rounded-xl border border-border bg-surface p-4 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="eyebrow text-muted-foreground">Studio location</p>
+            <p className="eyebrow text-muted-foreground">{t("vendor.studioLocation")}</p>
             <h2 className="mt-2 font-display text-xl font-medium">{vendor.location}</h2>
             {vendor.contactPhone ? (
               <p className="mt-2 text-sm text-muted-foreground">
-                Contact this studio:{" "}
+                {t("vendor.contactStudio")}{" "}
                 <a
                   href={`tel:${vendor.contactPhone}`}
                   className="font-medium text-accent underline underline-offset-4"
@@ -172,11 +177,11 @@ async function VendorContent({
             rel="noreferrer"
             className="text-sm font-medium text-accent underline underline-offset-4"
           >
-            Open in Google Maps
+            {t("vendor.openMaps")}
           </a>
         </div>
         <iframe
-          title={`Google Maps showing ${vendor.location}`}
+          title={t("vendor.mapsTitle", { location: vendor.location })}
           src={`https://maps.google.com/maps?q=${encodeURIComponent(
             typeof vendor.latitude === "number" && typeof vendor.longitude === "number"
               ? `${vendor.latitude},${vendor.longitude}`
@@ -190,7 +195,11 @@ async function VendorContent({
 
       <div className="flex flex-wrap items-center justify-between gap-3 py-4">
         <p className="text-xs text-muted-foreground">
-          {results.total} {results.total === 1 ? "object" : "objects"} from {vendor.name}
+          {t("vendor.objectsFromStudio", {
+            count: results.total,
+            objects: results.total === 1 ? t("nav.object") : t("nav.objects"),
+            studio: vendor.name,
+          })}
         </p>
         <SortLinks pathname={`/vendors/${vendor.slug}`} query={{ ...query, page: 1 }} />
       </div>
@@ -208,9 +217,9 @@ async function VendorContent({
       {otherStudios.length > 0 ? (
         <section className="mt-16 border-t border-border pt-10 sm:mt-20">
           <SectionHeading
-            eyebrow="More studios"
-            title="Keep meeting makers."
-            description="Each studio in the preview has its own discipline, location, and way of working."
+            eyebrow={t("vendor.moreStudios")}
+            title={t("vendor.keepMeeting")}
+            description={t("vendor.moreStudiosDescription")}
           />
           <div className="mt-8 grid gap-5 sm:grid-cols-2">
             {otherStudios.map((studio) => (

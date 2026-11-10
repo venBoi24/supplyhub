@@ -4,6 +4,7 @@ import { House, LayoutGrid, ShoppingCart, Store, UserRound } from "lucide-react"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 export interface BottomNavViewProps {
@@ -14,18 +15,19 @@ export interface BottomNavViewProps {
 
 export function BottomNavView({ cartCount, accountHref, accountLabel }: BottomNavViewProps) {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   const tabs = [
     {
       href: "/",
-      label: "Home",
+      label: t("bottomNav.home"),
       icon: House,
       active: pathname === "/",
       badge: 0,
     },
     {
       href: "/products",
-      label: "Shop",
+      label: t("bottomNav.shop"),
       icon: LayoutGrid,
       active:
         pathname.startsWith("/products") ||
@@ -35,14 +37,14 @@ export function BottomNavView({ cartCount, accountHref, accountLabel }: BottomNa
     },
     {
       href: "/vendors",
-      label: "Studios",
+      label: t("bottomNav.studios"),
       icon: Store,
       active: pathname.startsWith("/vendors"),
       badge: 0,
     },
     {
       href: "/cart",
-      label: "Cart",
+      label: t("bottomNav.cart"),
       icon: ShoppingCart,
       active: pathname === "/cart" || pathname.startsWith("/checkout"),
       badge: cartCount,
@@ -61,7 +63,7 @@ export function BottomNavView({ cartCount, accountHref, accountLabel }: BottomNa
 
   return (
     <nav
-      aria-label="Quick navigation"
+      aria-label={t("bottomNav.quick")}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md supports-[backdrop-filter]:bg-background/85 md:hidden"
     >
       <div className="mx-auto flex h-16 max-w-lg items-stretch justify-between px-2">

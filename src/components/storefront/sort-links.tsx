@@ -1,21 +1,26 @@
+"use client";
+
 import Link from "next/link";
 
 import { catalogHref, type CatalogQuery } from "@/features/catalog/search-params";
 import type { ProductSort } from "@/features/catalog/types";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
-const options: readonly { value: ProductSort; label: string }[] = [
-  { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest" },
-  { value: "price-asc", label: "Price ↑" },
-  { value: "price-desc", label: "Price ↓" },
+const options: readonly { value: ProductSort; labelKey: string }[] = [
+  { value: "featured", labelKey: "common.featured" },
+  { value: "newest", labelKey: "common.newest" },
+  { value: "price-asc", labelKey: "common.priceAsc" },
+  { value: "price-desc", labelKey: "common.priceDesc" },
 ];
 
 export function SortLinks({ pathname, query }: { pathname: string; query: CatalogQuery }) {
+  const t = useT();
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="eyebrow hidden text-muted-foreground sm:inline">Sort</span>
-      <nav aria-label="Sort objects" className="flex flex-wrap items-center gap-1">
+      <span className="eyebrow hidden text-muted-foreground sm:inline">{t("common.sort")}</span>
+      <nav aria-label={t("common.sortObjects")} className="flex flex-wrap items-center gap-1">
         {options.map((option) => {
           const active = query.sort === option.value;
 
@@ -31,7 +36,7 @@ export function SortLinks({ pathname, query }: { pathname: string; query: Catalo
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {option.label}
+              {t(option.labelKey)}
             </Link>
           );
         })}

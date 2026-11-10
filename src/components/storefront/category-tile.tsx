@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import type { CategorySummary } from "@/features/catalog/types";
+import { useT } from "@/i18n/client";
 
 export interface CategoryTileProps {
   category: CategorySummary;
@@ -13,6 +14,7 @@ export interface CategoryTileProps {
 }
 
 export function CategoryTile({ category, priority = false }: CategoryTileProps) {
+  const t = useT();
   const [active, setActive] = useState(0);
   const timers = useRef<{
     first?: ReturnType<typeof setTimeout>;
@@ -110,7 +112,8 @@ export function CategoryTile({ category, priority = false }: CategoryTileProps) 
 
         <div className="absolute inset-x-0 bottom-0 p-4 text-white">
           <p className="eyebrow text-white/75">
-            {category.productCount} {category.productCount === 1 ? "piece" : "pieces"}
+            {category.productCount}{" "}
+            {category.productCount === 1 ? t("common.piece") : t("common.pieces")}
           </p>
           <h3 className="mt-1 font-display text-lg font-semibold tracking-[-0.02em]">
             {category.name}

@@ -1,4 +1,7 @@
+"use client";
+
 import type { Vendor } from "@/features/catalog/types";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 export interface MakerLabelProps {
@@ -14,6 +17,8 @@ export function MakerLabel({
   tilt = false,
   className,
 }: MakerLabelProps) {
+  const t = useT();
+
   if (variant === "tag") {
     return (
       <div
@@ -27,7 +32,9 @@ export function MakerLabel({
           {vendor.monogram}
         </span>
         <span className="flex flex-col justify-center gap-[3px] px-3 py-2">
-          <span className="eyebrow text-[0.5rem] leading-none text-clay">Made by</span>
+          <span className="eyebrow text-[0.5rem] leading-none text-clay">
+            {t("product.madeBy")}
+          </span>
           <span className="font-display text-[0.8125rem] leading-none font-semibold">
             {vendor.name}
           </span>

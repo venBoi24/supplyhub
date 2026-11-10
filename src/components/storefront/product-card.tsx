@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -5,6 +7,7 @@ import type { ProductListing } from "@/features/catalog/types";
 import { Badge } from "@/components/ui/badge";
 import { Price } from "@/components/ui/price";
 import { WishlistButton } from "@/features/experience/widgets/wishlist-button";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { AvailabilityBadge } from "./availability-badge";
@@ -19,6 +22,7 @@ export function ProductCard({
   priority?: boolean;
   className?: string;
 }) {
+  const t = useT();
   const hasDiscount =
     typeof product.compareAtPriceCents === "number" &&
     product.compareAtPriceCents > product.priceCents;
@@ -56,7 +60,7 @@ export function ProductCard({
             <span />
           )}
           <div className="flex items-center gap-1.5">
-            {hasDiscount ? <Badge tone="accent">Sale</Badge> : null}
+            {hasDiscount ? <Badge tone="accent">{t("common.sale")}</Badge> : null}
             <WishlistButton
               item={{
                 slug: product.slug,

@@ -4,21 +4,23 @@ import { Link2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toaster";
+import { useT } from "@/i18n/client";
 
 export function ShareButton({ className }: { className?: string }) {
   const { toast } = useToast();
+  const t = useT();
 
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
       toast({
-        title: "Link copied",
-        description: "The address for this piece is on your clipboard.",
+        title: t("common.linkCopied"),
+        description: t("common.linkCopiedBody"),
       });
     } catch {
       toast({
-        title: "Could not copy the link",
-        description: "Copy the address from your browser bar instead.",
+        title: t("common.copyFailed"),
+        description: t("common.copyFailedBody"),
       });
     }
   }
@@ -26,7 +28,7 @@ export function ShareButton({ className }: { className?: string }) {
   return (
     <Button type="button" variant="secondary" onClick={copyLink} className={className}>
       <Link2 className="size-4" aria-hidden="true" />
-      Copy link
+      {t("common.copyLink")}
     </Button>
   );
 }

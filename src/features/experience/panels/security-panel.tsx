@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { KeyRound, LogIn, ShieldCheck, Smartphone, SmartphoneNfc } from "lucide-react";
 
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
@@ -11,6 +12,7 @@ const input =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-[#0f766e] focus:outline-none";
 
 export function SecurityPanel() {
+  const { t } = useI18n();
   const { state, enableTwoFactor, disableTwoFactor, verifyPhone, recordLoginAlert } =
     useExperience();
   const { security } = state;
@@ -53,10 +55,10 @@ export function SecurityPanel() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="flex items-center gap-2 font-display text-lg font-medium">
-                <KeyRound className="size-5 text-[#0f766e]" /> Two-factor authentication
+                <KeyRound className="size-5 text-[#0f766e]" /> {t("experience.security.twoFactor")}
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Ask for a one-time code at sign-in so a stolen password isn&apos;t enough.
+                {t("experience.security.twoFactorBody")}
               </p>
             </div>
             <button
@@ -99,11 +101,9 @@ export function SecurityPanel() {
 
         <form onSubmit={submitPhone} className="rounded-2xl border border-border bg-surface p-5">
           <h2 className="flex items-center gap-2 font-display text-lg font-medium">
-            <Smartphone className="size-5 text-[#0f766e]" /> Verify your phone
+            <Smartphone className="size-5 text-[#0f766e]" /> {t("experience.security.phone")}
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Couriers use a verified number to reach you and confirm hand-over with your code.
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t("experience.security.phoneBody")}</p>
           <div className="mt-3 flex gap-2">
             <input
               className={input}
@@ -117,12 +117,12 @@ export function SecurityPanel() {
               disabled={phone.trim().length < 6}
               className="shrink-0 rounded-lg bg-[#0f766e] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
-              {security.phoneVerified ? "Update" : "Verify"}
+              {security.phoneVerified ? "Update" : t("experience.security.verify")}
             </button>
           </div>
           {security.phoneVerified ? (
             <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-[#0f766e]">
-              <SmartphoneNfc className="size-4" /> Verified · {security.phoneNumber}
+              <SmartphoneNfc className="size-4" /> {t("common.verified")} · {security.phoneNumber}
             </p>
           ) : null}
         </form>
@@ -131,14 +131,14 @@ export function SecurityPanel() {
       <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 font-display text-lg font-medium">
-            <LogIn className="size-5 text-[#0f766e]" /> Login alerts
+            <LogIn className="size-5 text-[#0f766e]" /> {t("experience.security.loginAlerts")}
           </h2>
           <button
             type="button"
             onClick={simulateSignIn}
             className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:border-border-strong hover:text-foreground"
           >
-            Simulate sign-in
+            {t("experience.security.simulate")}
           </button>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">

@@ -12,6 +12,11 @@ LynxPay sandbox in Tanzanian shillings, stock reservations are released when pay
 arrives, and administrators reconcile payments, refunds, commission, and manual vendor payouts. The
 PWA phases follow the gates in [docs/07-development-phases.md](docs/07-development-phases.md).
 
+Beyond the phase gates, studios now publish objects instantly without administrator approval, the
+home page surfaces new arrivals by day / week / month, the studio has its own sign-out and
+seller-only navigation, and the whole interface ships in five languages (see
+[Seller experience and localization](#seller-experience-and-localization)).
+
 The Phase 3 gate is covered by unit tests that prove customers, vendors, and administrators cannot
 read or mutate another user's or studio's private resources, including suspended accounts,
 pending or rejected applications, and order access across vendors. The Phase 4 gate adds tests for
@@ -93,11 +98,13 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
 
 - Products are owned by exactly one studio. Every studio write scopes by the session's vendor ID
   server-side; another studio's product ID returns 404. Image uploads, stock adjustments, edits,
-  submission, and withdrawal all re-check ownership.
-- New objects start as `DRAFT`. A studio submits work to `PENDING_REVIEW`, may withdraw it back to
-  draft, and may not edit an object while it is in review; stock can still be adjusted so the
-  inventory stays accurate. Administrators publish or return an object with a reason, and every
-  decision is written to the audit log.
+  publishing, and archiving all re-check ownership.
+- New objects go live immediately. Saving a product publishes it as `PUBLISHED` with a
+  `publishedAt` timestamp, so it reaches the storefront without an administrator approval step. A
+  studio can archive any live object, and legacy `DRAFT` or `REJECTED` objects can be self-published
+  or deleted from the studio. Stock can always be adjusted so inventory stays accurate. Every
+  publish, archive, and delete decision is written to the audit log. Administrators keep moderation
+  tools for legacy `PENDING_REVIEW` items, but new listings no longer enter a review queue.
 - Uploads accept JPEG, PNG, WebP, GIF, AVIF, or BMP up to 5 MB, verified by magic bytes rather than
   the declared MIME type. Keys are generated server-side as `products/<productId>/<uuid>.<ext>`, so
   a client cannot choose a path, overwrite another object's image, or upload SVG or executable
@@ -154,6 +161,27 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
   product claims or trademarks.
 - Lighthouse: accessibility, best practices, and SEO score 100 on the home page (desktop) and
   product detail (mobile).
+
+## Seller experience and localization
+
+- **Instant publishing.** Studio owners publish objects without administrator approval. The studio
+  form saves straight to `PUBLISHED`, the product list and overview count objects as live, and a
+  direct publish action covers any legacy draft or rejected object. See
+  [Catalog and inventory](#catalog-and-inventory-phase-4).
+- **New arrivals on the home page.** The storefront home shows the latest objects with Today /
+  This week / This month tabs (`?new=day|week|month`). Windows are calendar-based (midnight today,
+  Monday-start week, first of the month) and filter on `publishedAt`. The logic lives in
+  `src/features/catalog/new-arrivals.ts` and is covered by unit tests.
+- **Studio chrome.** The studio shell has an explicit Sign out button and renders only studio
+  navigation. The buyer bottom navigation (Home / Shop / Studios / Cart) is not shown on the seller
+  side, because studio owners sell rather than shop.
+- **Five languages.** The interface ships in English, Kiswahili, Arabic (RTL), Chinese, and French.
+  Dictionaries live in `src/i18n/messages/<locale>.json`; server components read translations through
+  `getServerI18n()` and client components through `useI18n()` / `useT()`. The preference is persisted
+  in a first-party cookie and mirrored to localStorage, with no URL/locale routing, so every typed
+  route and canonical link keeps working. A parity test (`tests/unit/i18n.test.ts`) requires all five
+  dictionaries to share identical keys, and the document `lang`/`dir` update on switch (Arabic
+  renders right-to-left).
 
 ## Requirements
 
@@ -292,11 +320,12 @@ src/
   app/                 App Router routes, layouts, error boundaries, /media, and payment webhooks
   components/          UI primitives, storefront chrome, studio panels, and admin controls
   features/cart/       Guest and account carts, pricing summary, and cart actions
-  features/catalog/    Catalog queries, search, money, validation, and studio/admin actions
+  features/catalog/    Catalog queries, search, new arrivals, money, validation, and studio/admin actions
   features/checkout/   Order placement, reservation release, order queries, and checkout UI
   features/identity/   Sign-up, sign-in, recovery, verification, and account queries
   features/payments/   Payment lifecycle, ledger, refunds, payouts, webhook handling, and actions
   features/vendors/    Vendor application, admin review, and studio queries
+  i18n/                Locale config, dictionaries, formatters, and server/client providers
   generated/prisma/    Generated Prisma client (not committed)
   lib/config/          Validated environment configuration
   lib/logging/         Structured, redacting logger
@@ -349,11 +378,12 @@ docs/                  Product, architecture, security, and phase specifications
   search. The demo catalogue is small and this keeps ranking predictable; moving to `tsvector` and
   trigram indexes is a performance change, not a schema rewrite.
 - **Image moderation is automatic and validation-based.** Accepted JPEG/PNG/WebP/GIF/AVIF/BMP files
-  are auto-approved as `APPROVED`; the product-level review gate is human. A separate image
-  moderation queue is not part of this phase.
-- **Edits to published products go live immediately.** Administrators moderate the initial
-  submission, not every subsequent edit. If continuous review becomes policy, published edits
-  should move to a draft revision instead of mutating the live row.
+  are auto-approved as `APPROVED`. A separate image moderation queue is not part of this phase.
+- **Products publish without a review gate.** New objects go live the moment a studio saves them,
+  and edits to published products also go live immediately. There is no human approval step for new
+  listings; administrators keep moderation tools only for legacy `PENDING_REVIEW` items. If
+  pre-publication review becomes policy, reintroduce a draft revision step instead of mutating the
+  live row.
 - **Checkout is customer-only.** Vendor and administrator accounts keep operational roles and
   cannot place orders in this phase. Relax `canCheckout` when purchase policy is specified.
 - **LynxPay is the only payment provider in this phase.** The catalogue moved from USD to TZS
