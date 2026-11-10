@@ -269,6 +269,15 @@
       padding-bottom: calc(4rem + env(safe-area-inset-bottom));
     }
   }
+
+  /* The studio bottom nav stays visible up to the lg breakpoint (phones, tablets and
+     the in-app mobile preview sit below lg), so its clearance is scoped wider than
+     the storefront's md-scoped clearance. */
+  @media (width < 64rem) {
+    .studio-bottom-nav-clearance {
+      padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    }
+  }
 }
 
 /* Right-to-left support (Arabic). The `dir` attribute on <html> already mirrors flex/grid

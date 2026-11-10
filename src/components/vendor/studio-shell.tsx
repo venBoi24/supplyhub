@@ -96,7 +96,7 @@ export async function StudioShell({ studio, children }: StudioShellProps) {
 
       {approved ? <StudioNav /> : null}
 
-      <main id="main" className="bottom-nav-clearance flex-1">
+      <main id="main" className="studio-bottom-nav-clearance flex-1">
         <div className="mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6 sm:py-8">{children}</div>
       </main>
 

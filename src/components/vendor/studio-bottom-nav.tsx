@@ -17,7 +17,7 @@ export function StudioBottomNav() {
   return (
     <nav
       aria-label={t("studio.nav")}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md supports-[backdrop-filter]:bg-background/85 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md supports-[backdrop-filter]:bg-background/85 lg:hidden"
     >
       <div className="mx-auto flex h-16 max-w-lg items-stretch justify-between px-1">
         {studioTabs.map((tab) => {
