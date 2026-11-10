@@ -263,44 +263,65 @@ async function VendorContent({
               No orders yet. Paid orders containing your objects will appear here.
             </p>
           ) : (
-            <div className="scroll-x">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-border bg-surface-muted/60">
-                    <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
-                      Order
-                    </th>
-                    <th className="hidden px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase sm:table-cell">
-                      Buyer
-                    </th>
-                    <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
-                      Total
-                    </th>
-                    <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((order) => (
-                    <tr key={order.id} className="border-b border-border last:border-b-0">
-                      <td className="px-4 py-2.5 font-mono text-xs tabular-nums">
+            <>
+              {/* Phones: stacked rows that wrap in place — no horizontal scrolling. */}
+              <ul className="divide-y divide-border sm:hidden">
+                {recentOrders.map((order) => (
+                  <li key={order.id} className="px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 font-mono text-xs break-all tabular-nums">
                         {order.order.orderNumber}
-                      </td>
-                      <td className="hidden px-4 py-2.5 text-xs sm:table-cell">
+                      </span>
+                      <OrderStatusPill status={order.status} />
+                    </div>
+                    <div className="mt-1.5 flex items-start justify-between gap-3 text-xs">
+                      <span className="min-w-0 break-words text-muted-foreground">
                         {order.order.recipientName}
-                      </td>
-                      <td className="px-4 py-2.5 font-mono text-xs tabular-nums">
+                      </span>
+                      <span className="shrink-0 font-mono tabular-nums">
                         {formatMoney(decimalToCents(order.subtotal), order.currency)}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <OrderStatusPill status={order.status} />
-                      </td>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="scroll-x hidden sm:block">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-border bg-surface-muted/60">
+                      <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
+                        Order
+                      </th>
+                      <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
+                        Buyer
+                      </th>
+                      <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
+                        Total
+                      </th>
+                      <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
+                        Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {recentOrders.map((order) => (
+                      <tr key={order.id} className="border-b border-border last:border-b-0">
+                        <td className="px-4 py-2.5 font-mono text-xs tabular-nums">
+                          {order.order.orderNumber}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs">{order.order.recipientName}</td>
+                        <td className="px-4 py-2.5 font-mono text-xs tabular-nums">
+                          {formatMoney(decimalToCents(order.subtotal), order.currency)}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <OrderStatusPill status={order.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </section>
 

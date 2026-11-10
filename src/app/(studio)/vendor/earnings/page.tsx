@@ -63,41 +63,67 @@ async function VendorEarningsContent() {
             No payout records yet.
           </p>
         ) : (
-          <div className="scroll-x mt-3 rounded-xl border border-border bg-surface">
-            <table className="w-full min-w-[700px] text-left text-sm">
-              <thead className="bg-surface-muted/60">
-                <tr>
-                  {["Reference", "Period", "Amount", "Status", "Updated"].map((heading) => (
-                    <th
-                      key={heading}
-                      className="px-4 py-2.5 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {earnings.payouts.map((payout) => (
-                  <tr key={payout.id}>
-                    <td className="px-4 py-3 font-mono text-xs">
+          <>
+            {/* Phones: stacked rows that wrap in place — no horizontal scrolling. */}
+            <ul className="mt-3 divide-y divide-border rounded-xl border border-border bg-surface sm:hidden">
+              {earnings.payouts.map((payout) => (
+                <li key={payout.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="min-w-0 font-mono text-xs break-all">
                       {payout.reference ?? "Pending reference"}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
+                    </span>
+                    <span className="shrink-0 text-xs">{payout.status}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-start justify-between gap-3 text-xs">
+                    <span className="min-w-0 break-words text-muted-foreground">
                       {formatDate(payout.periodStart)} – {formatDate(payout.periodEnd)}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs tabular-nums">
+                    </span>
+                    <span className="shrink-0 font-mono tabular-nums">
                       {formatMoney(payout.amountCents, payout.currency)}
-                    </td>
-                    <td className="px-4 py-3 text-xs">{payout.status}</td>
-                    <td className="px-4 py-3 text-xs">
-                      {formatDate(payout.reconciledAt ?? payout.paidAt ?? payout.createdAt)}
-                    </td>
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[0.6563rem] text-muted-foreground">
+                    Updated {formatDate(payout.reconciledAt ?? payout.paidAt ?? payout.createdAt)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <div className="scroll-x mt-3 hidden rounded-xl border border-border bg-surface sm:block">
+              <table className="w-full min-w-[700px] text-left text-sm">
+                <thead className="bg-surface-muted/60">
+                  <tr>
+                    {["Reference", "Period", "Amount", "Status", "Updated"].map((heading) => (
+                      <th
+                        key={heading}
+                        className="px-4 py-2.5 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase"
+                      >
+                        {heading}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {earnings.payouts.map((payout) => (
+                    <tr key={payout.id}>
+                      <td className="px-4 py-3 font-mono text-xs">
+                        {payout.reference ?? "Pending reference"}
+                      </td>
+                      <td className="px-4 py-3 text-xs">
+                        {formatDate(payout.periodStart)} – {formatDate(payout.periodEnd)}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs tabular-nums">
+                        {formatMoney(payout.amountCents, payout.currency)}
+                      </td>
+                      <td className="px-4 py-3 text-xs">{payout.status}</td>
+                      <td className="px-4 py-3 text-xs">
+                        {formatDate(payout.reconciledAt ?? payout.paidAt ?? payout.createdAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
     </>
