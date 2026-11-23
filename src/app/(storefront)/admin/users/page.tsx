@@ -190,12 +190,12 @@ async function UsersContent({
         <table className="w-full table-fixed text-left text-sm">
           <thead className="bg-surface-muted text-xs text-muted-foreground">
             <tr>
-              <th className="p-4">{t("admin.tableAccount")}</th>
-              <th className="p-4">{t("admin.roleLabel")}</th>
-              <th className="p-4">{t("common.status")}</th>
-              <th className="p-4">{t("admin.tableEmailVerified")}</th>
-              <th className="p-4">{t("admin.tableJoined")}</th>
-              <th className="p-4">{t("admin.tableActions")}</th>
+              <th className="w-[28%] p-4">{t("admin.tableAccount")}</th>
+              <th className="w-[12%] p-4">{t("admin.roleLabel")}</th>
+              <th className="w-[12%] p-4">{t("common.status")}</th>
+              <th className="w-[16%] p-4">{t("admin.tableEmailVerified")}</th>
+              <th className="w-[16%] p-4">{t("admin.tableJoined")}</th>
+              <th className="w-[16%] p-4">{t("admin.tableActions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
