@@ -49,7 +49,7 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
           <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-64">
+      <DropdownMenuContent align="end" className="w-[min(16rem,calc(100vw-1rem))]">
         <DropdownMenuLabel>{t("account.signedIn")}</DropdownMenuLabel>
         <div className="px-3 pb-2">
           <p className="truncate text-sm font-medium text-foreground">{actor.name}</p>

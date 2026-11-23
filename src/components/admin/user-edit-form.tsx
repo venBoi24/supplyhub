@@ -33,7 +33,7 @@ export function UserEditForm({
         <summary className="cursor-pointer text-xs font-medium text-accent underline underline-offset-4">
           {t("admin.editAccount")}
         </summary>
-        <form action={editAction} className="mt-3 grid min-w-64 gap-2">
+        <form action={editAction} className="mt-3 grid w-full gap-2">
           <input type="hidden" name="userId" value={userId} />
           <label className="grid gap-1 text-xs">
             {t("auth.name")}
