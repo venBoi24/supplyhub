@@ -3,9 +3,11 @@ import { cn } from "@/lib/utils/cn";
 export function Wordmark({
   className,
   compact = false,
+  iconOnly = false,
 }: {
   className?: string;
   compact?: boolean;
+  iconOnly?: boolean;
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
@@ -26,14 +28,16 @@ export function Wordmark({
         </span>
         <span aria-hidden="true" className="absolute -right-[3px] -bottom-[3px] size-2 bg-accent" />
       </span>
-      <span
-        className={cn(
-          "font-display leading-none font-semibold tracking-[-0.035em]",
-          compact ? "text-[1.15rem]" : "text-[1.45rem]",
-        )}
-      >
-        SupplyHub
-      </span>
+      {iconOnly ? null : (
+        <span
+          className={cn(
+            "font-display leading-none font-semibold tracking-[-0.035em]",
+            compact ? "text-[1.15rem]" : "text-[1.45rem]",
+          )}
+        >
+          SupplyHub
+        </span>
+      )}
     </span>
   );
 }

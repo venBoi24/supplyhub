@@ -30,7 +30,7 @@ export async function SiteHeader() {
           href="/"
           className="mr-1 inline-flex shrink-0 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         >
-          <Wordmark compact className="sm:hidden" />
+          <Wordmark compact iconOnly className="sm:hidden" />
           <Wordmark className="hidden sm:inline-flex" />
         </Link>
 
