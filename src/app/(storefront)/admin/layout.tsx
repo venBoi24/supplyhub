@@ -1,21 +1,21 @@
 import type { ReactNode } from "react";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageShell } from "@/components/storefront/page-shell";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { LanguageSwitcher } from "@/i18n/language-switcher";
+import { PageShell } from "@/components/storefront/page-shell";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <>
-      <div className="border-b border-border bg-surface/70">
-        <PageShell className="flex items-center gap-3 py-3">
-          <div className="min-w-0 flex-1">
-            <AdminNav />
-          </div>
-          <LanguageSwitcher compact />
-        </PageShell>
+    <div className="min-h-dvh lg:flex">
+      <AdminSidebar />
+      <div className="min-w-0 flex-1">
+        <div className="border-b border-border bg-surface/70">
+          <PageShell className="flex items-center justify-end gap-3 py-3">
+            <LanguageSwitcher compact />
+          </PageShell>
+        </div>
+        {children}
       </div>
-      {children}
-    </>
+    </div>
   );
 }

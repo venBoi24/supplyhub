@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/storefront/page-shell";
 import { getAdminDashboardMetrics } from "@/features/admin/queries";
 import { getServerI18n } from "@/i18n/server";
@@ -58,6 +59,18 @@ export default async function AdminIndexPage() {
           </Link>
         ))}
       </dl>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Button asChild variant="secondary" size="sm">
+          <Link href="/admin/posts">{t("admin.posts")}</Link>
+        </Button>
+        <Button asChild variant="secondary" size="sm">
+          <Link href="/admin/reports">{t("admin.reports")}</Link>
+        </Button>
+        <Button asChild variant="secondary" size="sm">
+          <Link href="/admin/settings">{t("admin.settings")}</Link>
+        </Button>
+      </div>
     </PageShell>
   );
 }

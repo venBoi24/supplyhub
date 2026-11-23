@@ -14,13 +14,17 @@ export interface AdminProductSummary {
   id: string;
   name: string;
   slug: string;
+  summary: string;
+  description: string;
   status: ProductStatus;
   sku: string;
   priceCents: number;
   currency: string;
   stock: number;
   featured: boolean;
+  createdAt: Date;
   updatedAt: Date;
+  publishedAt: Date | null;
   vendorName: string;
   vendorSlug: string;
   categoryName: string;
@@ -44,12 +48,30 @@ export interface AdminCategorySummary {
 export async function listAdminProducts(input: {
   status?: ProductStatus;
   search?: string;
+  categorySlug?: string;
+  vendorSlug?: string;
+  dateFrom?: string;
+  dateTo?: string;
   page: number;
 }): Promise<{ products: AdminProductSummary[]; total: number; page: number }> {
   await connection();
   const database = getDatabase();
+  const fromDate = input.dateFrom ? new Date(input.dateFrom) : null;
+  const toDate = input.dateTo ? new Date(input.dateTo) : null;
+  const validFrom = fromDate && !Number.isNaN(fromDate.getTime()) ? fromDate : null;
+  const validTo = toDate && !Number.isNaN(toDate.getTime()) ? toDate : null;
   const where = {
     ...(input.status ? { status: input.status } : {}),
+    ...(input.categorySlug ? { category: { slug: input.categorySlug } } : {}),
+    ...(input.vendorSlug ? { vendor: { slug: input.vendorSlug } } : {}),
+    ...(validFrom || validTo
+      ? {
+          publishedAt: {
+            ...(validFrom ? { gte: validFrom } : {}),
+            ...(validTo ? { lte: validTo } : {}),
+          },
+        }
+      : {}),
     ...(input.search
       ? {
           OR: [
@@ -82,13 +104,17 @@ export async function listAdminProducts(input: {
       id: product.id,
       name: product.name,
       slug: product.slug,
+      summary: product.summary,
+      description: product.description,
       status: product.status,
       sku: product.sku,
       priceCents: decimalToCents(product.price),
       currency: product.currency,
       stock: product.stock,
       featured: product.featured,
+      createdAt: product.createdAt,
       updatedAt: product.updatedAt,
+      publishedAt: product.publishedAt,
       vendorName: product.vendor.name,
       vendorSlug: product.vendor.slug,
       categoryName: product.category.name,
@@ -154,6 +180,66 @@ export async function listAdminCategories(): Promise<AdminCategorySummary[]> {
     productCount: category._count.products,
     publishedCount: category.products.length,
   }));
+}
+
+export async function getAdminProduct(id: string): Promise<AdminProductSummary | null> {
+  await connection();
+  const database = getDatabase();
+  const product = await database.product.findUnique({
+    where: { id },
+    include: {
+      vendor: { select: { name: true, slug: true } },
+      category: { select: { name: true, slug: true } },
+      images: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+
+  if (!product) {
+    return null;
+  }
+
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    summary: product.summary,
+    description: product.description,
+    status: product.status,
+    sku: product.sku,
+    priceCents: decimalToCents(product.price),
+    currency: product.currency,
+    stock: product.stock,
+    featured: product.featured,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+    publishedAt: product.publishedAt,
+    vendorName: product.vendor.name,
+    vendorSlug: product.vendor.slug,
+    categoryName: product.category.name,
+    categorySlug: product.category.slug,
+    reviewNote: product.reviewNote,
+    images: product.images.map((image) => ({
+      src: mediaUrlForKey(image.storageKey),
+      alt: image.alt,
+    })),
+  };
+}
+
+export async function listAdminAuditEventsForTarget(targetType: string, targetId: string) {
+  await connection();
+  const database = getDatabase();
+  return database.auditLog.findMany({
+    where: { targetType, targetId },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: {
+      id: true,
+      action: true,
+      metadata: true,
+      createdAt: true,
+      actor: { select: { name: true, email: true } },
+    },
+  });
 }
 
 export async function getAdminCategory(id: string): Promise<AdminCategorySummary | null> {

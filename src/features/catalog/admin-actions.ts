@@ -11,6 +11,7 @@ import { recordAuditEvent } from "@/server/audit/audit-log";
 import { canManageCategories, canModerateCatalog } from "@/server/auth/policies";
 import { getSessionActor } from "@/server/auth/session";
 import { getDatabase } from "@/server/db/client";
+import { getStorage } from "@/server/storage/object-storage";
 
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
 
@@ -374,4 +375,155 @@ export async function archiveCategoryAction(
   logger.info("category.archived", { actorId: actor.id, categoryId: category.id });
   revalidateCatalog();
   redirect("/admin/categories?archived=1");
+}
+export async function hideAdminProductAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const actor = await requireAdmin("/admin/posts");
+  const { t } = await getServerI18n();
+  const productId = asUuid(formValue(formData, "productId"));
+
+  if (!productId) {
+    return { status: "error", message: t("admin.errors.objectGone") };
+  }
+
+  const database = getDatabase();
+  const product = await database.product.findUnique({
+    where: { id: productId },
+    select: { id: true, status: true, featured: true },
+  });
+
+  if (!product) {
+    return { status: "error", message: t("admin.errors.objectGone") };
+  }
+
+  if (product.status === "ARCHIVED") {
+    return { status: "success", message: t("admin.success.postHidden") };
+  }
+
+  if (product.status !== "PUBLISHED") {
+    return { status: "error", message: t("admin.errors.notPublished") };
+  }
+
+  const updated = await database.product.updateMany({
+    where: { id: product.id, status: "PUBLISHED" },
+    data: { status: "ARCHIVED", archivedAt: new Date(), featured: false },
+  });
+
+  if (updated.count !== 1) {
+    return { status: "error", message: t("admin.errors.objectChanged") };
+  }
+
+  await database.$transaction((transaction) =>
+    recordAuditEvent(transaction, {
+      actorId: actor.id,
+      action: "PRODUCT_ARCHIVED",
+      targetType: "product",
+      targetId: product.id,
+      metadata: { reason: "admin-hide" },
+    }),
+  );
+
+  logger.info("product.hidden", { actorId: actor.id, productId: product.id });
+  revalidateCatalog();
+  redirect("/admin/posts?hidden=1");
+}
+
+export async function restoreAdminProductAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const actor = await requireAdmin("/admin/posts");
+  const { t } = await getServerI18n();
+  const productId = asUuid(formValue(formData, "productId"));
+
+  if (!productId) {
+    return { status: "error", message: t("admin.errors.objectGone") };
+  }
+
+  const database = getDatabase();
+  const product = await database.product.findUnique({
+    where: { id: productId },
+    select: { id: true, status: true },
+  });
+
+  if (!product) {
+    return { status: "error", message: t("admin.errors.objectGone") };
+  }
+
+  if (product.status !== "ARCHIVED") {
+    return { status: "error", message: t("admin.errors.notHidden") };
+  }
+
+  const updated = await database.product.updateMany({
+    where: { id: product.id, status: "ARCHIVED" },
+    data: { status: "PUBLISHED", publishedAt: new Date(), archivedAt: null, reviewedAt: new Date(), reviewedById: actor.id },
+  });
+
+  if (updated.count !== 1) {
+    return { status: "error", message: t("admin.errors.objectChanged") };
+  }
+
+  await database.$transaction((transaction) =>
+    recordAuditEvent(transaction, {
+      actorId: actor.id,
+      action: "PRODUCT_PUBLISHED",
+      targetType: "product",
+      targetId: product.id,
+      metadata: { reason: "admin-restore" },
+    }),
+  );
+
+  logger.info("product.restored", { actorId: actor.id, productId: product.id });
+  revalidateCatalog();
+  redirect("/admin/posts?restored=1");
+}
+
+export async function deleteAdminProductAction(
+  _previousState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const actor = await requireAdmin("/admin/posts");
+  const { t } = await getServerI18n();
+  const productId = asUuid(formValue(formData, "productId"));
+
+  if (!productId) {
+    return { status: "error", message: t("admin.errors.objectGone") };
+  }
+
+  const database = getDatabase();
+  const product = await database.product.findUnique({
+    where: { id: productId },
+    select: { id: true, status: true, images: { select: { storageKey: true } } },
+  });
+
+  if (!product) {
+    return { status: "error", message: t("admin.errors.objectGone") };
+  }
+
+  if (product.status === "PUBLISHED" || product.status === "PENDING_REVIEW") {
+    return { status: "error", message: t("admin.errors.deletePublishedForbidden") };
+  }
+
+  const deleted = await database.product.deleteMany({
+    where: { id: product.id, status: product.status },
+  });
+
+  if (deleted.count !== 1) {
+    return { status: "error", message: t("admin.errors.objectChanged") };
+  }
+
+  const storage = getStorage();
+  await Promise.all(
+    product.images.map((image) =>
+      storage.delete(image.storageKey).catch((error: unknown) => {
+        logger.warn("product.image_delete_failed", { productId: product.id, error });
+      }),
+    ),
+  );
+
+  logger.info("product.deleted", { actorId: actor.id, productId: product.id });
+  revalidateCatalog();
+  redirect("/admin/posts?deleted=1");
 }
