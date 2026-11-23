@@ -80,7 +80,7 @@ async function UsersContent({
             {t("admin.usersIntro", { count: formatNumber(total) })}
           </p>
         </div>
-        <Button asChild variant="secondary" size="sm">
+        <Button asChild variant="secondary" size="sm" className="w-full" style={{ whiteSpace: "normal" }}>
           <Link
             href={`/api/admin/users/export?${new URLSearchParams({ ...(role ? { role } : {}), ...(status ? { status } : {}), ...(search ? { q: search } : {}) }).toString()}`}
           >
@@ -152,7 +152,7 @@ async function UsersContent({
             ) : (
               <div className="mt-3 grid gap-3">
                 {user.vendor ? (
-                  <Button asChild variant="secondary" size="sm">
+                  <Button asChild variant="secondary" size="sm" className="w-full" style={{ whiteSpace: "normal" }}>
                     <Link href={`/admin/users/${user.id}/inventory`}>{t("admin.manageStoreInventory")}</Link>
                   </Button>
                 ) : null}
@@ -217,7 +217,7 @@ async function UsersContent({
                   ) : (
                     <div className="grid gap-3">
                       {user.vendor ? (
-                        <Button asChild variant="secondary" size="sm" className="w-full !whitespace-normal">
+                        <Button asChild variant="secondary" size="sm" className="w-full min-w-0" style={{ whiteSpace: "normal" }}>
                           <Link href={`/admin/users/${user.id}/inventory`}>
                             {t("admin.manageStoreInventory")}
                           </Link>

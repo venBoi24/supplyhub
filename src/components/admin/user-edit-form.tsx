@@ -43,7 +43,7 @@ export function UserEditForm({
             {t("auth.email")}
             <Input name="email" type="email" defaultValue={email} maxLength={254} required className="min-w-0" />
           </label>
-          <Button size="sm" type="submit" disabled={editPending} className="w-full min-w-0 !whitespace-normal">
+          <Button size="sm" type="submit" disabled={editPending} className="w-full min-w-0" style={{ whiteSpace: "normal" }}>
             {editPending ? t("common.saving") : t("admin.saveChanges")}
           </Button>
           {editState.message ? (
@@ -63,7 +63,7 @@ export function UserEditForm({
         }}
       >
         <input type="hidden" name="userId" value={userId} />
-        <Button type="submit" variant="secondary" size="sm" disabled={deletePending} className="w-full min-w-0 !whitespace-normal">
+        <Button type="submit" variant="secondary" size="sm" disabled={deletePending} className="w-full min-w-0" style={{ whiteSpace: "normal" }}>
           {deletePending ? t("admin.deletingPending") : t("common.delete")}
         </Button>
         {deleteState.message ? (
