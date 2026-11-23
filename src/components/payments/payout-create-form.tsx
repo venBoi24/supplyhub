@@ -35,7 +35,7 @@ export function PayoutCreateForm({
   const payables = vendors.filter((vendor) => vendor.availableCents > 0);
 
   return (
-    <form action={action} className="space-y-4 rounded-xl border border-border bg-surface p-6">
+    <form action={action} className="w-full min-w-0 space-y-4 rounded-xl border border-border bg-surface p-6">
       <div>
         <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
           {t("payments.payout.recordTitle")}

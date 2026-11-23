@@ -122,7 +122,7 @@ async function AdminCategoriesContent({
                   ) : null}
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex flex-wrap items-center gap-4">
                   <dl className="flex gap-6 text-sm">
                     <div>
                       <dt className="eyebrow text-muted-foreground">{t("studio.published")}</dt>

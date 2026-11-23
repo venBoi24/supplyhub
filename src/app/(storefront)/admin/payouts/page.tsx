@@ -96,7 +96,7 @@ async function AdminPayoutsContent() {
       </Notice>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-        <section aria-labelledby="vendor-balances">
+        <section aria-labelledby="vendor-balances" className="min-w-0">
           <h2 id="vendor-balances" className="font-display text-2xl font-medium tracking-[-0.02em]">
             {t("admin.studioBalances")}
           </h2>

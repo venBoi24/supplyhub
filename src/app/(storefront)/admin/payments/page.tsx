@@ -49,7 +49,7 @@ async function AdminPaymentsContent() {
       <div className="flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
           <p className="eyebrow text-muted-foreground">{t("admin.nav")}</p>
-          <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] text-balance sm:text-5xl">
+          <h1 className="mt-3 break-words font-display text-3xl leading-tight font-medium tracking-[-0.04em] text-balance sm:text-5xl">
             {t("admin.paymentsReconciliation")}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
