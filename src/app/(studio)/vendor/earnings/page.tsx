@@ -109,7 +109,7 @@ async function VendorEarningsContent() {
               ))}
             </ul>
             <div className="scroll-x mt-3 hidden rounded-xl border border-border bg-surface sm:block">
-              <table className="w-full min-w-[700px] text-left text-sm">
+              <table className="w-full  text-left text-sm">
                 <thead className="bg-surface-muted/60">
                   <tr>
                     {[

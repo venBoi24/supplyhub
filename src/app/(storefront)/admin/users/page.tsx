@@ -160,7 +160,7 @@ async function UsersContent({
                         </Button>
                       ) : null}
                       {user.vendor?.appealedAt && !user.vendor.appealReviewedAt ? (
-                        <section className="min-w-64 rounded-lg border border-warning/40 bg-warning/5 p-3">
+                        <section className="w-full max-w-sm rounded-lg border border-warning/40 bg-warning/5 p-3">
                           <p className="text-xs font-semibold text-warning">
                             {t("admin.vendorAppealPending")}
                           </p>

@@ -54,7 +54,7 @@ export function StudioNav() {
 
   return (
     <nav aria-label={t("studio.nav")} className="hidden border-b border-border bg-surface lg:block">
-      <div className="scroll-x mx-auto flex w-full max-w-[1180px] gap-0.5 px-4 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-wrap gap-0.5 px-4 sm:px-6">
         {studioTabs.map((tab) => {
           const active = tab.active(pathname);
 

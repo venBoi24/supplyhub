@@ -32,7 +32,7 @@ export function AdminNav() {
   const { t } = useI18n();
 
   return (
-    <nav aria-label={t("admin.nav")} className="scroll-x -mx-1 flex items-center gap-1 px-1 py-1">
+    <nav aria-label={t("admin.nav")} className="-mx-1 flex flex-wrap items-center gap-1 px-1 py-1">
       {links.map((link) => {
         const active = pathname.startsWith(link.href);
 

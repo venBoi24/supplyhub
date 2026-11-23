@@ -81,7 +81,7 @@ function CenterInner({
 
       <nav
         aria-label={t("experience.sections")}
-        className="mt-6 flex scrollbar-thin gap-1 overflow-x-auto rounded-xl border border-border bg-surface p-1"
+        className="mt-6 flex flex-wrap gap-1 rounded-xl border border-border bg-surface p-1"
       >
         {TABS.map((item) => (
           <button

@@ -41,7 +41,7 @@ export function LanguageSwitcher({
           <span className="hidden text-xs font-semibold tracking-wide uppercase sm:inline">
             {compact ? current.code : current.name}
           </span>
-          <span className="text-xs font-semibold uppercase sm:hidden">{current.code}</span>
+          <span className="hidden text-xs font-semibold uppercase sm:inline">{current.code}</span>
           <ChevronDown className="size-3.5 opacity-60" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>

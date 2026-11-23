@@ -78,7 +78,7 @@ async function SearchContent({
       </div>
 
       {query.q ? (
-        <div className="mt-5 flex scrollbar-thin gap-2 overflow-x-auto pb-1">
+        <div className="mt-5 flex flex-wrap gap-2">
           <Link
             href={catalogHref("/search", { ...query, category: undefined, page: 1 })}
             aria-current={!query.category ? "true" : undefined}
