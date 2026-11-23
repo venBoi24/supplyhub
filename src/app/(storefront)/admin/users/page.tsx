@@ -122,8 +122,8 @@ async function UsersContent({
           {t("common.filter")}
         </Button>
       </form>
-      <div className="scroll-x mt-6 rounded-xl border border-border bg-surface">
-        <table className="w-full min-w-[760px] text-left text-sm">
+      <div className="mt-6 rounded-xl border border-border bg-surface">
+        <table className="w-full table-fixed text-left text-sm">
           <thead className="bg-surface-muted text-xs text-muted-foreground">
             <tr>
               <th className="p-4">{t("admin.tableAccount")}</th>
@@ -139,7 +139,7 @@ async function UsersContent({
               <tr key={user.id}>
                 <td className="p-4">
                   <p className="font-medium">{user.name}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{user.email}</p>
+                  <p className="mt-1 break-words text-xs text-muted-foreground">{user.email}</p>
                 </td>
                 <td className="p-4">{t(roleLabelKeys[user.role])}</td>
                 <td className="p-4">{t(statusLabelKeys[user.status])}</td>

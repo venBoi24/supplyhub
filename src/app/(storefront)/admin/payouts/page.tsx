@@ -108,8 +108,8 @@ async function AdminPayoutsContent() {
               className="mt-4"
             />
           ) : (
-            <div className="scroll-x mt-4 rounded-xl border border-border bg-surface">
-              <table className="w-full  text-left text-sm">
+            <div className="mt-4 rounded-xl border border-border bg-surface">
+              <table className="w-full table-fixed text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs text-muted-foreground">
                     <th scope="col" className="px-5 py-3 font-medium">
