@@ -30,7 +30,7 @@ export function UserStatusForm({
     >
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={nextStatus} />
-      <Button type="submit" variant="secondary" size="sm" disabled={pending} className="w-full whitespace-normal">
+      <Button type="submit" variant="secondary" size="sm" disabled={pending} className="w-full !whitespace-normal">
         {pending
           ? t("common.saving")
           : status === "ACTIVE"
