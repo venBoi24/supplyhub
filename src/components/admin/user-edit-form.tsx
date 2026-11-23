@@ -43,7 +43,7 @@ export function UserEditForm({
             {t("auth.email")}
             <Input name="email" type="email" defaultValue={email} maxLength={254} required />
           </label>
-          <Button size="sm" type="submit" disabled={editPending}>
+          <Button size="sm" type="submit" disabled={editPending} className="w-full whitespace-normal">
             {editPending ? t("common.saving") : t("admin.saveChanges")}
           </Button>
           {editState.message ? (

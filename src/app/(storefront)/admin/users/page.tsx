@@ -122,7 +122,71 @@ async function UsersContent({
           {t("common.filter")}
         </Button>
       </form>
-      <div className="mt-6 rounded-xl border border-border bg-surface">
+      <div className="mt-6 space-y-4 sm:hidden">
+        {users.map((user) => (
+          <article key={user.id} className="rounded-xl border border-border bg-surface p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium">{user.name}</p>
+                <p className="mt-1 break-words text-xs text-muted-foreground">{user.email}</p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
+                <span className="rounded-md bg-surface-muted px-2 py-1">{t(roleLabelKeys[user.role])}</span>
+                <span className="rounded-md bg-surface-muted px-2 py-1">{t(statusLabelKeys[user.status])}</span>
+              </div>
+            </div>
+            <dl className="mt-3 grid gap-2 text-xs">
+              <div>
+                <dt className="text-muted-foreground">{t("admin.tableEmailVerified")}</dt>
+                <dd className="mt-0.5 font-medium">
+                  {user.emailVerifiedAt ? formatDate(user.emailVerifiedAt) : t("admin.notVerified")}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">{t("admin.tableJoined")}</dt>
+                <dd className="mt-0.5 font-medium">{formatDate(user.createdAt)}</dd>
+              </div>
+            </dl>
+            {user.role === "ADMIN" ? (
+              <p className="mt-3 text-xs text-muted-foreground">{t("vendor.protected")}</p>
+            ) : (
+              <div className="mt-3 grid gap-3">
+                {user.vendor ? (
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={`/admin/users/${user.id}/inventory`}>{t("admin.manageStoreInventory")}</Link>
+                  </Button>
+                ) : null}
+                {user.vendor?.appealedAt && !user.vendor.appealReviewedAt ? (
+                  <section className="w-full max-w-sm rounded-lg border border-warning/40 bg-warning/5 p-3">
+                    <p className="text-xs font-semibold text-warning">{t("admin.vendorAppealPending")}</p>
+                    <p className="mt-1 text-xs font-medium">{user.vendor.name}</p>
+                    <p className="mt-2 text-xs whitespace-pre-wrap text-muted-foreground">
+                      {user.vendor.appealReason}
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {t("admin.submittedOn", { date: formatDate(user.vendor.appealedAt) })}
+                    </p>
+                    <UserAppealEditForm
+                      userId={user.id}
+                      vendorId={user.vendor.id}
+                      name={user.name}
+                      vendorName={user.vendor.name}
+                      appealReason={user.vendor.appealReason ?? ""}
+                    />
+                    <VendorAppealReviewActions vendorId={user.vendor.id} />
+                  </section>
+                ) : null}
+                <UserStatusForm userId={user.id} status={user.status} />
+                <UserEditForm userId={user.id} name={user.name} email={user.email} />
+              </div>
+            )}
+          </article>
+        ))}
+        {users.length === 0 ? (
+          <p className="p-8 text-center text-sm text-muted-foreground">{t("admin.usersEmpty")}</p>
+        ) : null}
+      </div>
+      <div className="mt-6 hidden rounded-xl border border-border bg-surface sm:block">
         <table className="w-full table-fixed text-left text-sm">
           <thead className="bg-surface-muted text-xs text-muted-foreground">
             <tr>

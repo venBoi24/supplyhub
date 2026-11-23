@@ -58,7 +58,7 @@ export function UserAppealEditForm({
             className="min-h-24"
           />
         </label>
-        <Button size="sm" type="submit" disabled={pending}>
+        <Button size="sm" type="submit" disabled={pending} className="w-full whitespace-normal">
           {pending ? t("common.saving") : t("admin.saveUserAndAppeal")}
         </Button>
         {state.message ? (

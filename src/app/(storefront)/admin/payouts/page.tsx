@@ -108,8 +108,38 @@ async function AdminPayoutsContent() {
               className="mt-4"
             />
           ) : (
-            <div className="mt-4 rounded-xl border border-border bg-surface">
-              <table className="w-full table-fixed text-left text-sm">
+            <>
+              <ul className="mt-4 space-y-3 sm:hidden">
+                {overview.vendors.map((vendor) => (
+                  <li key={vendor.id} className="rounded-xl border border-border bg-surface p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <Link href={`/vendors/${vendor.slug}`} className="font-medium underline-offset-4 hover:underline">
+                        {vendor.name}
+                      </Link>
+                    </div>
+                    <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <dt className="eyebrow text-muted-foreground">{t("admin.payoutEarned")}</dt>
+                        <dd className="mt-1 tabular-nums">{formatMoney(vendor.earningsCents, currency)}</dd>
+                      </div>
+                      <div>
+                        <dt className="eyebrow text-muted-foreground">{t("admin.payoutReserved")}</dt>
+                        <dd className="mt-1 tabular-nums">{formatMoney(vendor.reservedCents, currency)}</dd>
+                      </div>
+                      <div>
+                        <dt className="eyebrow text-muted-foreground">{t("admin.payoutPaidOut")}</dt>
+                        <dd className="mt-1 tabular-nums">{formatMoney(vendor.paidOutCents, currency)}</dd>
+                      </div>
+                      <div>
+                        <dt className="eyebrow text-muted-foreground">{t("admin.payoutAvailable")}</dt>
+                        <dd className="mt-1 font-medium tabular-nums">{formatMoney(vendor.availableCents, currency)}</dd>
+                      </div>
+                    </dl>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 hidden rounded-xl border border-border bg-surface sm:block">
+                <table className="w-full table-fixed text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-xs text-muted-foreground">
                     <th scope="col" className="px-5 py-3 font-medium">
@@ -157,6 +187,7 @@ async function AdminPayoutsContent() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </section>
 
