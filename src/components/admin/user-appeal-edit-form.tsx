@@ -35,7 +35,7 @@ export function UserAppealEditForm({
         <input type="hidden" name="vendorId" value={vendorId} />
         <label className="grid gap-1 text-xs">
           {t("admin.fieldUsername")}
-          <Input name="name" defaultValue={name} maxLength={80} required minLength={2} />
+          <Input name="name" defaultValue={name} maxLength={80} required minLength={2} className="min-w-0" />
         </label>
         <label className="grid gap-1 text-xs">
           {t("admin.fieldStoreName")}
@@ -45,6 +45,7 @@ export function UserAppealEditForm({
             maxLength={100}
             required
             minLength={2}
+            className="min-w-0"
           />
         </label>
         <label className="grid gap-1 text-xs">
@@ -55,10 +56,10 @@ export function UserAppealEditForm({
             minLength={20}
             maxLength={1000}
             required
-            className="min-h-24"
+            className="min-h-24 min-w-0"
           />
         </label>
-        <Button size="sm" type="submit" disabled={pending} className="w-full !whitespace-normal">
+        <Button size="sm" type="submit" disabled={pending} className="w-full min-w-0 !whitespace-normal">
           {pending ? t("common.saving") : t("admin.saveUserAndAppeal")}
         </Button>
         {state.message ? (

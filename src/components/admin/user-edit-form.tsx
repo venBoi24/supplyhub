@@ -33,17 +33,17 @@ export function UserEditForm({
         <summary className="cursor-pointer text-xs font-medium text-accent underline underline-offset-4">
           {t("admin.editAccount")}
         </summary>
-        <form action={editAction} className="mt-3 grid w-full gap-2">
+        <form action={editAction} className="mt-3 grid w-full min-w-0 gap-2">
           <input type="hidden" name="userId" value={userId} />
           <label className="grid gap-1 text-xs">
             {t("auth.name")}
-            <Input name="name" defaultValue={name} maxLength={80} required minLength={2} />
+            <Input name="name" defaultValue={name} maxLength={80} required minLength={2} className="min-w-0" />
           </label>
           <label className="grid gap-1 text-xs">
             {t("auth.email")}
-            <Input name="email" type="email" defaultValue={email} maxLength={254} required />
+            <Input name="email" type="email" defaultValue={email} maxLength={254} required className="min-w-0" />
           </label>
-          <Button size="sm" type="submit" disabled={editPending} className="w-full !whitespace-normal">
+          <Button size="sm" type="submit" disabled={editPending} className="w-full min-w-0 !whitespace-normal">
             {editPending ? t("common.saving") : t("admin.saveChanges")}
           </Button>
           {editState.message ? (
@@ -63,7 +63,7 @@ export function UserEditForm({
         }}
       >
         <input type="hidden" name="userId" value={userId} />
-        <Button type="submit" variant="secondary" size="sm" disabled={deletePending} className="w-full !whitespace-normal">
+        <Button type="submit" variant="secondary" size="sm" disabled={deletePending} className="w-full min-w-0 !whitespace-normal">
           {deletePending ? t("admin.deletingPending") : t("common.delete")}
         </Button>
         {deleteState.message ? (
