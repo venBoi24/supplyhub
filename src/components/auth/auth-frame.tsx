@@ -48,12 +48,12 @@ export function AuthFrame({ children, registry, bottomNav }: AuthFrameProps) {
       </aside>
 
       <div className="bottom-nav-clearance flex min-h-dvh flex-col">
-        <header className="flex items-center justify-between gap-4 px-5 py-5 sm:px-8">
+        <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-5 sm:gap-4 sm:px-8">
           <Link
             href="/"
             className="rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background focus-visible:outline-none lg:hidden"
           >
-            <Wordmark />
+            <Wordmark compact iconOnly />
           </Link>
           <span className="hidden lg:block" aria-hidden="true" />
           <div className="flex items-center gap-3">
@@ -67,11 +67,11 @@ export function AuthFrame({ children, registry, bottomNav }: AuthFrameProps) {
           </div>
         </header>
 
-        <main id="main" className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
+        <main id="main" className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
           <div className="w-full max-w-md">{children}</div>
         </main>
 
-        <footer className="px-5 pb-8 text-center text-xs text-muted-foreground sm:px-8">
+        <footer className="px-4 pb-8 text-center text-xs text-muted-foreground sm:px-8">
           {t("auth.sessionNote")}
         </footer>
 
