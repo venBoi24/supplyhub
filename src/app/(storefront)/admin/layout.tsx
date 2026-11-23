@@ -8,7 +8,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh lg:flex">
       <AdminSidebar />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 max-w-full flex-1">
         <div className="border-b border-border bg-surface/70">
           <PageShell className="flex items-center justify-end gap-3 py-3">
             <LanguageSwitcher compact />
