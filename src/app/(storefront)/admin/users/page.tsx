@@ -217,7 +217,7 @@ async function UsersContent({
                   ) : (
                     <div className="grid gap-3">
                       {user.vendor ? (
-                        <Button asChild variant="secondary" size="sm">
+                        <Button asChild variant="secondary" size="sm" className="w-full !whitespace-normal">
                           <Link href={`/admin/users/${user.id}/inventory`}>
                             {t("admin.manageStoreInventory")}
                           </Link>
