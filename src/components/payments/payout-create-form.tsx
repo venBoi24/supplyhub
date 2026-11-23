@@ -56,7 +56,7 @@ export function PayoutCreateForm({
             htmlFor="payout-vendor"
             error={state.fieldErrors?.vendorId}
           >
-            <Select id="payout-vendor" name="vendorId" defaultValue={payables[0]?.id}>
+            <Select id="payout-vendor" name="vendorId" defaultValue={payables[0]?.id} className="min-w-0">
               {payables.map((vendor) => (
                 <option key={vendor.id} value={vendor.id}>
                   {t("payments.payout.availableOption", {
@@ -78,6 +78,7 @@ export function PayoutCreateForm({
                 id="payout-amount"
                 name="amount"
                 inputMode="decimal"
+                className="min-w-0"
                 placeholder="0.00"
                 aria-invalid={state.fieldErrors?.amount ? true : undefined}
                 aria-describedby={state.fieldErrors?.amount ? "payout-amount-error" : undefined}
@@ -92,6 +93,7 @@ export function PayoutCreateForm({
                 id="payout-start"
                 name="periodStart"
                 type="date"
+                className="min-w-0"
                 defaultValue={defaultPeriodStart}
                 aria-invalid={state.fieldErrors?.periodStart ? true : undefined}
               />
@@ -105,6 +107,7 @@ export function PayoutCreateForm({
                 id="payout-end"
                 name="periodEnd"
                 type="date"
+                className="min-w-0"
                 defaultValue={defaultPeriodEnd}
                 aria-invalid={state.fieldErrors?.periodEnd ? true : undefined}
               />

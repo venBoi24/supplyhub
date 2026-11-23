@@ -23,7 +23,9 @@ export function EmptyState({ icon, title, description, children, className }: Em
           {icon}
         </div>
       ) : null}
-      <h2 className="font-display text-2xl font-medium tracking-[-0.02em] text-balance">{title}</h2>
+      <h2 className="max-w-full break-words font-display text-xl font-medium tracking-[-0.02em] text-balance sm:text-2xl">
+        {title}
+      </h2>
       <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">{description}</p>
       {children ? <div className="mt-6 flex flex-wrap items-center gap-3">{children}</div> : null}
     </div>

@@ -122,8 +122,8 @@ async function AdminCategoriesContent({
                   ) : null}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                  <dl className="flex gap-6 text-sm">
+                <div className="flex min-w-0 flex-wrap items-center gap-4">
+                  <dl className="flex flex-wrap gap-4 text-sm">
                     <div>
                       <dt className="eyebrow text-muted-foreground">{t("studio.published")}</dt>
                       <dd className="mt-1 font-display text-xl font-medium">
@@ -139,7 +139,7 @@ async function AdminCategoriesContent({
                   </dl>
                   <Link
                     href={`/admin/categories/${category.id}`}
-                    className="rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="max-w-full break-words rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   >
                     {t("studio.manage")}
                   </Link>
