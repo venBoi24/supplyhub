@@ -393,7 +393,16 @@
     "mapTitle": "Lieu de livraison Google Maps",
     "deliveryQuote": "Devis de livraison",
     "totalDelivery": "Total livraison",
-    "addItemForQuote": "Ajoutez des articles à votre panier pour voir les distances et prix de livraison par studio."
+    "addItemForQuote": "Ajoutez des articles à votre panier pour voir les distances et prix de livraison par studio.",
+    "status": {
+      "awaitingPayment": "En attente de paiement",
+      "paid": "Payé",
+      "processing": "En traitement",
+      "shipped": "Expédié",
+      "delivered": "Livré",
+      "cancelled": "Annulé",
+      "expired": "Expiré"
+    }
   },
   "auth": {
     "backToShop": "Retour à la boutique",
@@ -411,6 +420,7 @@
     "noAccount": "Pas encore de compte ?",
     "haveAccount": "Vous avez déjà un compte ?",
     "email": "E-mail",
+    "password": "Mot de passe",
     "name": "Nom",
     "phone": "Numéro de téléphone",
     "phoneHint": "Incluez votre indicatif pays, par exemple +255 754 123 456. Les acheteurs peuvent l'ajouter plus tard au paiement.",
@@ -468,7 +478,29 @@
     "verifying": "Vérification en cours…",
     "verifyEmail": "Vérifier l'e-mail",
     "wrongAccount": "Mauvais compte ?",
-    "signInAgain": "Se reconnecter"
+    "signInAgain": "Se reconnecter",
+    "errors": {
+      "signInRateLimited": "Trop de tentatives de connexion. Attendez quelques minutes et réessayez.",
+      "badCredentials": "E-mail ou mot de passe incorrect.",
+      "signUpRateLimited": "Trop de tentatives d’inscription. Attendez un instant et réessayez.",
+      "signUpFailed": "Nous n’avons pas pu créer un compte avec ces informations. Si vous avez déjà un compte, connectez-vous ou réinitialisez votre mot de passe.",
+      "accountCreated": "Compte créé. Connectez-vous pour continuer.",
+      "resetRateLimited": "Trop de demandes de réinitialisation. Attendez un instant et réessayez.",
+      "resetSent": "Si un compte existe pour cet e-mail, nous avons envoyé un lien de réinitialisation.",
+      "resetAttemptRateLimited": "Trop de tentatives de réinitialisation. Attendez un instant et réessayez.",
+      "resetLinkInvalid": "Ce lien de réinitialisation est invalide ou expiré. Demandez-en un nouveau."
+    }
+  },
+  "validation": {
+    "emailInvalid": "Saisissez une adresse e-mail valide.",
+    "emailTooLong": "Utilisez une adresse e-mail de moins de 254 caractères.",
+    "minCharacters": "Utilisez au moins {min} caractères.",
+    "maxCharacters": "Utilisez {max} caractères ou moins.",
+    "passwordRequired": "Saisissez votre mot de passe.",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
+    "phoneWithCountryCode": "Saisissez un numéro de téléphone avec son indicatif pays.",
+    "phoneDigits": "Utilisez 7 à 15 chiffres et incluez l’indicatif pays.",
+    "linkInvalid": "Ce lien est invalide ou incomplet."
   },
   "studio": {
     "nav": "Navigation du studio",
@@ -543,7 +575,21 @@
     "appealRejectionStands": "Votre recours a été examiné et le rejet est maintenu.",
     "appealAwaiting": "Votre recours est en attente d'examen.",
     "suspendedNotice": "Cet espace de travail studio est suspendu.",
-    "suspendedBody": "Les outils de listing, de commande et de compte sont indisponibles pendant la suspension du studio. Contactez l'équipe SupplyHub pour plus de détails."
+    "suspendedBody": "Les outils de listing, de commande et de compte sont indisponibles pendant la suspension du studio. Contactez l'équipe SupplyHub pour plus de détails.",
+    "drafts": "Brouillons",
+    "draftsNote": "Pas encore publiés",
+    "status": {
+      "draft": "Brouillon",
+      "inReview": "En revue",
+      "published": "Publié",
+      "changesRequested": "Modifications demandées",
+      "archived": "Archivé"
+    },
+    "draftsPending": "{count} {objects} pas encore publiés",
+    "publishWhenReady": "Publiez-les lorsqu’ils sont prêts.",
+    "allObjectsLive": "Tous les objets sont en ligne",
+    "allObjectsLiveNote": "Chaque objet de votre catalogue est publié.",
+    "loadingWorkspace": "Chargement de l’espace de travail du studio"
   },
   "admin": {
     "nav": "Administration",

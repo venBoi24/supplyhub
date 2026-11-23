@@ -17,13 +17,19 @@ import {
 } from "@/features/catalog/queries";
 import { catalogHref, parseCatalogQuery } from "@/features/catalog/search-params";
 import { SearchAutocomplete } from "@/features/experience/widgets/search-autocomplete";
+import { getServerI18n } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Search",
-  description: "Search the SupplyHub preview catalog by object, material, studio, or city.",
-  alternates: { canonical: "/search" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: t("search.metaTitle"),
+    description: t("search.metaDescription"),
+    alternates: { canonical: "/search" },
+  };
+}
 
+/** Material and craft terms buyers actually type; kept in English because the
+ *  catalog search index matches English names, slugs and materials. */
 const suggestedSearches = ["stoneware", "indigo", "linen", "leather", "Portland"] as const;
 
 export default function SearchPage({ searchParams }: PageProps<"/search">) {
@@ -41,7 +47,11 @@ async function SearchContent({
 }) {
   const params = await searchParams;
   const query = parseCatalogQuery(params);
-  const [categories, vendors] = await Promise.all([listCategorySummaries(), listVendorSummaries()]);
+  const [{ t }, categories, vendors] = await Promise.all([
+    getServerI18n(),
+    listCategorySummaries(),
+    listVendorSummaries(),
+  ]);
   const results = query.q
     ? await listProductPage({
         query: query.q,
@@ -55,14 +65,11 @@ async function SearchContent({
   return (
     <PageShell className="pt-10 sm:pt-14">
       <div className="border-b border-border pb-8">
-        <p className="eyebrow text-muted-foreground">Search</p>
+        <p className="eyebrow text-muted-foreground">{t("footer.search")}</p>
         <h1 className="mt-3 max-w-3xl font-display text-4xl leading-[0.98] font-medium tracking-[-0.04em] text-balance sm:text-5xl">
-          {query.q ? `Results for “${query.q}”` : "Search the catalog"}
+          {query.q ? t("search.resultsFor", { query: query.q }) : t("search.searchTheCatalog")}
         </h1>
-        <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-          Find an object by name, material, studio, or city. The catalog is small enough to browse
-          from start to finish, too.
-        </p>
+        <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">{t("search.intro")}</p>
         <SearchAutocomplete
           defaultValue={query.q ?? ""}
           inputId="search-page-input"
@@ -81,7 +88,7 @@ async function SearchContent({
                 : "shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground transition hover:border-border-strong hover:text-foreground"
             }
           >
-            All departments
+            {t("search.allDepartments")}
           </Link>
           {categories.map((category) => (
             <Link
@@ -111,7 +118,7 @@ async function SearchContent({
                 : "shrink-0 rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground transition hover:border-border-strong hover:text-foreground"
             }
           >
-            All studios
+            {t("search.allStudios")}
           </Link>
           {vendors.map((vendor) => (
             <Link
@@ -141,7 +148,7 @@ async function SearchContent({
               id="search-departments"
               className="font-display text-2xl font-medium tracking-[-0.03em]"
             >
-              Start with a department
+              {t("search.startDepartment")}
             </h2>
             <ul className="mt-4 divide-y divide-border border-y border-border">
               {categories.map((category) => (
@@ -155,7 +162,7 @@ async function SearchContent({
                         {category.name}
                       </span>
                       <span className="mt-0.5 block text-sm text-muted-foreground">
-                        {category.headline} · {category.productCount} pieces
+                        {category.headline} · {t("nav.pieces", { count: category.productCount })}
                       </span>
                     </span>
                     <ArrowUpRight
@@ -171,7 +178,7 @@ async function SearchContent({
           <aside className="space-y-8">
             <section aria-labelledby="search-suggestions">
               <h2 id="search-suggestions" className="eyebrow text-muted-foreground">
-                Try a search
+                {t("search.trySearch")}
               </h2>
               <div className="mt-3 flex flex-wrap gap-2">
                 {suggestedSearches.map((term) => (
@@ -188,7 +195,7 @@ async function SearchContent({
 
             <section aria-labelledby="search-studios">
               <h2 id="search-studios" className="eyebrow text-muted-foreground">
-                Or meet the studios
+                {t("search.meetStudios")}
               </h2>
               <ul className="mt-3 space-y-2">
                 {vendors.map((vendor) => (
@@ -209,7 +216,10 @@ async function SearchContent({
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 py-4">
             <p className="text-xs text-muted-foreground">
-              {results.total} {results.total === 1 ? "object" : "objects"} matching “{query.q}”
+              {t(results.total === 1 ? "search.matching" : "search.matchingPlural", {
+                count: results.total,
+                query: query.q ?? "",
+              })}
             </p>
             <SortLinks pathname="/search" query={{ ...query, page: 1 }} />
           </div>
@@ -224,23 +234,25 @@ async function SearchContent({
       ) : (
         <EmptyState
           icon={<SearchX className="size-5" aria-hidden="true" />}
-          title="No objects match that search."
-          description="Try a broader term, search by material or studio, or clear the search to browse the full catalog."
+          title={t("search.emptyTitle")}
+          description={t("search.emptyBody")}
           className="mt-8"
         >
           <Button asChild>
-            <Link href="/products">Browse all objects</Link>
+            <Link href="/products">{t("common.browseAllObjects")}</Link>
           </Button>
           <Button asChild variant="secondary">
-            <Link href="/search">Clear search</Link>
+            <Link href="/search">{t("search.clearSearch")}</Link>
           </Button>
         </EmptyState>
       )}
 
       <div className="mt-12 flex items-center gap-3 border-t border-border pt-6 text-xs text-muted-foreground">
         <Search className="size-4" aria-hidden="true" />
-        <p>Searches cover object names, materials, descriptions, studios, and locations.</p>
+        <p>{t("search.footerNote")}</p>
       </div>
     </PageShell>
   );
 }
+
+export const instant = false;

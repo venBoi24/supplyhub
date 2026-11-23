@@ -9,15 +9,33 @@ import { AuditAction } from "@/generated/prisma/enums";
 import { parseEnumParam, searchParamValue } from "@/features/admin/filters";
 import { listAdminAuditEvents } from "@/features/admin/queries";
 import { pageCount, parsePage } from "@/lib/utils/pagination";
-import { formatDate } from "@/lib/utils/format-date";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
+import type { Translator } from "@/i18n/dictionary";
 
-export const metadata: Metadata = { title: "Audit log", robots: { index: false, follow: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("admin.audit"),
+    robots: { index: false, follow: false },
+  };
+}
+
 const actions = Object.values(AuditAction);
 
-export default function AdminAuditPage({ searchParams }: PageProps<"/admin/audit">) {
+/** Audit action codes are machine identifiers; the dictionary humanizes each one. */
+function auditActionLabel(t: Translator, action: AuditAction): string {
+  const key = `admin.actions.${action}`;
+  const label = t(key);
+  return label === key ? action.replaceAll("_", " ") : label;
+}
+
+export default async function AdminAuditPage({ searchParams }: PageProps<"/admin/audit">) {
+  const { t } = await getServerI18n();
+
   return (
-    <Suspense fallback={<PageShell className="pt-12">Loading audit events…</PageShell>}>
+    <Suspense fallback={<PageShell className="pt-12">{t("admin.loadingAudit")}</PageShell>}>
       <AuditContent searchParams={searchParams} />
     </Suspense>
   );
@@ -28,6 +46,7 @@ async function AuditContent({
 }: {
   searchParams: PageProps<"/admin/audit">["searchParams"];
 }) {
+  const { t, formatDate, formatNumber } = await getServerI18n();
   await requireAdmin();
   const params = await searchParams;
   const action = parseEnumParam(params.action, actions);
@@ -37,28 +56,30 @@ async function AuditContent({
 
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <p className="eyebrow text-muted-foreground">Administration</p>
-      <h1 className="mt-3 font-display text-4xl font-medium tracking-[-0.04em]">Audit log.</h1>
+      <p className="eyebrow text-muted-foreground">{t("admin.nav")}</p>
+      <h1 className="mt-3 font-display text-4xl font-medium tracking-[-0.04em]">
+        {t("admin.auditTitle")}
+      </h1>
       <p className="mt-3 text-sm text-muted-foreground">
-        {total.toLocaleString()} recorded events · newest first.
+        {t("admin.auditIntro", { count: formatNumber(total) })}
       </p>
       <form
         action="/admin/audit"
         className="mt-7 grid max-w-xl gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
       >
         <label className="grid gap-2 text-sm">
-          Action
+          {t("admin.auditAction")}
           <Select name="action" defaultValue={action ?? ""}>
-            <option value="">All actions</option>
+            <option value="">{t("admin.allActions")}</option>
             {actions.map((value) => (
               <option key={value} value={value}>
-                {value.replaceAll("_", " ")}
+                {auditActionLabel(t, value)}
               </option>
             ))}
           </Select>
         </label>
         <Button type="submit" size="sm">
-          Filter
+          {t("common.filter")}
         </Button>
       </form>
       <ol className="mt-6 space-y-3">
@@ -66,11 +87,13 @@ async function AuditContent({
           <li key={event.id} className="rounded-xl border border-border bg-surface p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-xs tracking-wide">{event.action}</p>
+                <p className="font-mono text-xs tracking-wide">
+                  {auditActionLabel(t, event.action)}
+                </p>
                 <p className="mt-1 text-sm">
-                  {event.actor?.name ?? "System"}{" "}
+                  {event.actor?.name ?? t("admin.systemActor")}{" "}
                   <span className="text-muted-foreground">
-                    on {event.targetType}
+                    {t("admin.auditOnTarget", { targetType: event.targetType })}
                     {event.targetId ? ` · ${event.targetId}` : ""}
                   </span>
                 </p>
@@ -87,10 +110,18 @@ async function AuditContent({
       </ol>
       {events.length === 0 ? (
         <p className="mt-6 rounded-xl border border-border bg-surface p-8 text-center text-sm text-muted-foreground">
-          No audit events match this filter.
+          {t("admin.auditEmpty")}
         </p>
       ) : null}
-      <PagedNav pathname="/admin/audit" params={{ action }} page={currentPage} pageCount={pages} />
+      <PagedNav
+        pathname="/admin/audit"
+        params={{ action }}
+        page={currentPage}
+        pageCount={pages}
+        label={t("common.pagination")}
+      />
     </PageShell>
   );
 }
+
+export const instant = false;

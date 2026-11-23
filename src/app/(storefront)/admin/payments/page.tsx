@@ -12,24 +12,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/features/catalog/money";
 import { paymentMethodLabel } from "@/features/payments/methods";
 import { listPaymentReconciliation } from "@/features/payments/queries";
-import { formatDateTime } from "@/lib/utils/format-date";
+import { ORDER_STATUS_LABEL_KEYS } from "@/features/checkout/status";
+import type { OrderStatus } from "@/generated/prisma/enums";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
-export const metadata: Metadata = {
-  title: "Payments and reconciliation",
-  description: "Reconcile LynxPay settlements, refunds, and commission ledger entries.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
 
-export default function AdminPaymentsPage() {
+  return {
+    title: t("admin.paymentsMetaTitle"),
+    description: t("admin.paymentsMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function AdminPaymentsPage() {
+  const { t } = await getServerI18n();
+
   return (
-    <Suspense fallback={<AdminPaymentsSkeleton />}>
+    <Suspense fallback={<AdminPaymentsSkeleton loadingLabel={t("common.loading")} />}>
       <AdminPaymentsContent />
     </Suspense>
   );
 }
 
 async function AdminPaymentsContent() {
+  const { t, formatDate, formatTime } = await getServerI18n();
   const admin = await requireAdmin();
   const report = await listPaymentReconciliation();
   const { totals, rows } = report;
@@ -39,65 +48,77 @@ async function AdminPaymentsContent() {
     <PageShell className="pt-10 sm:pt-14">
       <div className="flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <p className="eyebrow text-muted-foreground">Administration</p>
+          <p className="eyebrow text-muted-foreground">{t("admin.nav")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] text-balance sm:text-5xl">
-            Payments and reconciliation.
+            {t("admin.paymentsReconciliation")}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-            Every confirmed LynxPay payment is checked against its order total and the commission
-            ledger. Refunds reverse vendor earnings and platform commission in the same ratio.
+            {t("admin.paymentsIntro")}
           </p>
           <p className="mt-3 font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
-            Signed in as {admin.name}
+            {t("admin.signedInAs", { name: admin.name })}
           </p>
         </div>
 
         <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3 lg:gap-x-10">
           <div>
-            <dt className="eyebrow text-muted-foreground">Confirmed</dt>
+            <dt className="eyebrow text-muted-foreground">{t("admin.paymentsConfirmed")}</dt>
             <dd className="mt-1 font-display text-2xl font-medium">{totals.successfulPayments}</dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Merchant net</dt>
+            <dt className="eyebrow text-muted-foreground">{t("admin.labelMerchantNet")}</dt>
             <dd className="mt-1 font-display text-2xl font-medium tabular-nums">
               {formatMoney(totals.netCents, currency)}
             </dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Flagged</dt>
+            <dt className="eyebrow text-muted-foreground">{t("admin.paymentsFlagged")}</dt>
             <dd className="mt-1 font-display text-2xl font-medium">{totals.flaggedPayments}</dd>
           </div>
         </dl>
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard label="Customer paid" value={formatMoney(totals.grossCents, currency)} />
-        <SummaryCard label="Provider fees" value={formatMoney(totals.feeCents, currency)} />
-        <SummaryCard label="Refunded" value={formatMoney(totals.refundedCents, currency)} />
         <SummaryCard
-          label="Ledger net"
+          label={t("admin.labelCustomerPaid")}
+          value={formatMoney(totals.grossCents, currency)}
+        />
+        <SummaryCard
+          label={t("admin.labelProviderFees")}
+          value={formatMoney(totals.feeCents, currency)}
+        />
+        <SummaryCard
+          label={t("admin.labelRefunded")}
+          value={formatMoney(totals.refundedCents, currency)}
+        />
+        <SummaryCard
+          label={t("admin.labelLedgerNet")}
           value={formatMoney(totals.ledgerNetCents, currency)}
-          detail={`${formatMoney(totals.vendorEarningCents, currency)} studios · ${formatMoney(totals.platformCommissionCents, currency)} platform`}
+          detail={t("admin.ledgerNetDetail", {
+            studios: formatMoney(totals.vendorEarningCents, currency),
+            platform: formatMoney(totals.platformCommissionCents, currency),
+          })}
         />
       </div>
 
       {totals.reconciled ? (
         <Notice tone="success" className="mt-6">
-          Ledger net matches provider net after refunds. Financial totals reconcile.
+          {t("admin.noticeReconciled")}
         </Notice>
       ) : (
         <Notice tone="danger" className="mt-6">
-          Ledger net {formatMoney(totals.ledgerNetCents, currency)} does not match provider net
-          after refunds {formatMoney(totals.netCents - totals.refundedCents, currency)}. Review the
-          flagged payments below.
+          {t("admin.noticeNotReconciled", {
+            ledgerNet: formatMoney(totals.ledgerNetCents, currency),
+            providerNet: formatMoney(totals.netCents - totals.refundedCents, currency),
+          })}
         </Notice>
       )}
 
       {rows.length === 0 ? (
         <EmptyState
           icon={<ReceiptText className="size-5" aria-hidden="true" />}
-          title="No payments yet."
-          description="Once a customer starts a LynxPay payment, every attempt and its reconciliation state appears here."
+          title={t("admin.paymentsEmptyTitle")}
+          description={t("admin.paymentsEmptyBody")}
           className="mt-8"
         />
       ) : (
@@ -123,45 +144,74 @@ async function AdminPaymentsContent() {
                         </Link>
                         <PaymentStatusBadge status={payment.status} />
                         <span className="font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
-                          Attempt {payment.attempt}
+                          {t("admin.attempt", { count: payment.attempt })}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {paymentMethodLabel(payment.method)} · started{" "}
-                        {formatDateTime(payment.initiatedAt)}
+                        {paymentMethodLabel(payment.method)} ·{" "}
+                        {t("admin.startedOn", {
+                          date: `${formatDate(payment.initiatedAt)} · ${formatTime(
+                            payment.initiatedAt,
+                          )}`,
+                        })}
                         {payment.completedAt
-                          ? ` · confirmed ${formatDateTime(payment.completedAt)}`
+                          ? ` · ${t("admin.confirmedOn", {
+                              date: `${formatDate(payment.completedAt)} · ${formatTime(
+                                payment.completedAt,
+                              )}`,
+                            })}`
                           : ""}
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Order status: {payment.orderStatus.replaceAll("_", " ").toLowerCase()}
+                      {t("admin.orderStatusLabel")}{" "}
+                      {t(ORDER_STATUS_LABEL_KEYS[payment.orderStatus as OrderStatus])}
                     </p>
                   </div>
 
                   <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4 text-sm sm:grid-cols-3 lg:grid-cols-6">
                     <Amount
-                      label="Order total"
+                      label={t("admin.labelOrderTotal")}
                       cents={payment.orderTotalCents}
                       currency={currency}
                     />
-                    <Amount label="Customer paid" cents={payment.grossCents} currency={currency} />
-                    <Amount label="Provider fee" cents={payment.feeCents} currency={currency} />
-                    <Amount label="Merchant net" cents={payment.netCents} currency={currency} />
-                    <Amount label="Refunded" cents={payment.refundedCents} currency={currency} />
-                    <Amount label="Ledger net" cents={payment.ledgerNetCents} currency={currency} />
+                    <Amount
+                      label={t("admin.labelCustomerPaid")}
+                      cents={payment.grossCents}
+                      currency={currency}
+                    />
+                    <Amount
+                      label={t("admin.labelProviderFee")}
+                      cents={payment.feeCents}
+                      currency={currency}
+                    />
+                    <Amount
+                      label={t("admin.labelMerchantNet")}
+                      cents={payment.netCents}
+                      currency={currency}
+                    />
+                    <Amount
+                      label={t("admin.labelRefunded")}
+                      cents={payment.refundedCents}
+                      currency={currency}
+                    />
+                    <Amount
+                      label={t("admin.labelLedgerNet")}
+                      cents={payment.ledgerNetCents}
+                      currency={currency}
+                    />
                   </dl>
 
                   {payment.failureMessage ? (
                     <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                      <span className="text-danger">Provider message: </span>
+                      <span className="text-danger">{t("admin.providerMessage")} </span>
                       {payment.failureMessage}
                     </p>
                   ) : null}
 
                   {payment.issues.length > 0 ? (
                     <div className="mt-4 rounded-md border border-danger/25 bg-danger/10 px-3.5 py-2.5 text-sm leading-5 text-danger">
-                      <p className="font-medium">Not reconciled</p>
+                      <p className="font-medium">{t("admin.notReconciled")}</p>
                       <ul className="mt-1 list-disc space-y-1 pl-4">
                         {payment.issues.map((issue) => (
                           <li key={issue}>{issue}</li>
@@ -172,7 +222,7 @@ async function AdminPaymentsContent() {
 
                   {payment.refunds.length > 0 ? (
                     <div className="mt-5 border-t border-border pt-4">
-                      <p className="eyebrow text-muted-foreground">Refunds</p>
+                      <p className="eyebrow text-muted-foreground">{t("admin.refunds")}</p>
                       <ul className="mt-2 space-y-2 text-sm">
                         {payment.refunds.map((refund) => (
                           <li
@@ -184,7 +234,9 @@ async function AdminPaymentsContent() {
                               {formatMoney(refund.amountCents, currency)}
                             </span>
                             <span>{refund.reason}</span>
-                            <span className="text-xs">{formatDateTime(refund.createdAt)}</span>
+                            <span className="text-xs">
+                              {formatDate(refund.createdAt)} · {formatTime(refund.createdAt)}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -202,8 +254,9 @@ async function AdminPaymentsContent() {
 
                   {payment.pendingRefundCents > 0 ? (
                     <p className="mt-4 text-xs text-muted-foreground">
-                      {formatMoney(payment.pendingRefundCents, currency)} is awaiting provider
-                      confirmation.
+                      {t("admin.awaitingProvider", {
+                        amount: formatMoney(payment.pendingRefundCents, currency),
+                      })}
                     </p>
                   ) : null}
                 </article>
@@ -215,9 +268,7 @@ async function AdminPaymentsContent() {
 
       <p className="mt-8 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
         <Link2 className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-        Reconciliation compares provider gross, fee, and net amounts with the order total and the
-        immutable commission ledger. It never edits ledger entries; corrective actions are new
-        refunds or payout adjustments.
+        {t("admin.reconciliationFootnote")}
       </p>
     </PageShell>
   );
@@ -242,10 +293,10 @@ function SummaryCard({ label, value, detail }: { label: string; value: string; d
   );
 }
 
-function AdminPaymentsSkeleton() {
+function AdminPaymentsSkeleton({ loadingLabel }: { loadingLabel: string }) {
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading payment reconciliation">
+      <div role="status" aria-label={loadingLabel}>
         <div className="border-b border-border pb-8">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="mt-4 h-12 w-96 max-w-full" />
@@ -262,7 +313,9 @@ function AdminPaymentsSkeleton() {
           <Skeleton className="h-56 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{loadingLabel}</span>
     </PageShell>
   );
 }
+
+export const instant = false;

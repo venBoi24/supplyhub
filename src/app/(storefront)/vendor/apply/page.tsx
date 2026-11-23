@@ -11,27 +11,22 @@ import { listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
 import { getAccountProfile } from "@/features/identity/queries";
 import { requireActor } from "@/server/auth/guards";
 import { canApplyForVendor } from "@/server/auth/policies";
+import { getServerI18n } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Apply for a studio",
-  description: "Apply for a vendor workspace on SupplyHub.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: t("vendor.applyMetaTitle"),
+    description: t("vendor.applyMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
-const steps = [
-  {
-    title: "Tell us about your studio",
-    description: "A name, a handle for your storefront address, and what you make.",
-  },
-  {
-    title: "An administrator reviews it",
-    description: "Every studio is reviewed by hand before it can list objects.",
-  },
-  {
-    title: "Your workspace opens",
-    description: "Approved owners receive the vendor role and a studio workspace.",
-  },
-];
+const stepKeys = [
+  { titleKey: "vendor.applyStep1Title", copyKey: "vendor.applyStep1Body" },
+  { titleKey: "vendor.applyStep2Title", copyKey: "vendor.applyStep2Body" },
+  { titleKey: "vendor.applyStep3Title", copyKey: "vendor.applyStep3Body" },
+] as const;
 
 export default function VendorApplyPage() {
   return (
@@ -52,7 +47,8 @@ async function ApplyContent() {
     redirect("/account?denied=vendor");
   }
 
-  const [departments, profile] = await Promise.all([
+  const [{ t }, departments, profile] = await Promise.all([
+    getServerI18n(),
     listStudioCategoryOptions(),
     getAccountProfile(actor.id),
   ]);
@@ -64,26 +60,25 @@ async function ApplyContent() {
         className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
-        Back to account
+        {t("vendor.backToAccount")}
       </Link>
 
       <div className="mt-8 border-b border-border pb-8">
-        <p className="eyebrow text-muted-foreground">Studio application</p>
+        <p className="eyebrow text-muted-foreground">{t("vendor.applicationEyebrow")}</p>
         <h1 className="mt-3 max-w-2xl font-display text-4xl leading-none font-medium tracking-[-0.04em] text-balance sm:text-5xl">
-          Apply for a studio.
+          {t("vendor.applyTitle")}
         </h1>
         <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-          SupplyHub is a curated registry. Studio applications are reviewed before a workspace
-          opens, so take a moment to describe what you make and how you work.
+          {t("vendor.applyIntro")}
         </p>
       </div>
 
       <div className="mt-10 grid items-start gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
         <aside>
-          <h2 className="eyebrow text-muted-foreground">How it works</h2>
+          <h2 className="eyebrow text-muted-foreground">{t("vendor.howItWorks")}</h2>
           <ol className="mt-5 space-y-6">
-            {steps.map((step, index) => (
-              <li key={step.title} className="flex gap-4">
+            {stepKeys.map(({ titleKey, copyKey }, index) => (
+              <li key={titleKey} className="flex gap-4">
                 <span
                   aria-hidden="true"
                   className="mt-0.5 font-mono text-xs tracking-[0.14em] text-clay"
@@ -91,16 +86,15 @@ async function ApplyContent() {
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div>
-                  <p className="font-medium">{step.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{step.description}</p>
+                  <p className="font-medium">{t(titleKey)}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{t(copyKey)}</p>
                 </div>
               </li>
             ))}
           </ol>
 
           <p className="mt-8 border-t border-border pt-6 text-xs leading-5 text-muted-foreground">
-            Commission, payout terms, and listing requirements are still being finalized. Applying
-            now does not commit you to any terms.
+            {t("vendor.termsNote")}
           </p>
         </aside>
 
@@ -112,10 +106,10 @@ async function ApplyContent() {
             id="vendor-application-heading"
             className="font-display text-2xl font-medium tracking-[-0.02em]"
           >
-            Your studio
+            {t("vendor.yourStudioHeading")}
           </h2>
           <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-            This becomes your public studio profile once approved.
+            {t("vendor.publicProfileNote")}
           </p>
           <div className="mt-6">
             <VendorApplicationForm departments={departments} defaultPhone={profile?.phone ?? ""} />
@@ -126,10 +120,11 @@ async function ApplyContent() {
   );
 }
 
-function ApplySkeleton() {
+async function ApplySkeleton() {
+  const { t } = await getServerI18n();
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading the studio application">
+      <div role="status" aria-label={t("vendor.loadingApplication")}>
         <Skeleton className="h-4 w-32" />
         <div className="mt-8 border-b border-border pb-8">
           <Skeleton className="h-3 w-32" />
@@ -146,7 +141,9 @@ function ApplySkeleton() {
           <Skeleton className="h-96 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </PageShell>
   );
 }
+
+export const instant = false;

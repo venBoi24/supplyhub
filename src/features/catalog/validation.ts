@@ -1,256 +1,328 @@
 import { z } from "zod";
-import { phoneNumberSchema } from "@/features/identity/validation";
+
+import { defaultTranslator, type Translator } from "@/i18n/dictionary";
+import { createPhoneNumberSchema } from "@/features/identity/validation";
 
 import { MAX_UNIT_STOCK } from "./inventory";
 import { MAX_PRICE_CENTS, parseMoneyToCents } from "./money";
 
 const trimmed = (value: unknown) => (typeof value === "string" ? value.trim() : value);
 
-const slugField = z.preprocess(
-  (value) => (typeof value === "string" ? value.trim().toLowerCase() : value),
-  z
-    .string({ error: "Enter a handle." })
-    .min(3, { error: "Use at least 3 characters." })
-    .max(72, { error: "Use 72 characters or fewer." })
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-      error: "Use lowercase letters, numbers, and single hyphens.",
-    }),
-);
-
-const skuField = z.preprocess(
-  (value) => (typeof value === "string" ? value.trim().toUpperCase() : value),
-  z
-    .string({ error: "Enter a SKU." })
-    .min(3, { error: "Use at least 3 characters." })
-    .max(32, { error: "Use 32 characters or fewer." })
-    .regex(/^[A-Z0-9][A-Z0-9-]*$/, {
-      error: "Use uppercase letters, numbers, and hyphens.",
-    }),
-);
-
-const priceField = z.preprocess(
-  (value) => (typeof value === "string" ? parseMoneyToCents(value) : value),
-  z
-    .number({ error: "Enter a price like 68.00." })
-    .int({ error: "Prices must resolve to whole cents." })
-    .min(1, { error: "Price must be greater than zero." })
-    .max(MAX_PRICE_CENTS, { error: "That price is too large." }),
-);
-
-const optionalPriceField = z.preprocess(
-  (value) => {
-    if (typeof value !== "string" || value.trim() === "") return undefined;
-    return parseMoneyToCents(value);
-  },
-  z
-    .number({ error: "Enter a comparison price like 84.00, or leave it empty." })
-    .int()
-    .min(1, { error: "Comparison price must be greater than zero." })
-    .max(MAX_PRICE_CENTS, { error: "That price is too large." })
-    .optional(),
-);
-
-const wholeNumberField = (minimum: number, maximum: number, message: string) =>
+/**
+ * Schema factories take a translator so server actions can emit field errors in
+ * the visitor's selected locale. The module-level `*Schema` consts below are the
+ * same factories bound to English for consumers that are not request-scoped.
+ */
+const createSlugField = (t: Translator) =>
   z.preprocess(
-    (value) => (typeof value === "string" && value.trim() !== "" ? Number(value) : value),
-    z.number({ error: message }).int({ error: "Enter a whole number." }).min(minimum).max(maximum),
+    (value) => (typeof value === "string" ? value.trim().toLowerCase() : value),
+    z
+      .string({ error: t("validation.handleRequired") })
+      .min(3, { error: t("validation.minCharacters", { min: 3 }) })
+      .max(72, { error: t("validation.maxCharacters", { max: 72 }) })
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+        error: t("validation.slugFormat"),
+      }),
   );
 
-const materialsField = z.preprocess(
-  (value) => {
-    if (typeof value !== "string") return [];
-    return value
-      .split(/[\n,]+/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  },
-  z
-    .array(z.string().min(1).max(60, { error: "Keep each material under 60 characters." }))
-    .max(12, { error: "List 12 materials or fewer." }),
-);
+const createSkuField = (t: Translator) =>
+  z.preprocess(
+    (value) => (typeof value === "string" ? value.trim().toUpperCase() : value),
+    z
+      .string({ error: t("validation.skuRequired") })
+      .min(3, { error: t("validation.minCharacters", { min: 3 }) })
+      .max(32, { error: t("validation.maxCharacters", { max: 32 }) })
+      .regex(/^[A-Z0-9][A-Z0-9-]*$/, {
+        error: t("validation.skuFormat"),
+      }),
+  );
 
-export const productInputSchema = z
-  .object({
+const createPriceField = (t: Translator) =>
+  z.preprocess(
+    (value) => (typeof value === "string" ? parseMoneyToCents(value) : value),
+    z
+      .number({ error: t("validation.priceRequired") })
+      .int({ error: t("validation.priceWholeCents") })
+      .min(1, { error: t("validation.pricePositive") })
+      .max(MAX_PRICE_CENTS, { error: t("validation.priceTooLarge") }),
+  );
+
+const createOptionalPriceField = (t: Translator) =>
+  z.preprocess(
+    (value) => {
+      if (typeof value !== "string" || value.trim() === "") return undefined;
+      return parseMoneyToCents(value);
+    },
+    z
+      .number({ error: t("validation.compareAtPriceRequired") })
+      .int()
+      .min(1, { error: t("validation.compareAtPricePositive") })
+      .max(MAX_PRICE_CENTS, { error: t("validation.priceTooLarge") })
+      .optional(),
+  );
+
+const createWholeNumberField = (t: Translator, minimum: number, maximum: number, message: string) =>
+  z.preprocess(
+    (value) => (typeof value === "string" && value.trim() !== "" ? Number(value) : value),
+    z
+      .number({ error: message })
+      .int({ error: t("validation.wholeNumber") })
+      .min(minimum)
+      .max(maximum),
+  );
+
+const createMaterialsField = (t: Translator) =>
+  z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return [];
+      return value
+        .split(/[\n,]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    },
+    z
+      .array(
+        z
+          .string()
+          .min(1)
+          .max(60, { error: t("validation.materialTooLong", { max: 60 }) }),
+      )
+      .max(12, { error: t("validation.materialCount", { max: 12 }) }),
+  );
+
+export const createProductInputSchema = (t: Translator) =>
+  z
+    .object({
+      name: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.objectNameRequired") })
+          .min(2, { error: t("validation.minCharacters", { min: 2 }) })
+          .max(120, { error: t("validation.maxCharacters", { max: 120 }) }),
+      ),
+      slug: createSlugField(t),
+      categoryId: z.uuid({ error: t("validation.chooseDepartment") }),
+      sku: createSkuField(t),
+      priceCents: createPriceField(t),
+      compareAtPriceCents: createOptionalPriceField(t),
+      summary: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.summaryRequired") })
+          .min(10, { error: t("validation.minCharacters", { min: 10 }) })
+          .max(280, { error: t("validation.maxCharacters", { max: 280 }) }),
+      ),
+      description: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.descriptionRequired") })
+          .min(20, { error: t("validation.minCharacters", { min: 20 }) })
+          .max(4000, { error: t("validation.maxCharacters", { max: 4000 }) }),
+      ),
+      makerNote: z.preprocess(
+        trimmed,
+        z
+          .string()
+          .max(600, { error: t("validation.maxCharacters", { max: 600 }) })
+          .default(""),
+      ),
+      materials: createMaterialsField(t),
+      dimensions: z.preprocess(
+        trimmed,
+        z
+          .string()
+          .max(160, { error: t("validation.maxCharacters", { max: 160 }) })
+          .default(""),
+      ),
+      care: z.preprocess(
+        trimmed,
+        z
+          .string()
+          .max(400, { error: t("validation.maxCharacters", { max: 400 }) })
+          .default(""),
+      ),
+      initialStock: z.preprocess(
+        (value) => (value === "" || value === undefined || value === null ? 0 : Number(value)),
+        z
+          .number({ error: t("validation.wholeUnits") })
+          .int({ error: t("validation.wholeUnits") })
+          .min(0, { error: t("validation.stockNotNegative") })
+          .max(MAX_UNIT_STOCK, {
+            error: t("validation.stockMax", { max: MAX_UNIT_STOCK }),
+          }),
+      ),
+    })
+    .superRefine((value, context) => {
+      if (
+        value.compareAtPriceCents !== undefined &&
+        value.compareAtPriceCents <= value.priceCents
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["compareAtPriceCents"],
+          message: t("validation.compareAtPriceHigher"),
+        });
+      }
+    });
+
+export const createInventoryAdjustmentSchema = (t: Translator) =>
+  z
+    .object({
+      productId: z.uuid({ error: t("validation.objectReferenceInvalid") }),
+      mode: z.enum(["add", "set"], { error: t("validation.chooseStockMode") }),
+      quantity: createWholeNumberField(t, 0, MAX_UNIT_STOCK, t("validation.wholeUnits")),
+      reason: z.enum(["RESTOCK", "CORRECTION", "RETURN"], {
+        error: t("validation.chooseStockReason"),
+      }),
+      note: z.preprocess(
+        trimmed,
+        z
+          .string()
+          .max(200, { error: t("validation.maxCharacters", { max: 200 }) })
+          .default(""),
+      ),
+    })
+    .superRefine((value, context) => {
+      if (value.mode === "add" && value.quantity < 1) {
+        context.addIssue({
+          code: "custom",
+          path: ["quantity"],
+          message: t("validation.addAtLeastOneUnit"),
+        });
+      }
+    });
+
+export const createStudioProfileSchema = (t: Translator) =>
+  z
+    .object({
+      contactPhone: createPhoneNumberSchema(t),
+      departmentIds: z
+        .array(z.uuid())
+        .min(1, { error: t("validation.chooseDepartment") })
+        .max(20),
+      city: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.cityRequired") })
+          .min(2, { error: t("validation.minCharacters", { min: 2 }) })
+          .max(80, { error: t("validation.maxCharacters", { max: 80 }) }),
+      ),
+      street: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.streetRequired") })
+          .min(2)
+          .max(120),
+      ),
+      address: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.addressRequired") })
+          .min(2)
+          .max(160),
+      ),
+      latitude: z.preprocess(
+        (value) => (value === "" || value === null || value === undefined ? null : Number(value)),
+        z.number().min(-90).max(90).nullable(),
+      ),
+      longitude: z.preprocess(
+        (value) => (value === "" || value === null || value === undefined ? null : Number(value)),
+        z.number().min(-180).max(180).nullable(),
+      ),
+      discipline: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.disciplineRequired") })
+          .min(2, { error: t("validation.minCharacters", { min: 2 }) })
+          .max(60, { error: t("validation.maxCharacters", { max: 60 }) }),
+      ),
+      story: z.preprocess(
+        trimmed,
+        z
+          .string({ error: t("validation.studioStoryRequired") })
+          .min(20, { error: t("validation.minCharacters", { min: 20 }) })
+          .max(1000, { error: t("validation.maxCharacters", { max: 1000 }) }),
+      ),
+      monogram: z.preprocess(
+        (value) => (typeof value === "string" ? value.trim().toUpperCase() : value),
+        z
+          .string()
+          .max(3, { error: t("validation.monogramMax", { max: 3 }) })
+          .regex(/^[A-Z]{0,3}$/, { error: t("validation.monogramLetters") })
+          .default(""),
+      ),
+    })
+    .superRefine((value, context) => {
+      if ((value.latitude === null) !== (value.longitude === null)) {
+        context.addIssue({
+          code: "custom",
+          path: [value.latitude === null ? "latitude" : "longitude"],
+          message: t("validation.mapCoordinatesPair"),
+        });
+      }
+    });
+
+export const createCategoryInputSchema = (t: Translator) =>
+  z.object({
     name: z.preprocess(
       trimmed,
       z
-        .string({ error: "Enter an object name." })
-        .min(2, { error: "Use at least 2 characters." })
-        .max(120, { error: "Use 120 characters or fewer." }),
+        .string({ error: t("validation.departmentNameRequired") })
+        .min(2, { error: t("validation.minCharacters", { min: 2 }) })
+        .max(60, { error: t("validation.maxCharacters", { max: 60 }) }),
     ),
-    slug: slugField,
-    categoryId: z.uuid({ error: "Choose a department." }),
-    sku: skuField,
-    priceCents: priceField,
-    compareAtPriceCents: optionalPriceField,
-    summary: z.preprocess(
+    slug: createSlugField(t),
+    headline: z.preprocess(
       trimmed,
       z
-        .string({ error: "Write a short summary." })
-        .min(10, { error: "Use at least 10 characters." })
-        .max(280, { error: "Use 280 characters or fewer." }),
+        .string()
+        .max(120, { error: t("validation.maxCharacters", { max: 120 }) })
+        .default(""),
     ),
     description: z.preprocess(
       trimmed,
       z
-        .string({ error: "Describe the object." })
-        .min(20, { error: "Use at least 20 characters." })
-        .max(4000, { error: "Use 4000 characters or fewer." }),
-    ),
-    makerNote: z.preprocess(
-      trimmed,
-      z.string().max(600, { error: "Use 600 characters or fewer." }).default(""),
-    ),
-    materials: materialsField,
-    dimensions: z.preprocess(
-      trimmed,
-      z.string().max(160, { error: "Use 160 characters or fewer." }).default(""),
-    ),
-    care: z.preprocess(
-      trimmed,
-      z.string().max(400, { error: "Use 400 characters or fewer." }).default(""),
-    ),
-    initialStock: z.preprocess(
-      (value) => (value === "" || value === undefined || value === null ? 0 : Number(value)),
-      z
-        .number({ error: "Enter a whole number of units." })
-        .int({ error: "Enter a whole number of units." })
-        .min(0, { error: "Stock cannot be negative." })
-        .max(MAX_UNIT_STOCK, { error: `Stock cannot exceed ${MAX_UNIT_STOCK} units.` }),
-    ),
-  })
-  .superRefine((value, context) => {
-    if (value.compareAtPriceCents !== undefined && value.compareAtPriceCents <= value.priceCents) {
-      context.addIssue({
-        code: "custom",
-        path: ["compareAtPriceCents"],
-        message: "The comparison price must be higher than the price.",
-      });
-    }
-  });
-
-export const inventoryAdjustmentSchema = z
-  .object({
-    productId: z.uuid({ error: "That object reference is invalid." }),
-    mode: z.enum(["add", "set"], { error: "Choose how to change stock." }),
-    quantity: wholeNumberField(0, MAX_UNIT_STOCK, "Enter a whole number of units."),
-    reason: z.enum(["RESTOCK", "CORRECTION", "RETURN"], {
-      error: "Choose a reason for the change.",
-    }),
-    note: z.preprocess(
-      trimmed,
-      z.string().max(200, { error: "Use 200 characters or fewer." }).default(""),
-    ),
-  })
-  .superRefine((value, context) => {
-    if (value.mode === "add" && value.quantity < 1) {
-      context.addIssue({
-        code: "custom",
-        path: ["quantity"],
-        message: "Add at least one unit.",
-      });
-    }
-  });
-
-export const studioProfileSchema = z
-  .object({
-    contactPhone: phoneNumberSchema,
-    departmentIds: z.array(z.uuid()).min(1, { error: "Choose at least one department." }).max(20),
-    city: z.preprocess(
-      trimmed,
-      z
-        .string({ error: "Enter a city or town." })
-        .min(2, { error: "Use at least 2 characters." })
-        .max(80, { error: "Use 80 characters or fewer." }),
-    ),
-    street: z.preprocess(trimmed, z.string({ error: "Enter a street." }).min(2).max(120)),
-    address: z.preprocess(
-      trimmed,
-      z.string({ error: "Enter an address or building number." }).min(2).max(160),
-    ),
-    latitude: z.preprocess(
-      (value) => (value === "" || value === null || value === undefined ? null : Number(value)),
-      z.number().min(-90).max(90).nullable(),
-    ),
-    longitude: z.preprocess(
-      (value) => (value === "" || value === null || value === undefined ? null : Number(value)),
-      z.number().min(-180).max(180).nullable(),
-    ),
-    discipline: z.preprocess(
-      trimmed,
-      z
-        .string({ error: "Describe your discipline." })
-        .min(2, { error: "Use at least 2 characters." })
-        .max(60, { error: "Use 60 characters or fewer." }),
-    ),
-    story: z.preprocess(
-      trimmed,
-      z
-        .string({ error: "Tell customers about your studio." })
-        .min(20, { error: "Use at least 20 characters." })
-        .max(1000, { error: "Use 1000 characters or fewer." }),
-    ),
-    monogram: z.preprocess(
-      (value) => (typeof value === "string" ? value.trim().toUpperCase() : value),
-      z
         .string()
-        .max(3, { error: "Use up to 3 letters." })
-        .regex(/^[A-Z]{0,3}$/, { error: "Use letters only." })
+        .max(600, { error: t("validation.maxCharacters", { max: 600 }) })
         .default(""),
     ),
-  })
-  .superRefine((value, context) => {
-    if ((value.latitude === null) !== (value.longitude === null)) {
-      context.addIssue({
-        code: "custom",
-        path: [value.latitude === null ? "latitude" : "longitude"],
-        message: "Use device location to save both map coordinates, or clear both coordinates.",
-      });
-    }
   });
 
-export const categoryInputSchema = z.object({
-  name: z.preprocess(
-    trimmed,
-    z
-      .string({ error: "Enter a department name." })
-      .min(2, { error: "Use at least 2 characters." })
-      .max(60, { error: "Use 60 characters or fewer." }),
-  ),
-  slug: slugField,
-  headline: z.preprocess(
-    trimmed,
-    z.string().max(120, { error: "Use 120 characters or fewer." }).default(""),
-  ),
-  description: z.preprocess(
-    trimmed,
-    z.string().max(600, { error: "Use 600 characters or fewer." }).default(""),
-  ),
-});
+export const createProductModerationSchema = (t: Translator) =>
+  z
+    .object({
+      productId: z.uuid({ error: t("validation.objectReferenceInvalid") }),
+      decision: z.enum(["approve", "reject"], { error: t("validation.chooseModerationDecision") }),
+      note: z.preprocess(
+        trimmed,
+        z
+          .string()
+          .max(500, { error: t("validation.maxCharacters", { max: 500 }) })
+          .default(""),
+      ),
+    })
+    .superRefine((value, context) => {
+      if (value.decision === "reject" && value.note.length < 3) {
+        context.addIssue({
+          code: "custom",
+          path: ["note"],
+          message: t("validation.explainDecisionToStudio"),
+        });
+      }
+    });
 
-export const productModerationSchema = z
-  .object({
-    productId: z.uuid({ error: "That object reference is invalid." }),
-    decision: z.enum(["approve", "reject"], { error: "Choose a moderation decision." }),
-    note: z.preprocess(
-      trimmed,
-      z.string().max(500, { error: "Use 500 characters or fewer." }).default(""),
-    ),
-  })
-  .superRefine((value, context) => {
-    if (value.decision === "reject" && value.note.length < 3) {
-      context.addIssue({
-        code: "custom",
-        path: ["note"],
-        message: "Explain the decision to the studio.",
-      });
-    }
+export const createProductFeatureSchema = (t: Translator) =>
+  z.object({
+    productId: z.uuid({ error: t("validation.objectReferenceInvalid") }),
+    featured: z.enum(["1", "0"]),
   });
 
-export const productFeatureSchema = z.object({
-  productId: z.uuid({ error: "That object reference is invalid." }),
-  featured: z.enum(["1", "0"]),
-});
+export const productInputSchema = createProductInputSchema(defaultTranslator);
+export const inventoryAdjustmentSchema = createInventoryAdjustmentSchema(defaultTranslator);
+export const studioProfileSchema = createStudioProfileSchema(defaultTranslator);
+export const categoryInputSchema = createCategoryInputSchema(defaultTranslator);
+export const productModerationSchema = createProductModerationSchema(defaultTranslator);
+export const productFeatureSchema = createProductFeatureSchema(defaultTranslator);
 
 export type ProductInput = z.infer<typeof productInputSchema>;
 export type InventoryAdjustmentInput = z.infer<typeof inventoryAdjustmentSchema>;

@@ -8,11 +8,11 @@ import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
 
-const time = (at: number) =>
-  new Date(at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+const time = (at: number, locale: string) =>
+  new Date(at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 
 export function InboxPanel() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { state, sendChat, markChatRead } = useExperience();
   const threads = Object.values(state.chats).sort(
     (a, b) => (b.messages.at(-1)?.at ?? 0) - (a.messages.at(-1)?.at ?? 0),
@@ -44,8 +44,8 @@ export function InboxPanel() {
         <MessageSquare className="mx-auto size-8 text-muted-foreground" />
         <h2 className="mt-3 font-display text-lg font-medium">{t("experience.inbox.empty")}</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Open a studio from any product page and tap <strong>{t("product.messageStudio")}</strong>{" "}
-          to start a chat. Ask about materials, custom sizes or delivery before you buy.
+          {t("experience.inbox.emptyIntro")} <strong>{t("product.messageStudio")}</strong>{" "}
+          {t("experience.inbox.emptyOutro")}
         </p>
       </div>
     );
@@ -54,28 +54,28 @@ export function InboxPanel() {
   return (
     <div className="grid gap-4 overflow-hidden rounded-2xl border border-border bg-surface sm:grid-cols-[0.35fr_0.65fr]">
       <ul className="max-h-[26rem] divide-y divide-border overflow-y-auto border-b border-border sm:border-r sm:border-b-0">
-        {threads.map((t) => (
-          <li key={t.vendorSlug}>
+        {threads.map((thread) => (
+          <li key={thread.vendorSlug}>
             <button
               type="button"
-              onClick={() => setActive(t.vendorSlug)}
+              onClick={() => setActive(thread.vendorSlug)}
               className={cn(
                 "flex w-full items-center gap-2 px-4 py-3 text-left transition hover:bg-surface-muted",
-                activeSlug === t.vendorSlug && "bg-surface-muted",
+                activeSlug === thread.vendorSlug && "bg-surface-muted",
               )}
             >
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-[#0f766e]/10 text-xs font-bold text-[#0f766e]">
-                {t.vendorName.slice(0, 2).toUpperCase()}
+                {thread.vendorName.slice(0, 2).toUpperCase()}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold">{t.vendorName}</span>
+                <span className="block truncate text-sm font-semibold">{thread.vendorName}</span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  {t.messages.at(-1)?.text ?? "Say hello"}
+                  {thread.messages.at(-1)?.text ?? t("experience.inbox.sayHello")}
                 </span>
               </span>
-              {t.unread > 0 ? (
+              {thread.unread > 0 ? (
                 <span className="grid min-w-4 place-items-center rounded-full bg-accent px-1 text-[0.625rem] font-bold text-white">
-                  {t.unread}
+                  {thread.unread}
                 </span>
               ) : null}
             </button>
@@ -85,8 +85,8 @@ export function InboxPanel() {
 
       <div className="flex min-h-[26rem] flex-col">
         <div className="border-b border-border px-4 py-3">
-          <p className="text-sm font-semibold">{thread?.vendorName ?? "Studio"}</p>
-          <p className="text-xs text-muted-foreground">Usually replies within a few minutes</p>
+          <p className="text-sm font-semibold">{thread?.vendorName ?? t("products.studio")}</p>
+          <p className="text-xs text-muted-foreground">{t("experience.inbox.repliesQuickly")}</p>
         </div>
         <div className="flex-1 scrollbar-thin space-y-2 overflow-y-auto p-4">
           {(thread?.messages ?? []).map((m) => (
@@ -109,7 +109,7 @@ export function InboxPanel() {
                     m.from === "buyer" ? "text-white/70" : "text-muted-foreground",
                   )}
                 >
-                  {time(m.at)}
+                  {time(m.at, locale)}
                 </p>
               </div>
             </div>

@@ -1,28 +1,26 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import type { VendorStatus } from "@/generated/prisma/enums";
+import { getServerI18n } from "@/i18n/server";
 
 const statusPresentation: Record<
   VendorStatus,
-  { label: string; tone: NonNullable<BadgeProps["tone"]> }
+  { labelKey: string; tone: NonNullable<BadgeProps["tone"]> }
 > = {
-  PENDING: { label: "Under review", tone: "clay" },
-  APPROVED: { label: "Approved", tone: "success" },
-  REJECTED: { label: "Rejected", tone: "danger" },
-  SUSPENDED: { label: "Suspended", tone: "neutral" },
+  PENDING: { labelKey: "studio.status.inReview", tone: "clay" },
+  APPROVED: { labelKey: "vendor.approved", tone: "success" },
+  REJECTED: { labelKey: "admin.rejected", tone: "danger" },
+  SUSPENDED: { labelKey: "admin.suspended", tone: "neutral" },
 };
 
-export function VendorStatusBadge({
+export async function VendorStatusBadge({
   status,
   className,
 }: {
   status: VendorStatus;
   className?: string;
 }) {
+  const { t } = await getServerI18n();
   const presentation = statusPresentation[status];
 
-  return (
-    <Badge tone={presentation.tone} className={className}>
-      {presentation.label}
-    </Badge>
-  );
+  return <Badge tone={presentation.tone}>{t(presentation.labelKey)}</Badge>;
 }

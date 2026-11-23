@@ -393,7 +393,16 @@
     "mapTitle": "Google Maps delivery location",
     "deliveryQuote": "Delivery quote",
     "totalDelivery": "Total delivery",
-    "addItemForQuote": "Add items to your cart to see per-studio delivery distances and prices."
+    "addItemForQuote": "Add items to your cart to see per-studio delivery distances and prices.",
+    "status": {
+      "awaitingPayment": "Awaiting payment",
+      "paid": "Paid",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    }
   },
   "auth": {
     "backToShop": "Back to shop",
@@ -411,6 +420,7 @@
     "noAccount": "No account yet?",
     "haveAccount": "Already have an account?",
     "email": "Email",
+    "password": "Password",
     "name": "Name",
     "phone": "Phone number",
     "phoneHint": "Include your country code, for example +255 754 123 456. Buyers can add this later at checkout.",
@@ -468,7 +478,29 @@
     "verifying": "Verifying…",
     "verifyEmail": "Verify email",
     "wrongAccount": "Wrong account?",
-    "signInAgain": "Sign in again"
+    "signInAgain": "Sign in again",
+    "errors": {
+      "signInRateLimited": "Too many sign-in attempts. Wait a few minutes and try again.",
+      "badCredentials": "Email or password is incorrect.",
+      "signUpRateLimited": "Too many sign-up attempts. Wait a little while and try again.",
+      "signUpFailed": "We could not create an account with those details. If you already have an account, sign in or reset your password.",
+      "accountCreated": "Account created. Sign in to continue.",
+      "resetRateLimited": "Too many reset requests. Wait a little while and try again.",
+      "resetSent": "If an account exists for that email, we sent a password reset link.",
+      "resetAttemptRateLimited": "Too many reset attempts. Wait a little while and try again.",
+      "resetLinkInvalid": "This reset link is invalid or has expired. Request a new one."
+    }
+  },
+  "validation": {
+    "emailInvalid": "Enter a valid email address.",
+    "emailTooLong": "Use an email address under 254 characters.",
+    "minCharacters": "Use at least {min} characters.",
+    "maxCharacters": "Use {max} characters or fewer.",
+    "passwordRequired": "Enter your password.",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "phoneWithCountryCode": "Enter a phone number with its country code.",
+    "phoneDigits": "Use 7–15 digits and include the country code.",
+    "linkInvalid": "This link is invalid or incomplete."
   },
   "studio": {
     "nav": "Studio navigation",
@@ -543,7 +575,21 @@
     "appealRejectionStands": "Your appeal was reviewed and the rejection stands.",
     "appealAwaiting": "Your appeal is awaiting review.",
     "suspendedNotice": "This studio workspace is suspended.",
-    "suspendedBody": "Listing, order, and account tools are unavailable while the studio is suspended. Contact the SupplyHub team for details."
+    "suspendedBody": "Listing, order, and account tools are unavailable while the studio is suspended. Contact the SupplyHub team for details.",
+    "drafts": "Drafts",
+    "draftsNote": "Not yet published",
+    "status": {
+      "draft": "Draft",
+      "inReview": "In review",
+      "published": "Published",
+      "changesRequested": "Changes requested",
+      "archived": "Archived"
+    },
+    "draftsPending": "{count} {objects} not yet published",
+    "publishWhenReady": "Publish them when they are ready.",
+    "allObjectsLive": "All objects are live",
+    "allObjectsLiveNote": "Every object in your catalog is published.",
+    "loadingWorkspace": "Loading the studio workspace"
   },
   "admin": {
     "nav": "Administration",

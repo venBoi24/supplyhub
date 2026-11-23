@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/field";
 import { editAdminUserAppealAction } from "@/features/admin/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function UserAppealEditForm({
   userId,
@@ -21,22 +22,23 @@ export function UserAppealEditForm({
   vendorName: string;
   appealReason: string;
 }) {
+  const t = useT();
   const [state, action, pending] = useActionState(editAdminUserAppealAction, initialFormState);
 
   return (
     <details className="mt-3 border-t border-border pt-3">
       <summary className="cursor-pointer text-xs font-medium text-accent underline underline-offset-4">
-        Edit user and appeal
+        {t("admin.editUserAndAppeal")}
       </summary>
       <form action={action} className="mt-3 grid min-w-64 gap-2">
         <input type="hidden" name="userId" value={userId} />
         <input type="hidden" name="vendorId" value={vendorId} />
         <label className="grid gap-1 text-xs">
-          Username
+          {t("admin.fieldUsername")}
           <Input name="name" defaultValue={name} maxLength={80} required minLength={2} />
         </label>
         <label className="grid gap-1 text-xs">
-          Store name
+          {t("admin.fieldStoreName")}
           <Input
             name="vendorName"
             defaultValue={vendorName}
@@ -46,7 +48,7 @@ export function UserAppealEditForm({
           />
         </label>
         <label className="grid gap-1 text-xs">
-          Appeal reason
+          {t("admin.fieldAppealReason")}
           <Textarea
             name="appealReason"
             defaultValue={appealReason}
@@ -57,7 +59,7 @@ export function UserAppealEditForm({
           />
         </label>
         <Button size="sm" type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save user and appeal"}
+          {pending ? t("common.saving") : t("admin.saveUserAndAppeal")}
         </Button>
         {state.message ? (
           <p role="status" className="text-xs text-muted-foreground">

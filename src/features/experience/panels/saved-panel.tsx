@@ -45,10 +45,7 @@ export function SavedPanel({ products }: { products: ProductListing[] }) {
             <Bell className="size-3.5" /> {t("experience.saved.watching")}
           </span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Save a piece from its product page. We&apos;ll alert you when the price drops or it comes
-          back in stock.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("experience.saved.howItWorks")}</p>
 
         {saved.length === 0 ? (
           <div className="mt-4 rounded-xl border border-dashed border-border p-8 text-center">
@@ -97,7 +94,9 @@ export function SavedPanel({ products }: { products: ProductListing[] }) {
                         p.inventory > 0 ? "text-muted-foreground" : "text-[#b45309]",
                       )}
                     >
-                      {p.inventory > 0 ? `${p.inventory} in stock` : t("common.outOfStock")}
+                      {p.inventory > 0
+                        ? t("experience.saved.inStockCount", { count: p.inventory })
+                        : t("common.outOfStock")}
                     </p>
                     {dropped ? (
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#0f766e]/10 px-2 py-0.5 text-[0.625rem] font-semibold text-[#0f766e]">
@@ -112,7 +111,7 @@ export function SavedPanel({ products }: { products: ProductListing[] }) {
                   </div>
                   <button
                     type="button"
-                    aria-label={`Remove ${p.name} from wishlist`}
+                    aria-label={t("product.removeNamedFromWishlist", { name: p.name })}
                     onClick={() =>
                       toggleWishlist({
                         slug: p.slug,

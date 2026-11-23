@@ -1,4 +1,7 @@
+"use client";
+
 import { Field } from "@/components/ui/field";
+import { useI18n } from "@/i18n/client";
 
 export interface VendorDepartmentOption {
   id: string;
@@ -14,17 +17,17 @@ export function VendorDepartmentPicker({
   selectedIds?: string[];
   error?: string;
 }) {
+  const { t } = useI18n();
+
   return (
     <Field
-      label="Departments"
+      label={t("nav.departments")}
       htmlFor="vendor-department-0"
-      hint="Choose every kind of product your studio sells. You can select more than one."
+      hint={t("studio.departmentPickerHint")}
       error={error}
     >
       {departments.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No active departments yet. Ask an administrator to add one.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("studio.noDepartmentsForPicker")}</p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
           {departments.map((department, index) => (

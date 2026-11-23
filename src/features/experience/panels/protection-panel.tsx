@@ -13,19 +13,25 @@ const input =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-[#0f766e] focus:outline-none";
 const label = "text-[0.6875rem] font-semibold tracking-[0.1em] uppercase text-muted-foreground";
 
-const RETURN_REASONS = [
-  "Item not as described",
-  "Arrived damaged",
-  "Wrong item sent",
-  "Changed my mind",
-  "Never arrived",
-];
+const RETURN_STATUS_KEYS: Record<string, string> = {
+  requested: "experience.protection.returnStatusRequested",
+  approved: "experience.protection.returnStatusApproved",
+  refunded: "experience.protection.returnStatusRefunded",
+};
+
+const RETURN_REASON_KEYS = [
+  "experience.protection.reasonNotAsDescribed",
+  "experience.protection.reasonDamaged",
+  "experience.protection.reasonWrongItem",
+  "experience.protection.reasonChangedMind",
+  "experience.protection.reasonNeverArrived",
+] as const;
 
 export function ProtectionPanel() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { state, requestReturn } = useExperience();
   const [orderId, setOrderId] = useState("");
-  const [reason, setReason] = useState(RETURN_REASONS[0]!);
+  const [reasonKey, setReasonKey] = useState<string>(RETURN_REASON_KEYS[0]!);
   const [detail, setDetail] = useState("");
 
   const eligible = state.orders.filter((o) => o.status === "delivered" || o.status === "completed");
@@ -34,7 +40,7 @@ export function ProtectionPanel() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!orderId) return;
-    requestReturn(orderId, reason, detail);
+    requestReturn(orderId, t(reasonKey), detail);
     setOrderId("");
     setDetail("");
   };
@@ -43,28 +49,29 @@ export function ProtectionPanel() {
     <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
       <section className="rounded-2xl border border-[#0f766e]/30 bg-[#0f766e]/5 p-6">
         <ShieldCheck className="size-8 text-[#0f766e]" />
-        <h2 className="mt-3 font-display text-xl font-medium">Buyer protection, explained</h2>
+        <h2 className="mt-3 font-display text-xl font-medium">
+          {t("experience.protection.explainedTitle")}
+        </h2>
         <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
           <li className="flex gap-2">
-            <span className="font-semibold text-[#0f766e]">1.</span> You pay at checkout; we hold
-            the money in protection — the studio isn&apos;t paid yet.
+            <span className="font-semibold text-[#0f766e]">1.</span>{" "}
+            {t("experience.protection.stepOne")}
           </li>
           <li className="flex gap-2">
-            <span className="font-semibold text-[#0f766e]">2.</span> The courier delivers and
-            confirms hand-over with your one-time code.
+            <span className="font-semibold text-[#0f766e]">2.</span>{" "}
+            {t("experience.protection.stepTwo")}
           </li>
           <li className="flex gap-2">
-            <span className="font-semibold text-[#0f766e]">3.</span> You confirm receipt; only then
-            is payment released to the studio.
+            <span className="font-semibold text-[#0f766e]">3.</span>{" "}
+            {t("experience.protection.stepThree")}
           </li>
           <li className="flex gap-2">
-            <span className="font-semibold text-[#0f766e]">4.</span> Something wrong? Open a return
-            below and protected funds come back to you.
+            <span className="font-semibold text-[#0f766e]">4.</span>{" "}
+            {t("experience.protection.stepFour")}
           </li>
         </ul>
         <p className="mt-4 rounded-lg border border-border bg-surface p-3 text-xs text-muted-foreground">
-          Money-back guarantee applies to every sandbox order. Refunds return to the original
-          payment method.
+          {t("experience.protection.guaranteeNote")}
         </p>
       </section>
 
@@ -81,7 +88,7 @@ export function ProtectionPanel() {
             <div className="mt-4 space-y-3">
               <div>
                 <label className={label} htmlFor="ret-order">
-                  Order
+                  {t("studio.order")}
                 </label>
                 <select
                   id="ret-order"
@@ -89,7 +96,7 @@ export function ProtectionPanel() {
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
                 >
-                  <option value="">Choose order…</option>
+                  <option value="">{t("experience.protection.chooseOrder")}</option>
                   {eligible.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.number} · {formatCents(o.totalCents)}
@@ -104,11 +111,13 @@ export function ProtectionPanel() {
                 <select
                   id="ret-reason"
                   className={cn(input, "mt-1")}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  value={reasonKey}
+                  onChange={(e) => setReasonKey(e.target.value)}
                 >
-                  {RETURN_REASONS.map((r) => (
-                    <option key={r}>{r}</option>
+                  {RETURN_REASON_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {t(key)}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -154,14 +163,19 @@ export function ProtectionPanel() {
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {o.escrowReleasedAt
-                      ? `Released to studio ${new Date(o.escrowReleasedAt).toLocaleTimeString()}`
+                      ? t("experience.protection.releasedToStudio", {
+                          time: new Date(o.escrowReleasedAt).toLocaleTimeString(locale),
+                        })
                       : o.status === "refunded"
-                        ? "Refunded to you"
-                        : `${formatCents(o.totalCents)} held in protection`}
+                        ? t("experience.protection.refundedToYou")
+                        : t("experience.protection.amountHeld", {
+                            amount: formatCents(o.totalCents),
+                          })}
                   </p>
                   {o.returnRequest ? (
                     <p className="mt-1 text-xs text-[#0f766e]">
-                      Return: {o.returnRequest.reason} · {o.returnRequest.status}
+                      {t("experience.protection.returnLabel")} · {o.returnRequest.reason} ·{" "}
+                      {t(RETURN_STATUS_KEYS[o.returnRequest.status] ?? "common.status")}
                     </p>
                   ) : null}
                 </li>
@@ -170,7 +184,7 @@ export function ProtectionPanel() {
           )}
           {withReturns.length === 0 ? null : (
             <p className="mt-3 text-xs text-muted-foreground">
-              {withReturns.length} return(s) on record.
+              {t("experience.protection.returnsOnRecord", { count: withReturns.length })}
             </p>
           )}
         </section>

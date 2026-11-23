@@ -3,16 +3,23 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 
+import { useT } from "@/i18n/client";
+
 import { useExperience } from "../store";
 
 export function NotificationBell() {
+  const t = useT();
   const { state } = useExperience();
   const unread = state.notifications.filter((n) => !n.read).length;
 
   return (
     <Link
       href="/experience?tab=alerts"
-      aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+      aria-label={
+        unread > 0
+          ? t("account.notificationsUnread", { count: unread })
+          : t("account.notifications")
+      }
       className="relative grid size-11 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
     >
       <Bell className="size-5" aria-hidden="true" />

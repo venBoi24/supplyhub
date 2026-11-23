@@ -9,6 +9,7 @@ import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
+import { MILESTONE_KEYS } from "./alerts-panel";
 import { formatCents, type SandboxOrder } from "../types";
 
 const input =
@@ -63,8 +64,7 @@ export function OrdersPanel() {
         <PackageCheck className="mx-auto size-8 text-muted-foreground" />
         <p className="mt-3 font-display text-lg font-medium">{t("experience.orders.empty")}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Place an order in {t("experience.tabs.shop")} to watch protected payment and live courier
-          tracking.
+          {t("experience.orders.emptyBody", { tab: t("experience.tabs.shop") })}
         </p>
       </div>
     );
@@ -110,7 +110,7 @@ export function OrdersPanel() {
               {selected.milestones.map((m) => (
                 <li key={m.key} className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="mt-1 size-1.5 shrink-0 rounded-full bg-[#0f766e]" />
-                  <span>{m.label}</span>
+                  <span>{t(MILESTONE_KEYS[m.key] ?? "common.empty")}</span>
                 </li>
               ))}
             </ol>
@@ -125,7 +125,7 @@ export function OrdersPanel() {
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {t("experience.orders.handoverNote")}{" "}
-              {selected.otpVerified ? t("common.verified") : "Not yet verified."}
+              {selected.otpVerified ? t("common.verified") : t("experience.orders.notYetVerified")}
             </p>
             {selected.status === "shipped" ? (
               <div className="mt-3 flex gap-2">
@@ -136,8 +136,8 @@ export function OrdersPanel() {
                     setOtpInput(e.target.value);
                     setOtpError(false);
                   }}
-                  placeholder="Courier enters code"
-                  aria-label="Courier OTP entry"
+                  placeholder={t("experience.orders.courierCodePlaceholder")}
+                  aria-label={t("experience.orders.courierCodeLabel")}
                   inputMode="numeric"
                   maxLength={4}
                 />
@@ -155,7 +155,7 @@ export function OrdersPanel() {
               </div>
             ) : null}
             {otpError ? (
-              <p className="mt-2 text-xs text-[#b45309]">Code doesn&apos;t match. Try again.</p>
+              <p className="mt-2 text-xs text-[#b45309]">{t("experience.orders.codeMismatch")}</p>
             ) : null}
           </div>
 
@@ -192,7 +192,11 @@ export function OrdersPanel() {
 
           <div className="rounded-2xl border border-border bg-surface p-5 text-sm">
             <p className="font-semibold">
-              {selected.items.length} items · {formatCents(selected.totalCents, selected.currency)}
+              {t("experience.orders.itemCount", {
+                count: selected.items.length,
+                items: t(selected.items.length === 1 ? "common.item" : "common.items"),
+              })}{" "}
+              · {formatCents(selected.totalCents, selected.currency)}
             </p>
             <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
               {selected.items.map((i) => (

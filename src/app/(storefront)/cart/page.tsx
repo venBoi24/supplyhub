@@ -19,11 +19,14 @@ import type { Translator } from "@/i18n/dictionary";
 import { canCheckout } from "@/server/auth/policies";
 import { getSessionActor } from "@/server/auth/session";
 
-export const metadata: Metadata = {
-  title: "Your cart",
-  description: "Review the objects you have selected before checking out.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: t("cart.title"),
+    description: t("cart.metaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function searchParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -208,7 +211,8 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
                                 </p>
                                 {problem ? (
                                   <p className="mt-2 text-sm text-danger">
-                                    {problem}. {t("cart.problemAction")}
+                                    {problem}
+                                    {t("common.sentenceSeparator")} {t("cart.problemAction")}
                                   </p>
                                 ) : null}
                               </div>
@@ -294,10 +298,11 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
   );
 }
 
-function CartSkeleton() {
+async function CartSkeleton() {
+  const { t } = await getServerI18n();
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading your cart">
+      <div role="status" aria-label={t("cart.loadingCart")}>
         <div className="border-b border-border pb-8">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="mt-4 h-12 w-72 max-w-full" />
@@ -310,7 +315,9 @@ function CartSkeleton() {
           <Skeleton className="h-72 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </PageShell>
   );
 }
+
+export const instant = false;

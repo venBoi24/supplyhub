@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { formatMoney } from "@/features/catalog/money";
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
+import { getServerI18n } from "@/i18n/server";
 import { logger } from "@/lib/logging/logger";
 import { canPerformAdminAction } from "@/server/auth/policies";
 import { getSessionActor } from "@/server/auth/session";
@@ -19,7 +20,7 @@ import {
   reconcilePayout,
   refundPayment,
 } from "./service";
-import { payoutActionSchema, payoutSchema, refundSchema } from "./validation";
+import { createPayoutActionSchema, createPayoutSchema, createRefundSchema } from "./validation";
 
 async function requireAdminActor() {
   const actor = await getSessionActor();
@@ -31,21 +32,29 @@ async function requireAdminActor() {
   return actor;
 }
 
+/**
+ * `PaymentError` carries a provider or ledger message that is not part of the
+ * i18n dictionaries, so it is passed through unchanged. That is a pre-existing
+ * information-leak concern for a separate review rather than something to
+ * translate here.
+ */
+
 export async function refundPaymentAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const actor = await requireAdminActor();
 
   if (!actor) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   if (!consumeRateLimit(`refund:admin:${actor.id}`, AUTH_RATE_LIMITS.refundByAdmin)) {
-    return { status: "error", message: "Too many refund attempts. Wait a few minutes." };
+    return { status: "error", message: t("admin.errors.refundRateLimited") };
   }
 
-  const parsed = refundSchema.safeParse({
+  const parsed = createRefundSchema(t).safeParse({
     orderNumber: formValue(formData, "orderNumber"),
     paymentId: formValue(formData, "paymentId"),
     amountCents: formValue(formData, "amount"),
@@ -78,7 +87,9 @@ export async function refundPaymentAction(
 
     return {
       status: "success",
-      message: `Refund of ${formatMoney(parsed.data.amountCents, "TZS")} recorded. The order ledger has been reversed by the same amount.`,
+      message: t("admin.success.refundRecorded", {
+        amount: formatMoney(parsed.data.amountCents, "TZS"),
+      }),
     };
   } catch (error) {
     if (error instanceof PaymentError) {
@@ -86,7 +97,7 @@ export async function refundPaymentAction(
     }
 
     logger.error("payment.refund_action_failed", { error });
-    return { status: "error", message: "The refund could not be recorded." };
+    return { status: "error", message: t("admin.errors.refundRecordFailed") };
   }
 }
 
@@ -94,17 +105,18 @@ export async function createPayoutAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const actor = await requireAdminActor();
 
   if (!actor) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   if (!consumeRateLimit(`payout:admin:${actor.id}`, AUTH_RATE_LIMITS.payoutByAdmin)) {
-    return { status: "error", message: "Too many payout attempts. Wait a few minutes." };
+    return { status: "error", message: t("admin.errors.payoutRateLimited") };
   }
 
-  const parsed = payoutSchema.safeParse({
+  const parsed = createPayoutSchema(t).safeParse({
     vendorId: formValue(formData, "vendorId"),
     amountCents: formValue(formData, "amount"),
     periodStart: formValue(formData, "periodStart"),
@@ -130,7 +142,10 @@ export async function createPayoutAction(
 
     return {
       status: "success",
-      message: `Payout ${payout.reference} recorded for ${formatMoney(payout.amountCents, payout.currency)}.`,
+      message: t("admin.success.payoutRecorded", {
+        reference: payout.reference,
+        amount: formatMoney(payout.amountCents, payout.currency),
+      }),
     };
   } catch (error) {
     if (error instanceof PaymentError) {
@@ -138,7 +153,7 @@ export async function createPayoutAction(
     }
 
     logger.error("payment.payout_action_failed", { error });
-    return { status: "error", message: "The payout could not be recorded." };
+    return { status: "error", message: t("admin.errors.payoutRecordFailed") };
   }
 }
 
@@ -146,35 +161,36 @@ export async function markPayoutPaidAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const actor = await requireAdminActor();
 
   if (!actor) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   if (!consumeRateLimit(`payout:admin:${actor.id}`, AUTH_RATE_LIMITS.payoutByAdmin)) {
-    return { status: "error", message: "Too many payout attempts. Wait a few minutes." };
+    return { status: "error", message: t("admin.errors.payoutRateLimited") };
   }
 
-  const parsed = payoutActionSchema.safeParse({
+  const parsed = createPayoutActionSchema(t).safeParse({
     payoutId: formValue(formData, "payoutId"),
   });
 
   if (!parsed.success) {
-    return { status: "error", message: "That payout reference is invalid." };
+    return { status: "error", message: t("validation.payoutReferenceInvalid") };
   }
 
   try {
     await markPayoutPaid(getDatabase(), parsed.data.payoutId, actor.id);
     revalidatePath("/admin/payouts");
-    return { status: "success", message: "Payout marked as paid." };
+    return { status: "success", message: t("admin.success.payoutMarkedPaid") };
   } catch (error) {
     if (error instanceof PaymentError) {
       return { status: "error", message: error.message };
     }
 
     logger.error("payment.payout_paid_action_failed", { error });
-    return { status: "error", message: "The payout could not be updated." };
+    return { status: "error", message: t("admin.errors.payoutUpdateFailed") };
   }
 }
 
@@ -182,34 +198,35 @@ export async function reconcilePayoutAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const actor = await requireAdminActor();
 
   if (!actor) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   if (!consumeRateLimit(`payout:admin:${actor.id}`, AUTH_RATE_LIMITS.payoutByAdmin)) {
-    return { status: "error", message: "Too many payout attempts. Wait a few minutes." };
+    return { status: "error", message: t("admin.errors.payoutRateLimited") };
   }
 
-  const parsed = payoutActionSchema.safeParse({
+  const parsed = createPayoutActionSchema(t).safeParse({
     payoutId: formValue(formData, "payoutId"),
   });
 
   if (!parsed.success) {
-    return { status: "error", message: "That payout reference is invalid." };
+    return { status: "error", message: t("validation.payoutReferenceInvalid") };
   }
 
   try {
     await reconcilePayout(getDatabase(), parsed.data.payoutId, actor.id);
     revalidatePath("/admin/payouts");
-    return { status: "success", message: "Payout reconciled against the provider statement." };
+    return { status: "success", message: t("admin.success.payoutReconciled") };
   } catch (error) {
     if (error instanceof PaymentError) {
       return { status: "error", message: error.message };
     }
 
     logger.error("payment.payout_reconcile_action_failed", { error });
-    return { status: "error", message: "The payout could not be reconciled." };
+    return { status: "error", message: t("admin.errors.payoutReconcileFailed") };
   }
 }

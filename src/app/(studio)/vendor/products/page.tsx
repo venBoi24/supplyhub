@@ -12,13 +12,18 @@ import { ProductStatusBadge } from "@/components/vendor/product-status-badge";
 import { StudioPageHead } from "@/components/vendor/studio-page-head";
 import { formatMoney } from "@/features/catalog/money";
 import { getStudioProductStats, listVendorProducts } from "@/features/catalog/vendor-queries";
+import { getServerI18n } from "@/i18n/server";
 import { requireApprovedVendor } from "@/server/auth/guards";
 
-export const metadata: Metadata = {
-  title: "Studio products",
-  description: "Manage the objects in your SupplyHub studio catalog.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("studio.productsTitle"),
+    description: t("studio.productsDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function searchParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -41,7 +46,8 @@ async function ProductsContent({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [{ vendorId }, params] = await Promise.all([
+  const [{ t }, { vendorId }, params] = await Promise.all([
+    getServerI18n(),
     requireApprovedVendor("/vendor/products"),
     searchParams,
   ]);
@@ -57,15 +63,17 @@ async function ProductsContent({
   return (
     <>
       <StudioPageHead
-        title="Products"
-        description={`${stats.total} ${
-          stats.total === 1 ? "object" : "objects"
-        } in your catalog · ${stats.published} live on the storefront.`}
+        title={t("studio.products")}
+        description={t("studio.catalogSummary", {
+          count: stats.total,
+          objects: stats.total === 1 ? t("nav.object") : t("nav.objects"),
+          published: stats.published,
+        })}
         action={
           <Button asChild size="sm">
             <Link href="/vendor/products/new">
               <Plus className="size-4" aria-hidden="true" />
-              Add object
+              {t("studio.addObject")}
             </Link>
           </Button>
         }
@@ -73,32 +81,32 @@ async function ProductsContent({
 
       {published ? (
         <Notice tone="success" className="mb-4">
-          Object published. It is now live on the storefront.
+          {t("studio.noticePublished")}
         </Notice>
       ) : null}
       {archived ? (
         <Notice tone="warning" className="mb-4">
-          Object archived. It is no longer visible on the storefront.
+          {t("studio.noticeArchived")}
         </Notice>
       ) : null}
       {deleted ? (
         <Notice tone="success" className="mb-4">
-          Draft deleted.
+          {t("studio.noticeDraftDeleted")}
         </Notice>
       ) : null}
 
       {products.length === 0 ? (
         <EmptyState
           icon={<Package className="size-5" aria-hidden="true" />}
-          title="No objects yet."
-          description="Describe the object, set a price, and add an image. It goes live on the storefront as soon as you save it."
+          title={t("studio.noObjectsTitle")}
+          description={t("studio.noObjectsBody")}
         >
           <Link
             href="/vendor/products/new"
             className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
           >
             <Plus className="size-4" aria-hidden="true" />
-            Create the first object
+            {t("studio.createFirstObject")}
           </Link>
         </EmptyState>
       ) : (
@@ -125,8 +133,11 @@ async function ProductsContent({
                 <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-1.5">
                   <ProductStatusBadge status={product.status} />
                   <p className="text-xs text-muted-foreground">
-                    {formatMoney(product.priceCents, product.currency)} · {product.stock}{" "}
-                    {product.stock === 1 ? "unit" : "units"}
+                    {formatMoney(product.priceCents, product.currency)} ·{" "}
+                    {t("studio.unitsOnHand", {
+                      count: product.stock,
+                      units: product.stock === 1 ? t("common.piece") : t("common.pieces"),
+                    })}
                   </p>
                 </div>
               </Link>
@@ -138,9 +149,11 @@ async function ProductsContent({
   );
 }
 
-function ProductsSkeleton() {
+async function ProductsSkeleton() {
+  const { t } = await getServerI18n();
+
   return (
-    <div role="status" aria-label="Loading studio products">
+    <div role="status" aria-label={t("studio.loadingProducts")}>
       <div className="mb-5">
         <Skeleton className="h-7 w-32" />
         <Skeleton className="mt-2 h-3.5 w-64 max-w-full" />
@@ -150,7 +163,9 @@ function ProductsSkeleton() {
           <Skeleton key={index} className="h-24 w-full rounded-xl" />
         ))}
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
+
+export const instant = false;

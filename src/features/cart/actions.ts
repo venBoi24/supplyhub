@@ -6,23 +6,30 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
+import { getServerI18n } from "@/i18n/server";
+import type { Translator } from "@/i18n/dictionary";
 import { logger } from "@/lib/logging/logger";
 import { getSessionActor } from "@/server/auth/session";
 import { getDatabase } from "@/server/db/client";
 
 import { MAX_CART_QUANTITY } from "./constants";
 import { findCurrentCart, getOrCreateCartForMutation, touchCart } from "./service";
-import { cartMutationSchema, cartProductIdSchema } from "./validation";
+import { createCartMutationSchema, createCartProductIdSchema } from "./validation";
 
 function revalidateCart(): void {
   revalidatePath("/", "layout");
 }
 
-async function rejectInactiveActor(): Promise<FormState | null> {
+/**
+ * Reads the session and returns a localized error state for suspended accounts.
+ * Takes the request translator because `getServerI18n()` is request-scoped and
+ * must not be awaited at module scope.
+ */
+async function rejectInactiveActor(t: Translator): Promise<FormState | null> {
   const actor = await getSessionActor();
 
   if (actor && actor.status !== "ACTIVE") {
-    return { status: "error", message: "This account cannot use the cart." };
+    return { status: "error", message: t("cart.errors.accountInactive") };
   }
 
   return null;
@@ -32,13 +39,14 @@ export async function addToCartAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const inactive = await rejectInactiveActor();
+  const { t } = await getServerI18n();
+  const inactive = await rejectInactiveActor(t);
 
   if (inactive) {
     return inactive;
   }
 
-  const parsed = cartMutationSchema.safeParse({
+  const parsed = createCartMutationSchema(t).safeParse({
     productId: formValue(formData, "productId"),
     quantity: formValue(formData, "quantity"),
   });
@@ -59,11 +67,11 @@ export async function addToCartAction(
   });
 
   if (!product) {
-    return { status: "error", message: "That object is no longer available." };
+    return { status: "error", message: t("cart.errors.objectUnavailable") };
   }
 
   if (product.stock <= 0) {
-    return { status: "error", message: "That object is sold out." };
+    return { status: "error", message: t("cart.errors.soldOut") };
   }
 
   const { cartId } = await getOrCreateCartForMutation();
@@ -77,8 +85,8 @@ export async function addToCartAction(
       status: "error",
       message:
         product.stock === 1
-          ? "Only one of that object is available."
-          : `Only ${product.stock} of that object are available.`,
+          ? t("cart.errors.onlyOneAvailable")
+          : t("cart.errors.onlyN", { count: product.stock }),
     };
   }
 
@@ -99,20 +107,21 @@ export async function addToCartAction(
   logger.info("cart.item_added", { productId: product.id, quantity: parsed.data.quantity });
   revalidateCart();
 
-  return { status: "success", message: "Added to your cart." };
+  return { status: "success", message: t("cart.success.added") };
 }
 
 export async function updateCartLineAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const inactive = await rejectInactiveActor();
+  const { t } = await getServerI18n();
+  const inactive = await rejectInactiveActor(t);
 
   if (inactive) {
     return inactive;
   }
 
-  const parsed = cartMutationSchema.safeParse({
+  const parsed = createCartMutationSchema(t).safeParse({
     productId: formValue(formData, "productId"),
     quantity: formValue(formData, "quantity"),
   });
@@ -124,7 +133,7 @@ export async function updateCartLineAction(
   const cart = await findCurrentCart();
 
   if (!cart) {
-    return { status: "error", message: "That object is no longer in your cart." };
+    return { status: "error", message: t("cart.errors.notInCart") };
   }
 
   const database = getDatabase();
@@ -134,7 +143,7 @@ export async function updateCartLineAction(
   });
 
   if (!line) {
-    return { status: "error", message: "That object is no longer in your cart." };
+    return { status: "error", message: t("cart.errors.notInCart") };
   }
 
   if (parsed.data.quantity > line.product.stock) {
@@ -142,8 +151,8 @@ export async function updateCartLineAction(
       status: "error",
       message:
         line.product.stock === 0
-          ? `${line.product.name} is sold out.`
-          : `Only ${line.product.stock} of ${line.product.name} are available.`,
+          ? t("cart.errors.namedSoldOut", { name: line.product.name })
+          : t("cart.errors.namedOnlyN", { count: line.product.stock, name: line.product.name }),
     };
   }
 
@@ -154,15 +163,16 @@ export async function updateCartLineAction(
   await touchCart(cart.id);
 
   revalidateCart();
-  return { status: "success", message: "Quantity updated." };
+  return { status: "success", message: t("cart.quantityUpdated") };
 }
 
 export async function removeCartLineAction(formData: FormData): Promise<void> {
-  if (await rejectInactiveActor()) {
+  const { t } = await getServerI18n();
+  if (await rejectInactiveActor(t)) {
     redirect("/cart?inactive=1");
   }
 
-  const productId = cartProductIdSchema.safeParse(formValue(formData, "productId"));
+  const productId = createCartProductIdSchema(t).safeParse(formValue(formData, "productId"));
 
   if (!productId.success) {
     redirect("/cart");
@@ -182,7 +192,8 @@ export async function removeCartLineAction(formData: FormData): Promise<void> {
 }
 
 export async function clearCartAction(): Promise<void> {
-  if (await rejectInactiveActor()) {
+  const { t } = await getServerI18n();
+  if (await rejectInactiveActor(t)) {
     redirect("/cart?inactive=1");
   }
 

@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
+import { useT } from "@/i18n/client";
 
 export interface PreviewActionProps {
   label: string;
@@ -38,6 +39,7 @@ export function PreviewAction({
   iconOnly = false,
   className,
 }: PreviewActionProps) {
+  const t = useT();
   const Icon = icon === "info" ? Info : ShoppingBag;
 
   return (
@@ -54,7 +56,7 @@ export function PreviewAction({
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <p className="eyebrow text-clay">Preview</p>
+        <p className="eyebrow text-clay">{t("common.preview")}</p>
         <DialogHeader className="mt-3">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -66,11 +68,11 @@ export function PreviewAction({
         ) : null}
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <DialogClose asChild>
-            <Button variant="secondary">Continue browsing</Button>
+            <Button variant="secondary">{t("common.continueBrowsing")}</Button>
           </DialogClose>
           <DialogClose asChild>
             <Button asChild>
-              <Link href="/products">View the catalog</Link>
+              <Link href="/products">{t("common.viewTheCatalog")}</Link>
             </Button>
           </DialogClose>
         </div>

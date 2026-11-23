@@ -10,12 +10,14 @@ import { StudioFeatureCard } from "@/components/storefront/studio-card";
 import { getCatalogStats, listProducts, listVendorSummaries } from "@/features/catalog/queries";
 import { getServerI18n } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Studios",
-  description:
-    "Meet the independent ceramicists, leatherworkers, and weavers behind the SupplyHub preview catalog.",
-  alternates: { canonical: "/vendors" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: t("vendor.metaTitle"),
+    description: t("vendor.metaDescription"),
+    alternates: { canonical: "/vendors" },
+  };
+}
 
 export default function VendorsPage() {
   return (
@@ -86,3 +88,5 @@ async function VendorsContent() {
     </PageShell>
   );
 }
+
+export const instant = false;

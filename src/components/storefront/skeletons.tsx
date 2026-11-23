@@ -1,5 +1,6 @@
 import { PageShell } from "@/components/storefront/page-shell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getServerI18n } from "@/i18n/server";
 
 function ProductCardSkeleton() {
   return (
@@ -23,10 +24,11 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
-export function CatalogPageSkeleton() {
+export async function CatalogPageSkeleton() {
+  const { t } = await getServerI18n();
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading the catalog">
+      <div role="status" aria-label={t("common.loadingCatalog")}>
         <div className="border-b border-border pb-8">
           <Skeleton className="h-3 w-24" />
           <Skeleton className="mt-4 h-12 w-64 max-w-full" />
@@ -41,14 +43,15 @@ export function CatalogPageSkeleton() {
           <ProductGridSkeleton />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </PageShell>
   );
 }
 
-export function HomePageSkeleton() {
+export async function HomePageSkeleton() {
+  const { t } = await getServerI18n();
   return (
-    <div role="status" aria-label="Loading the storefront">
+    <div role="status" aria-label={t("common.loadingStorefront")}>
       <PageShell className="grid gap-10 pt-10 pb-14 sm:pt-14 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-16 lg:pt-20 lg:pb-20">
         <div>
           <Skeleton className="h-3 w-56" />
@@ -63,7 +66,7 @@ export function HomePageSkeleton() {
         </div>
         <Skeleton className="aspect-[4/5] w-full rounded-xl" />
       </PageShell>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
@@ -113,12 +116,13 @@ export function BottomNavSkeleton() {
   );
 }
 
-export function ProductDetailSkeleton() {
+export async function ProductDetailSkeleton() {
+  const { t } = await getServerI18n();
   return (
     <PageShell className="py-8 sm:py-12">
       <div
         role="status"
-        aria-label="Loading this object"
+        aria-label={t("common.loadingObject")}
         className="grid gap-10 lg:grid-cols-2 lg:gap-16"
       >
         <div className="flex flex-col gap-3">
@@ -138,7 +142,7 @@ export function ProductDetailSkeleton() {
           <Skeleton className="mt-8 h-12 w-full max-w-sm" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </PageShell>
   );
 }

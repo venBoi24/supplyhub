@@ -338,7 +338,11 @@ export function CheckoutForm({
                     <span>{quote.name}</span>
                     {quote.available ? (
                       <span className="tabular-nums">
-                        {quote.distanceKm.toFixed(1)} km · {formatMoney(quote.feeCents, currency)}
+                        {t("checkout.distanceAndFee", {
+                          distance: quote.distanceKm.toFixed(1),
+                          unit: t("checkout.kilometre"),
+                          fee: formatMoney(quote.feeCents, currency),
+                        })}
                       </span>
                     ) : (
                       <span className="text-danger">{t("checkout.deliveryUnavailable")}</span>
@@ -378,18 +382,16 @@ export function CheckoutForm({
                 size="sm"
                 onClick={() => setShowDeliveryDialog(false)}
               >
-                Close
+                {t("common.close")}
               </Button>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Pin your location on the map. Seller locations are shown below.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{t("checkout.pinLocation")}</p>
             <div className="mt-6">
               <DeliveryPlanner vendors={vendors} currency={currency} />
             </div>
             {vendors.length > 0 ? (
               <div className="mt-6 rounded-xl border border-border bg-surface p-5">
-                <h4 className="font-medium">Seller locations</h4>
+                <h4 className="font-medium">{t("checkout.sellerLocations")}</h4>
                 <ul className="mt-3 space-y-3 text-sm">
                   {vendors.map((vendor) => (
                     <li key={vendor.id} className="space-y-1">
@@ -405,11 +407,11 @@ export function CheckoutForm({
                             rel="noreferrer"
                             className="text-xs font-medium text-accent underline underline-offset-4"
                           >
-                            View on Google Maps
+                            {t("checkout.viewOnMaps")}
                           </a>
                         </>
                       ) : (
-                        <p className="text-muted-foreground">Location not listed</p>
+                        <p className="text-muted-foreground">{t("checkout.locationNotListed")}</p>
                       )}
                     </li>
                   ))}

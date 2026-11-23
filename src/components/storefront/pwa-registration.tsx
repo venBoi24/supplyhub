@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 
+import { useT } from "@/i18n/client";
+
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
 export function PwaRegistration() {
+  const t = useT();
   const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -39,16 +42,16 @@ export function PwaRegistration() {
 
   return (
     <aside className="fixed right-4 bottom-4 z-50 flex max-w-sm items-center gap-3 rounded-xl border border-border bg-surface p-4 shadow-xl">
-      <p className="text-sm">Install SupplyHub for a quicker return to the marketplace.</p>
+      <p className="text-sm">{t("pwa.installPrompt")}</p>
       <button
         className="shrink-0 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
         onClick={() => void installEvent.prompt().then(() => setInstallEvent(null))}
         type="button"
       >
-        Install
+        {t("pwa.install")}
       </button>
       <button
-        aria-label="Dismiss install suggestion"
+        aria-label={t("pwa.dismiss")}
         className="shrink-0 rounded-md px-2 py-2 text-sm text-muted-foreground"
         onClick={() => {
           window.localStorage.setItem("supplyhub-install-dismissed", "1");
@@ -56,7 +59,7 @@ export function PwaRegistration() {
         }}
         type="button"
       >
-        Dismiss
+        {t("pwa.dismiss")}
       </button>
     </aside>
   );

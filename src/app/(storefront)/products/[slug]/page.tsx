@@ -29,7 +29,7 @@ export async function generateMetadata({
   const product = await getProductBySlug(slug);
 
   if (!product) {
-    return { title: "Object not found" };
+    return { title: (await getServerI18n()).t("product.notFoundTitle") };
   }
 
   return {
@@ -275,3 +275,5 @@ async function ProductDetail({ product }: { product: ProductListing }) {
     </PageShell>
   );
 }
+
+export const instant = false;

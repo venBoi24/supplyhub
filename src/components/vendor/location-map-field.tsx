@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/i18n/client";
 
 export function LocationMapField({
   defaultValue,
@@ -23,6 +24,7 @@ export function LocationMapField({
   defaultLongitude: string;
   errors?: Record<string, string>;
 }) {
+  const t = useT();
   const [city, setCity] = useState(defaultCity || defaultValue);
   const [street, setStreet] = useState(defaultStreet);
   const [address, setAddress] = useState(defaultAddress);
@@ -36,9 +38,7 @@ export function LocationMapField({
 
   function useDeviceLocation() {
     if (!navigator.geolocation) {
-      setLocationMessage(
-        "This browser does not support device location. Enter the address manually.",
-      );
+      setLocationMessage(t("studio.locationUnsupported"));
       return;
     }
 
@@ -49,17 +49,17 @@ export function LocationMapField({
         setLatitude(position.coords.latitude.toFixed(7));
         setLongitude(position.coords.longitude.toFixed(7));
         setLocationMessage(
-          `Location captured (about ${Math.round(position.coords.accuracy)} m accuracy).`,
+          t("studio.locationCaptured", { meters: Math.round(position.coords.accuracy) }),
         );
         setLocating(false);
       },
       (error) => {
         const message =
           error.code === error.PERMISSION_DENIED
-            ? "Location permission was not granted. Enable it in your browser settings or enter the address manually."
+            ? t("studio.locationDenied")
             : error.code === error.TIMEOUT
-              ? "Finding your location timed out. Try again or enter the address manually."
-              : "Your location could not be read. Check device location settings or enter the address manually.";
+              ? t("studio.locationTimeout")
+              : t("studio.locationUnreadable");
         setLocationMessage(message);
         setLocating(false);
       },
@@ -70,7 +70,7 @@ export function LocationMapField({
   function clearCoordinates() {
     setLatitude("");
     setLongitude("");
-    setLocationMessage("Using the address text to preview the map.");
+    setLocationMessage(t("studio.usingAddressText"));
   }
 
   return (
@@ -78,7 +78,7 @@ export function LocationMapField({
       <input type="hidden" name="latitude" value={latitude} />
       <input type="hidden" name="longitude" value={longitude} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="City or town" htmlFor="studio-city" error={errors?.city}>
+        <Field label={t("studio.cityOrTown")} htmlFor="studio-city" error={errors?.city}>
           <Input
             id="studio-city"
             name="city"
@@ -87,10 +87,10 @@ export function LocationMapField({
             required
             minLength={2}
             maxLength={80}
-            placeholder="Dar es Salaam"
+            placeholder={t("studio.cityPlaceholder")}
           />
         </Field>
-        <Field label="Street" htmlFor="studio-street" error={errors?.street}>
+        <Field label={t("studio.street")} htmlFor="studio-street" error={errors?.street}>
           <Input
             id="studio-street"
             name="street"
@@ -99,14 +99,14 @@ export function LocationMapField({
             required
             minLength={2}
             maxLength={120}
-            placeholder="Samora Avenue"
+            placeholder={t("studio.streetPlaceholder")}
           />
         </Field>
       </div>
       <Field
-        label="Street address, building, or plot"
+        label={t("studio.streetAddressLabel")}
         htmlFor="studio-address"
-        hint="Add the building or house number and any detail that helps customers find the studio."
+        hint={t("studio.addressHint")}
         error={errors?.address}
       >
         <Input
@@ -117,7 +117,7 @@ export function LocationMapField({
           required
           minLength={2}
           maxLength={160}
-          placeholder="Plot 12, Mlimani Tower, 3rd floor"
+          placeholder={t("studio.addressPlaceholder")}
         />
       </Field>
       <div className="flex flex-wrap items-center gap-3">
@@ -128,20 +128,20 @@ export function LocationMapField({
           onClick={useDeviceLocation}
           disabled={locating}
         >
-          {locating ? "Finding location…" : "Use my current location"}
+          {locating ? t("studio.findingLocation") : t("studio.useMyLocation")}
         </Button>
         <p aria-live="polite" className="text-xs text-muted-foreground">
-          {locationMessage || "Optional: allow location access to place a more accurate map pin."}
+          {locationMessage || t("studio.locationOptionalHint")}
         </p>
         {coordinates ? (
           <Button type="button" variant="ghost" size="sm" onClick={clearCoordinates}>
-            Clear map pin
+            {t("studio.clearMapPin")}
           </Button>
         ) : null}
       </div>
       <iframe
         key={mapUrl}
-        title={query ? `Google Maps preview of ${query}` : "Google Maps location preview"}
+        title={query ? t("studio.mapsPreviewOf", { query }) : t("studio.mapsPreviewGeneric")}
         src={mapUrl}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
@@ -154,7 +154,7 @@ export function LocationMapField({
           rel="noreferrer"
           className="text-xs font-medium text-accent underline underline-offset-4"
         >
-          Check this location in Google Maps
+          {t("studio.checkInGoogleMaps")}
         </a>
       ) : null}
     </div>

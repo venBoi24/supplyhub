@@ -13,8 +13,8 @@ import { refreshPaymentAction, startPaymentAction } from "@/features/payments/ac
 import { PAYMENT_METHOD_OPTIONS } from "@/features/payments/methods";
 import { initialPaymentActionState, type PaymentActionState } from "@/features/payments/state";
 import type { CustomerPaymentView } from "@/features/payments/queries";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
-import { formatDateTime } from "@/lib/utils/format-date";
 
 const POLL_INTERVAL_MS = 4_000;
 const MAX_POLLS = 30;
@@ -41,6 +41,7 @@ export function PaymentPanel({
   paymentReturned,
 }: PaymentPanelProps) {
   const router = useRouter();
+  const { t, formatDate } = useI18n();
   const [state, formAction] = useActionState(startPaymentAction, initialPaymentActionState);
   const [method, setMethod] = useState<"mpesa" | "tigopesa" | "airtel" | "halopesa" | "card">(
     "mpesa",
@@ -119,17 +120,17 @@ export function PaymentPanel({
     >
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border px-6 py-5 sm:px-8">
         <div>
-          <p className="eyebrow text-muted-foreground">Payment</p>
+          <p className="eyebrow text-muted-foreground">{t("payments.eyebrow")}</p>
           <h2
             id="payment-heading"
             className="mt-2 font-display text-2xl font-medium tracking-[-0.03em]"
           >
-            Settle this order
+            {t("payments.settleOrder")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {reservationExpiresAt
-              ? `Stock is reserved until ${formatDateTime(reservationExpiresAt)}.`
-              : "Pay securely through LynxPay."}
+              ? t("payments.reservedUntil", { date: formatDate(reservationExpiresAt) })
+              : t("payments.payViaProvider")}
           </p>
         </div>
         <p className="font-display text-3xl font-medium tracking-[-0.02em] tabular-nums">
@@ -144,7 +145,7 @@ export function PaymentPanel({
               <input type="hidden" name="orderNumber" value={orderNumber} />
 
               <fieldset className="space-y-3">
-                <legend className="text-sm font-medium">How would you like to pay?</legend>
+                <legend className="text-sm font-medium">{t("payments.howToPay")}</legend>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {PAYMENT_METHOD_OPTIONS.map((option) => {
                     const selected = method === option.value;
@@ -178,7 +179,7 @@ export function PaymentPanel({
                         <span className="min-w-0">
                           <span className="block font-medium text-foreground">{option.label}</span>
                           <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-                            {option.description}
+                            {t(`payments.method.${option.value}`)}
                           </span>
                         </span>
                       </label>
@@ -188,15 +189,12 @@ export function PaymentPanel({
               </fieldset>
 
               {isCard ? (
-                <Notice tone="info">
-                  You will leave SupplyHub for LynxPay&apos;s secure card page. SupplyHub never sees
-                  your card details.
-                </Notice>
+                <Notice tone="info">{t("payments.cardLeaveNotice")}</Notice>
               ) : (
                 <Field
-                  label="Mobile money number"
+                  label={t("checkout.phone")}
                   htmlFor="payment-phone"
-                  hint="Tanzania"
+                  hint={t("payments.hintTanzania")}
                   error={errors.phone}
                 >
                   <Input
@@ -219,15 +217,15 @@ export function PaymentPanel({
 
               <div className="flex flex-wrap items-center gap-3">
                 <SubmitButton
-                  pendingLabel="Contacting LynxPay…"
+                  pendingLabel={t("payments.pendingContacting")}
                   size="lg"
                   className="w-auto min-w-44"
                 >
-                  {isCard ? "Continue to card page" : "Send payment prompt"}
+                  {isCard ? t("payments.continueCard") : t("payments.sendPrompt")}
                 </SubmitButton>
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Lock className="size-3.5" aria-hidden="true" />
-                  LynxPay&apos;s collection fee is added to your total.
+                  {t("payments.collectionFeeNote")}
                 </p>
               </div>
             </form>
@@ -245,32 +243,26 @@ export function PaymentPanel({
 
           {!showForm && latestPayment?.status === "SUCCEEDED" ? (
             <p className="text-sm leading-6 text-muted-foreground">
-              This payment is complete. The order and its studios have been marked paid.
+              {t("payments.paymentCompleteBody")}
             </p>
           ) : null}
 
           {!canPay && latestPayment?.status !== "SUCCEEDED" ? (
-            <Notice tone="warning">
-              Payment cannot be started for this order. Its reservation may have expired, or the
-              order is no longer awaiting payment.
-            </Notice>
+            <Notice tone="warning">{t("payments.cannotStartNotice")}</Notice>
           ) : null}
         </div>
 
         <aside className="space-y-4 rounded-lg border border-border bg-surface-muted/60 p-4">
           <p className="eyebrow text-muted-foreground">LynxPay</p>
-          <p className="text-sm leading-6 text-muted-foreground">
-            Mobile money prompts are approved with your PIN. Card payments use LynxPay&apos;s secure
-            hosted page.
-          </p>
+          <p className="text-sm leading-6 text-muted-foreground">{t("payments.providerSidebar")}</p>
           <dl className="space-y-2 border-t border-border pt-3 text-xs">
             <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-muted-foreground">Merchant total</dt>
+              <dt className="text-muted-foreground">{t("payments.merchantTotal")}</dt>
               <dd className="tabular-nums">{formatMoney(totalCents, currency)}</dd>
             </div>
             <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-muted-foreground">Confirmed by</dt>
-              <dd>Verified LynxPay event</dd>
+              <dt className="text-muted-foreground">{t("payments.confirmedBy")}</dt>
+              <dd>{t("payments.verifiedEvent")}</dd>
             </div>
           </dl>
           {cardCheckout && latestPayment?.checkoutUrl ? (
@@ -278,12 +270,11 @@ export function PaymentPanel({
               href={latestPayment.checkoutUrl}
               className="inline-flex text-sm font-medium text-accent underline underline-offset-4"
             >
-              Continue card payment
+              {t("payments.continueCardPayment")}
             </a>
           ) : null}
           <p className="text-[0.6875rem] leading-5 text-muted-foreground">
-            SupplyHub marks an order paid only after LynxPay confirms the exact amount. Returning
-            from the card page is not enough.
+            {t("payments.exactAmountNote")}
           </p>
         </aside>
       </div>

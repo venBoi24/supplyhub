@@ -13,6 +13,7 @@ import {
 } from "@/components/vendors/vendor-department-picker";
 import { updateStudioProfileAction } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function StudioProfileForm({
   defaults,
@@ -33,6 +34,7 @@ export function StudioProfileForm({
     monogram: string;
   };
 }) {
+  const t = useT();
   const [state, action] = useActionState(updateStudioProfileAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -42,9 +44,9 @@ export function StudioProfileForm({
 
       <div className="grid gap-5 sm:grid-cols-[1fr_7rem]">
         <Field
-          label="Monogram"
+          label={t("studio.monogram")}
           htmlFor="studio-monogram"
-          hint="Up to 3 letters"
+          hint={t("studio.monogramHint")}
           error={errors?.monogram}
         >
           <Input
@@ -77,9 +79,9 @@ export function StudioProfileForm({
       />
 
       <Field
-        label="Public contact phone"
+        label={t("studio.publicContactPhone")}
         htmlFor="studio-contact-phone"
-        hint="Customers will use this to contact your studio. Include your country code."
+        hint={t("studio.contactPhoneHint")}
         error={errors?.contactPhone}
       >
         <Input
@@ -96,23 +98,23 @@ export function StudioProfileForm({
         />
       </Field>
 
-      <Field label="Discipline" htmlFor="studio-discipline" error={errors?.discipline}>
+      <Field label={t("studio.discipline")} htmlFor="studio-discipline" error={errors?.discipline}>
         <Input
           id="studio-discipline"
           name="discipline"
           defaultValue={defaults.discipline}
           required
           maxLength={60}
-          placeholder="Ceramics"
+          placeholder={t("studio.disciplinePlaceholder")}
           aria-invalid={errors?.discipline ? true : undefined}
           aria-describedby={errors?.discipline ? "studio-discipline-error" : undefined}
         />
       </Field>
 
       <Field
-        label="Studio story"
+        label={t("studio.story")}
         htmlFor="studio-story"
-        hint="20–1000 characters"
+        hint={t("studio.storyRange")}
         error={errors?.story}
       >
         <Textarea
@@ -127,8 +129,8 @@ export function StudioProfileForm({
         />
       </Field>
 
-      <SubmitButton pendingLabel="Saving…" className="w-auto">
-        Save studio profile
+      <SubmitButton pendingLabel={t("common.saving")} className="w-auto">
+        {t("studio.saveProfile")}
       </SubmitButton>
     </form>
   );

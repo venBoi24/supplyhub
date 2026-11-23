@@ -16,15 +16,17 @@ import {
   listProductPage,
 } from "@/features/catalog/queries";
 import { parseCatalogQuery } from "@/features/catalog/search-params";
+import { getServerI18n } from "@/i18n/server";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/categories/[slug]">): Promise<Metadata> {
+  const { t } = await getServerI18n();
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
 
   if (!category) {
-    return { title: "Department not found" };
+    return { title: t("products.departmentNotFoundTitle") };
   }
 
   return {
@@ -50,7 +52,7 @@ async function CategoryContent({
   searchParams: PageProps<"/categories/[slug]">["searchParams"];
 }) {
   const { slug } = await params;
-  const category = await getCategoryBySlug(slug);
+  const [{ t }, category] = await Promise.all([getServerI18n(), getCategoryBySlug(slug)]);
 
   if (!category) {
     notFound();
@@ -82,19 +84,22 @@ async function CategoryContent({
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"
           />
           <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
-            <p className="eyebrow text-white/70">Department</p>
+            <p className="eyebrow text-white/70">{t("products.department")}</p>
             <h1 className="mt-2 font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
               {category.name}
             </h1>
           </div>
         </div>
       ) : null}
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs">
+      <nav
+        aria-label={t("common.breadcrumb")}
+        className="flex flex-wrap items-center gap-2 text-xs"
+      >
         <Link
           href="/products"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
-          All objects
+          {t("footer.allObjects")}
         </Link>
         <span aria-hidden="true" className="text-border-strong">
           /
@@ -107,7 +112,11 @@ async function CategoryContent({
       <div className="mt-6 flex flex-col gap-8 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
           <p className="eyebrow text-muted-foreground">
-            Department · {category.productCount} {category.productCount === 1 ? "piece" : "pieces"}
+            {t("products.departmentCount", {
+              department: t("products.department"),
+              count: category.productCount,
+              pieces: category.productCount === 1 ? t("common.piece") : t("common.pieces"),
+            })}
           </p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] sm:text-5xl">
             {category.name}
@@ -120,9 +129,9 @@ async function CategoryContent({
           </p>
         </div>
 
-        <nav aria-label="Departments" className="flex flex-wrap gap-2">
+        <nav aria-label={t("nav.departments")} className="flex flex-wrap gap-2">
           <FilterChip href="/products" active={false}>
-            All objects
+            {t("footer.allObjects")}
           </FilterChip>
           {categories.map((item) => (
             <FilterChip
@@ -138,7 +147,10 @@ async function CategoryContent({
 
       <div className="flex flex-wrap items-center justify-between gap-3 py-4">
         <p className="text-xs text-muted-foreground">
-          {results.total} {results.total === 1 ? "object" : "objects"}
+          {t("products.objectCount", {
+            count: results.total,
+            objects: results.total === 1 ? t("nav.object") : t("nav.objects"),
+          })}
         </p>
         <SortLinks pathname={`/categories/${category.slug}`} query={{ ...query, page: 1 }} />
       </div>
@@ -155,3 +167,5 @@ async function CategoryContent({
     </PageShell>
   );
 }
+
+export const instant = false;

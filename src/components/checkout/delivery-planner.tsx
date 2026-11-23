@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/features/catalog/money";
+import { useT } from "@/i18n/client";
 
 import type { CheckoutVendor } from "./checkout-form";
 
@@ -37,6 +38,7 @@ export function DeliveryPlanner({
   vendors: CheckoutVendor[];
   currency: string;
 }) {
+  const t = useT();
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(() => {
     if (typeof window === "undefined") {
       return null;
@@ -66,7 +68,7 @@ export function DeliveryPlanner({
 
   function requestLocation() {
     if (!navigator.geolocation) {
-      setLocationError("This browser does not support location access.");
+      setLocationError(t("checkout.locationUnsupported"));
       return;
     }
 
@@ -81,7 +83,7 @@ export function DeliveryPlanner({
         setRequesting(false);
       },
       () => {
-        setLocationError("Location access was denied or unavailable.");
+        setLocationError(t("checkout.locationDenied"));
         setRequesting(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
@@ -122,16 +124,16 @@ export function DeliveryPlanner({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <Button type="button" onClick={requestLocation} disabled={requesting}>
-          {requesting ? "Finding location…" : "Use my location"}
+          {requesting ? t("checkout.findingLocation") : t("checkout.useMyLocation")}
         </Button>
         {location ? (
           <p className="text-sm text-muted-foreground">
-            Pinned location: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+            {t("checkout.pinnedLocation", {
+              coordinates: `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`,
+            })}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Allow location access to pin your delivery address on the map.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("checkout.allowLocation")}</p>
         )}
       </div>
 
@@ -139,7 +141,7 @@ export function DeliveryPlanner({
 
       <iframe
         key={mapQuery}
-        title="Google Maps delivery location"
+        title={t("checkout.mapTitle")}
         src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
@@ -148,40 +150,48 @@ export function DeliveryPlanner({
 
       {quotes.length > 0 ? (
         <div className="rounded-xl border border-border bg-surface p-5">
-          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Delivery quote</h2>
+          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+            {t("checkout.deliveryQuote")}
+          </h2>
           <ul className="mt-4 space-y-3 text-sm">
             {quotes.map((quote) => (
               <li key={quote.id} className="flex items-baseline justify-between gap-3">
                 <span>{quote.name}</span>
                 {quote.available ? (
                   <span className="tabular-nums">
-                    {quote.distanceKm.toFixed(1)} km · {formatMoney(quote.feeCents, currency)}
+                    {t("checkout.distanceAndFee", {
+                      distance: quote.distanceKm.toFixed(1),
+                      unit: t("checkout.kilometre"),
+                      fee: formatMoney(quote.feeCents, currency),
+                    })}
                   </span>
                 ) : (
-                  <span className="text-danger">Delivery unavailable</span>
+                  <span className="text-danger">{t("checkout.deliveryUnavailable")}</span>
                 )}
               </li>
             ))}
           </ul>
           <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4 font-medium">
-            <span>Total delivery</span>
+            <span>{t("checkout.totalDelivery")}</span>
             <span className="tabular-nums">
-              {totalDistance.toFixed(1)} km · {formatMoney(totalFee, currency)}
+              {t("checkout.distanceAndFee", {
+                distance: totalDistance.toFixed(1),
+                unit: t("checkout.kilometre"),
+                fee: formatMoney(totalFee, currency),
+              })}
             </span>
           </div>
         </div>
       ) : location ? (
-        <p className="text-sm text-muted-foreground">
-          Add items to your cart to see per-studio delivery distances and prices.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("checkout.addItemForQuote")}</p>
       ) : null}
 
       <div className="flex flex-wrap gap-3">
         <Button asChild>
-          <a href="/checkout">Continue to checkout</a>
+          <a href="/checkout">{t("common.continueCheckout")}</a>
         </Button>
         <Button asChild variant="secondary">
-          <a href="/cart">Review cart</a>
+          <a href="/cart">{t("checkout.reviewCart")}</a>
         </Button>
       </div>
     </div>

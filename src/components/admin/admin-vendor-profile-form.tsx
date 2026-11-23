@@ -13,6 +13,7 @@ import {
 } from "@/components/vendors/vendor-department-picker";
 import { updateVendorProfileForUserAction } from "@/features/admin/vendor-management-actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function AdminVendorProfileForm({
   user,
@@ -36,6 +37,7 @@ export function AdminVendorProfileForm({
     monogram: string;
   };
 }) {
+  const t = useT();
   const [state, action] = useActionState(updateVendorProfileForUserAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -44,7 +46,7 @@ export function AdminVendorProfileForm({
       <input type="hidden" name="userId" value={user.id} />
       <input type="hidden" name="vendorId" value={vendor.id} />
       <FormMessage state={state} />
-      <Field label="Username" htmlFor="managed-username">
+      <Field label={t("admin.fieldUsername")} htmlFor="managed-username">
         <Input
           id="managed-username"
           name="name"
@@ -63,14 +65,18 @@ export function AdminVendorProfileForm({
         defaultLongitude={vendor.longitude}
         errors={errors}
       />
-      <Field label="What they sell" htmlFor="managed-discipline" error={errors?.discipline}>
+      <Field
+        label={t("admin.whatTheySell")}
+        htmlFor="managed-discipline"
+        error={errors?.discipline}
+      >
         <Input
           id="managed-discipline"
           name="discipline"
           defaultValue={vendor.discipline}
           required
           maxLength={60}
-          placeholder="Ceramics, clothing, food…"
+          placeholder={t("admin.whatTheySellPlaceholder")}
         />
       </Field>
       <VendorDepartmentPicker
@@ -79,7 +85,7 @@ export function AdminVendorProfileForm({
         error={errors?.departmentIds}
       />
       <Field
-        label="Public contact phone"
+        label={t("admin.publicContactPhone")}
         htmlFor="managed-contact-phone"
         error={errors?.contactPhone}
       >
@@ -95,9 +101,9 @@ export function AdminVendorProfileForm({
       </Field>
       <div className="grid gap-5 sm:grid-cols-[7rem_1fr]">
         <Field
-          label="Monogram"
+          label={t("admin.monogram")}
           htmlFor="managed-monogram"
-          hint="Up to 3 letters"
+          hint={t("admin.monogramHint")}
           error={errors?.monogram}
         >
           <Input
@@ -107,7 +113,7 @@ export function AdminVendorProfileForm({
             maxLength={3}
           />
         </Field>
-        <Field label="Store story" htmlFor="managed-story" error={errors?.story}>
+        <Field label={t("admin.storeStory")} htmlFor="managed-story" error={errors?.story}>
           <Textarea
             id="managed-story"
             name="story"
@@ -119,8 +125,8 @@ export function AdminVendorProfileForm({
           />
         </Field>
       </div>
-      <SubmitButton pendingLabel="Saving…" className="w-auto">
-        Save profile and location
+      <SubmitButton pendingLabel={t("common.saving")} className="w-auto">
+        {t("admin.saveProfileAndLocation")}
       </SubmitButton>
     </form>
   );

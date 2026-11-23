@@ -8,6 +8,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { saveCategoryAction } from "@/features/catalog/admin-actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function CategoryForm({
   category,
@@ -20,6 +21,7 @@ export function CategoryForm({
     description: string;
   };
 }) {
+  const t = useT();
   const [state, action] = useActionState(saveCategoryAction, initialFormState);
   const errors = state.fieldErrors;
   const editing = Boolean(category?.id);
@@ -30,23 +32,23 @@ export function CategoryForm({
       {category?.id ? <input type="hidden" name="categoryId" value={category.id} /> : null}
       <FormMessage state={state} />
 
-      <Field label="Name" htmlFor={`${prefix}-category-name`} error={errors?.name}>
+      <Field label={t("auth.name")} htmlFor={`${prefix}-category-name`} error={errors?.name}>
         <Input
           id={`${prefix}-category-name`}
           name="name"
           defaultValue={category?.name}
           required
           maxLength={60}
-          placeholder="Ceramics"
+          placeholder={t("admin.categoryNamePlaceholder")}
           aria-invalid={errors?.name ? true : undefined}
           aria-describedby={errors?.name ? `${prefix}-category-name-error` : undefined}
         />
       </Field>
 
       <Field
-        label="Handle"
+        label={t("studio.handle")}
         htmlFor={`${prefix}-category-slug`}
-        hint="Public web address"
+        hint={t("admin.publicWebAddress")}
         error={errors?.slug}
       >
         <Input
@@ -55,16 +57,16 @@ export function CategoryForm({
           defaultValue={category?.slug}
           required
           spellCheck={false}
-          placeholder="ceramics"
+          placeholder={t("admin.categoryHandlePlaceholder")}
           aria-invalid={errors?.slug ? true : undefined}
           aria-describedby={errors?.slug ? `${prefix}-category-slug-error` : undefined}
         />
       </Field>
 
       <Field
-        label="Headline"
+        label={t("admin.fieldHeadline")}
         htmlFor={`${prefix}-category-headline`}
-        hint="Optional"
+        hint={t("common.optional")}
         error={errors?.headline}
       >
         <Input
@@ -72,16 +74,16 @@ export function CategoryForm({
           name="headline"
           defaultValue={category?.headline}
           maxLength={120}
-          placeholder="Vessels for the daily ritual"
+          placeholder={t("admin.categoryHeadlinePlaceholder")}
           aria-invalid={errors?.headline ? true : undefined}
           aria-describedby={errors?.headline ? `${prefix}-category-headline-error` : undefined}
         />
       </Field>
 
       <Field
-        label="Description"
+        label={t("product.description")}
         htmlFor={`${prefix}-category-description`}
-        hint="Optional"
+        hint={t("common.optional")}
         error={errors?.description}
       >
         <Textarea
@@ -97,8 +99,8 @@ export function CategoryForm({
         />
       </Field>
 
-      <SubmitButton pendingLabel="Saving…" className="w-auto">
-        {editing ? "Save department" : "Create department"}
+      <SubmitButton pendingLabel={t("common.saving")} className="w-auto">
+        {editing ? t("admin.saveDepartment") : t("admin.createDepartment")}
       </SubmitButton>
     </form>
   );

@@ -9,20 +9,30 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { parseEnumParam, parseSearchTerm, searchParamValue } from "@/features/admin/filters";
 import { listAdminOrders } from "@/features/admin/queries";
-import { ORDER_STATUS_LABELS } from "@/features/checkout/status";
+import { ORDER_STATUS_LABELS, ORDER_STATUS_LABEL_KEYS } from "@/features/checkout/status";
 import { decimalToCents, formatMoney } from "@/features/catalog/money";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { pageCount, parsePage } from "@/lib/utils/pagination";
-import { formatDate } from "@/lib/utils/format-date";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
-export const metadata: Metadata = { title: "Orders", robots: { index: false, follow: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("admin.orders"),
+    description: t("admin.ordersMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const statuses = Object.keys(ORDER_STATUS_LABELS) as OrderStatus[];
 
-export default function AdminOrdersPage({ searchParams }: PageProps<"/admin/orders">) {
+export default async function AdminOrdersPage({ searchParams }: PageProps<"/admin/orders">) {
+  const { t } = await getServerI18n();
+
   return (
-    <Suspense fallback={<PageShell className="pt-12">Loading orders…</PageShell>}>
+    <Suspense fallback={<PageShell className="pt-12">{t("admin.loadingOrders")}</PageShell>}>
       <OrdersContent searchParams={searchParams} />
     </Suspense>
   );
@@ -33,6 +43,7 @@ async function OrdersContent({
 }: {
   searchParams: PageProps<"/admin/orders">["searchParams"];
 }) {
+  const { t, formatDate, formatNumber } = await getServerI18n();
   await requireAdmin();
   const params = await searchParams;
   const status = parseEnumParam(params.status, statuses);
@@ -44,20 +55,21 @@ async function OrdersContent({
 
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <p className="eyebrow text-muted-foreground">Administration</p>
+      <p className="eyebrow text-muted-foreground">{t("admin.nav")}</p>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl font-medium tracking-[-0.04em]">Orders.</h1>
+          <h1 className="font-display text-4xl font-medium tracking-[-0.04em]">
+            {t("admin.ordersTitle")}
+          </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            {total.toLocaleString()} matching orders · customer and vendor status are shown
-            separately.
+            {t("admin.ordersIntro", { count: formatNumber(total) })}
           </p>
         </div>
         <Button asChild variant="secondary" size="sm">
           <Link
             href={`/api/admin/orders/export?${new URLSearchParams({ ...(status ? { status } : {}), ...(search ? { q: search } : {}) }).toString()}`}
           >
-            Export latest 1,000 matches
+            {t("admin.exportMatches")}
           </Link>
         </Button>
       </div>
@@ -66,22 +78,22 @@ async function OrdersContent({
         className="mt-7 grid gap-3 rounded-xl border border-border bg-surface p-4 md:grid-cols-[minmax(0,1fr)_14rem_auto] md:items-end"
       >
         <label className="grid gap-2 text-sm">
-          Order number, customer, or email
+          {t("admin.ordersSearchLabel")}
           <Input name="q" defaultValue={search} maxLength={80} />
         </label>
         <label className="grid gap-2 text-sm">
-          Order status
+          {t("admin.orderStatusLabel")}
           <Select name="status" defaultValue={status ?? ""}>
-            <option value="">All statuses</option>
+            <option value="">{t("admin.allStatuses")}</option>
             {statuses.map((value) => (
               <option key={value} value={value}>
-                {ORDER_STATUS_LABELS[value]}
+                {t(ORDER_STATUS_LABEL_KEYS[value])}
               </option>
             ))}
           </Select>
         </label>
         <Button type="submit" size="sm">
-          Filter
+          {t("common.filter")}
         </Button>
       </form>
       <ul className="mt-6 space-y-3">
@@ -99,7 +111,7 @@ async function OrdersContent({
                   {formatMoney(decimalToCents(order.total), order.currency)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {ORDER_STATUS_LABELS[order.status]} · {formatDate(order.placedAt)}
+                  {t(ORDER_STATUS_LABEL_KEYS[order.status])} · {formatDate(order.placedAt)}
                 </p>
               </div>
             </div>
@@ -109,7 +121,7 @@ async function OrdersContent({
                   key={`${order.id}-${index}`}
                   className="rounded-full bg-surface-muted px-3 py-1 text-xs"
                 >
-                  {vendor.vendor.name}: {ORDER_STATUS_LABELS[vendor.status]}
+                  {vendor.vendor.name}: {t(ORDER_STATUS_LABEL_KEYS[vendor.status])}
                 </span>
               ))}
             </div>
@@ -118,7 +130,7 @@ async function OrdersContent({
       </ul>
       {orders.length === 0 ? (
         <p className="mt-6 rounded-xl border border-border bg-surface p-8 text-center text-sm text-muted-foreground">
-          No orders match these filters.
+          {t("admin.ordersEmpty")}
         </p>
       ) : null}
       <PagedNav
@@ -126,7 +138,10 @@ async function OrdersContent({
         params={filterParams}
         page={currentPage}
         pageCount={pages}
+        label={t("common.pagination")}
       />
     </PageShell>
   );
 }
+
+export const instant = false;

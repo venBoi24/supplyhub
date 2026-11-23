@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
+import { getServerI18n } from "@/i18n/server";
 import { logger } from "@/lib/logging/logger";
 import { recordAuditEvent } from "@/server/audit/audit-log";
 import { canManageCategories, canModerateCatalog } from "@/server/auth/policies";
@@ -13,7 +14,11 @@ import { getDatabase } from "@/server/db/client";
 
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
 
-import { categoryInputSchema, productFeatureSchema, productModerationSchema } from "./validation";
+import {
+  createCategoryInputSchema,
+  createProductFeatureSchema,
+  createProductModerationSchema,
+} from "./validation";
 
 const uuidSchema = z.uuid();
 
@@ -48,8 +53,9 @@ export async function moderateProductAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await requireAdmin("/admin/products");
+  const { t } = await getServerI18n();
 
-  const parsed = productModerationSchema.safeParse({
+  const parsed = createProductModerationSchema(t).safeParse({
     productId: formValue(formData, "productId"),
     decision: formValue(formData, "decision"),
     note: formValue(formData, "note"),
@@ -71,11 +77,11 @@ export async function moderateProductAction(
   });
 
   if (!product) {
-    return { status: "error", message: "That object no longer exists." };
+    return { status: "error", message: t("admin.errors.objectGone") };
   }
 
   if (product.status !== "PENDING_REVIEW") {
-    return { status: "error", message: "That object is not waiting for review." };
+    return { status: "error", message: t("admin.errors.notPendingReview") };
   }
 
   const approving = parsed.data.decision === "approve";
@@ -83,12 +89,12 @@ export async function moderateProductAction(
   if (approving && product.category.status !== "ACTIVE") {
     return {
       status: "error",
-      message: "The department is archived. Restore it before publishing this object.",
+      message: t("admin.errors.departmentArchived"),
     };
   }
 
   if (approving && product._count.images === 0) {
-    return { status: "error", message: "Publish needs at least one approved image." };
+    return { status: "error", message: t("admin.errors.approvedImageRequired") };
   }
 
   const nextStatus = approving ? "PUBLISHED" : "REJECTED";
@@ -133,7 +139,7 @@ export async function moderateProductAction(
   if (!reviewed) {
     return {
       status: "error",
-      message: "Another administrator reviewed that object first. Reload to see the result.",
+      message: t("admin.errors.reviewedByOtherAdmin"),
     };
   }
 
@@ -151,8 +157,9 @@ export async function featureProductAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await requireAdmin("/admin/products");
+  const { t } = await getServerI18n();
 
-  const parsed = productFeatureSchema.safeParse({
+  const parsed = createProductFeatureSchema(t).safeParse({
     productId: formValue(formData, "productId"),
     featured: formValue(formData, "featured"),
   });
@@ -169,11 +176,11 @@ export async function featureProductAction(
   });
 
   if (!product) {
-    return { status: "error", message: "That object no longer exists." };
+    return { status: "error", message: t("admin.errors.objectGone") };
   }
 
   if (featured && product.status !== "PUBLISHED") {
-    return { status: "error", message: "Only published objects can be featured." };
+    return { status: "error", message: t("admin.errors.featurePublishedOnly") };
   }
 
   const updated = await database.product.updateMany({
@@ -182,7 +189,7 @@ export async function featureProductAction(
   });
 
   if (updated.count !== 1) {
-    return { status: "error", message: "That object changed while you were editing. Reload." };
+    return { status: "error", message: t("admin.errors.objectChanged") };
   }
 
   await database.$transaction((transaction) =>
@@ -205,19 +212,20 @@ export async function saveCategoryAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await requireAdmin("/admin/categories");
+  const { t } = await getServerI18n();
 
   if (!canManageCategories(actor)) {
-    return { status: "error", message: "You are not allowed to manage departments." };
+    return { status: "error", message: t("admin.errors.departmentsForbidden") };
   }
 
   const rawCategoryId = formValue(formData, "categoryId");
   const categoryId = rawCategoryId ? asUuid(rawCategoryId) : null;
 
   if (rawCategoryId && !categoryId) {
-    return { status: "error", message: "That department reference is invalid." };
+    return { status: "error", message: t("validation.departmentReferenceInvalid") };
   }
 
-  const parsed = categoryInputSchema.safeParse({
+  const parsed = createCategoryInputSchema(t).safeParse({
     name: formValue(formData, "name"),
     slug: formValue(formData, "slug"),
     headline: formValue(formData, "headline"),
@@ -266,11 +274,11 @@ export async function saveCategoryAction(
     });
 
     if (!existing) {
-      return { status: "error", message: "That department no longer exists." };
+      return { status: "error", message: t("admin.errors.departmentGone") };
     }
 
     if (existing.status === "ARCHIVED") {
-      return { status: "error", message: "Archived departments cannot be edited." };
+      return { status: "error", message: t("admin.errors.departmentArchivedReadOnly") };
     }
 
     await database.$transaction(async (transaction) => {
@@ -295,7 +303,7 @@ export async function saveCategoryAction(
     if (isUniqueConstraintError(error)) {
       return {
         status: "error",
-        fieldErrors: { slug: "That handle is already in use. Choose another one." },
+        fieldErrors: { slug: t("studio.errors.slugTaken") },
       };
     }
 
@@ -308,15 +316,16 @@ export async function archiveCategoryAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await requireAdmin("/admin/categories");
+  const { t } = await getServerI18n();
 
   if (!canManageCategories(actor)) {
-    return { status: "error", message: "You are not allowed to manage departments." };
+    return { status: "error", message: t("admin.errors.departmentsForbidden") };
   }
 
   const categoryId = asUuid(formValue(formData, "categoryId"));
 
   if (!categoryId) {
-    return { status: "error", message: "That department reference is invalid." };
+    return { status: "error", message: t("validation.departmentReferenceInvalid") };
   }
 
   const database = getDatabase();
@@ -330,17 +339,17 @@ export async function archiveCategoryAction(
   });
 
   if (!category) {
-    return { status: "error", message: "That department no longer exists." };
+    return { status: "error", message: t("admin.errors.departmentGone") };
   }
 
   if (category.status === "ARCHIVED") {
-    return { status: "success", message: "This department is already archived." };
+    return { status: "success", message: t("admin.success.departmentAlreadyArchived") };
   }
 
   if (category._count.products > 0) {
     return {
       status: "error",
-      message: "Move published objects out of this department before archiving it.",
+      message: t("admin.errors.movePublishedFirst"),
     };
   }
 
@@ -350,7 +359,7 @@ export async function archiveCategoryAction(
   });
 
   if (updated.count !== 1) {
-    return { status: "error", message: "That department already changed. Reload and retry." };
+    return { status: "error", message: t("admin.errors.departmentChanged") };
   }
 
   await database.$transaction((transaction) =>

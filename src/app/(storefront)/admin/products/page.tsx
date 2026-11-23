@@ -16,36 +16,38 @@ import { ProductStatusBadge } from "@/components/vendor/product-status-badge";
 import { getAdminProductCounts, listAdminProducts } from "@/features/catalog/admin-queries";
 import { formatMoney } from "@/features/catalog/money";
 import type { ProductStatus } from "@/generated/prisma/enums";
-import { formatDate } from "@/lib/utils/format-date";
 import { pageCount, parsePage } from "@/lib/utils/pagination";
-import { paginationHref, parseSearchTerm } from "@/features/admin/filters";
+import { paginationHref, parseSearchTerm, searchParamValue } from "@/features/admin/filters";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
-export const metadata: Metadata = {
-  title: "Catalog moderation",
-  description: "Review, publish, and feature objects submitted by studios.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
 
-const statuses: Array<{ value: ProductStatus; label: string }> = [
-  { value: "PENDING_REVIEW", label: "In review" },
-  { value: "PUBLISHED", label: "Published" },
-  { value: "DRAFT", label: "Drafts" },
-  { value: "REJECTED", label: "Returned" },
-  { value: "ARCHIVED", label: "Archived" },
-];
-
-function searchParamValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
+  return {
+    title: t("admin.productsMetaTitle"),
+    description: t("admin.productsMetaDescription"),
+    robots: { index: false, follow: false },
+  };
 }
+
+const statuses: Array<{ value: ProductStatus; labelKey: string }> = [
+  { value: "PENDING_REVIEW", labelKey: "studio.status.inReview" },
+  { value: "PUBLISHED", labelKey: "studio.status.published" },
+  { value: "DRAFT", labelKey: "admin.filter.drafts" },
+  { value: "REJECTED", labelKey: "admin.filter.returned" },
+  { value: "ARCHIVED", labelKey: "studio.status.archived" },
+];
 
 function parseStatus(value: string | undefined): ProductStatus | undefined {
   return statuses.some((entry) => entry.value === value) ? (value as ProductStatus) : undefined;
 }
 
-export default function AdminProductsPage({ searchParams }: PageProps<"/admin/products">) {
+export default async function AdminProductsPage({ searchParams }: PageProps<"/admin/products">) {
+  const { t } = await getServerI18n();
+
   return (
-    <Suspense fallback={<AdminProductsSkeleton />}>
+    <Suspense fallback={<AdminProductsSkeleton loadingLabel={t("common.loading")} />}>
       <AdminProductsContent searchParams={searchParams} />
     </Suspense>
   );
@@ -56,6 +58,7 @@ async function AdminProductsContent({
 }: {
   searchParams: PageProps<"/admin/products">["searchParams"];
 }) {
+  const { t, formatDate, formatNumber } = await getServerI18n();
   const [admin, query] = await Promise.all([requireAdmin(), searchParams]);
   const status = parseStatus(searchParamValue(query.status));
   const search = parseSearchTerm(query.q);
@@ -72,64 +75,74 @@ async function AdminProductsContent({
     <PageShell className="pt-10 sm:pt-14">
       <div className="flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <p className="eyebrow text-muted-foreground">Administration</p>
+          <p className="eyebrow text-muted-foreground">{t("admin.nav")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] text-balance sm:text-5xl">
-            Catalog moderation.
+            {t("admin.catalogModeration")}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-            Publish objects submitted by studios, return them with a note, or curate what appears in
-            the featured edit. Every decision is recorded in the audit log.
+            {t("admin.productsIntro")}
           </p>
           <p className="mt-3 font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
-            Signed in as {admin.name}
+            {t("admin.signedInAs", { name: admin.name })}
           </p>
         </div>
 
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-3 lg:grid-cols-5">
           <div>
-            <dt className="eyebrow text-muted-foreground">Review</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.PENDING_REVIEW}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("admin.countReview")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.PENDING_REVIEW)}
+            </dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Published</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.PUBLISHED}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("studio.published")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.PUBLISHED)}
+            </dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Drafts</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.DRAFT}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("studio.drafts")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">{formatNumber(counts.DRAFT)}</dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Returned</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.REJECTED}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("admin.countReturned")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.REJECTED)}
+            </dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Archived</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.ARCHIVED}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("studio.status.archived")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.ARCHIVED)}
+            </dd>
           </div>
         </dl>
       </div>
 
       {reviewed === "published" ? (
         <Notice tone="success" className="mt-8">
-          Object published. It is visible on the storefront now.
+          {t("admin.noticePublished")}
         </Notice>
       ) : null}
       {reviewed === "rejected" ? (
         <Notice tone="warning" className="mt-8">
-          Object returned to the studio with your note.
+          {t("admin.noticeReturned")}
         </Notice>
       ) : null}
       {featuredUpdated ? (
         <Notice tone="success" className="mt-8">
-          Featured selection updated.
+          {t("admin.noticeFeatured")}
         </Notice>
       ) : null}
 
-      <nav aria-label="Filter by status" className="mt-8 flex flex-wrap items-center gap-2">
+      <nav
+        aria-label={t("admin.filterByStatus")}
+        className="mt-8 flex flex-wrap items-center gap-2"
+      >
         <FilterLink
           href={paginationHref("/admin/products", { q: search }, 1)}
           active={status === undefined}
-          label="All"
+          label={t("common.all")}
           count={
             counts.PENDING_REVIEW +
             counts.PUBLISHED +
@@ -143,7 +156,7 @@ async function AdminProductsContent({
             key={entry.value}
             href={paginationHref("/admin/products", { status: entry.value, q: search }, 1)}
             active={status === entry.value}
-            label={entry.label}
+            label={t(entry.labelKey)}
             count={counts[entry.value]}
           />
         ))}
@@ -153,30 +166,30 @@ async function AdminProductsContent({
         <form action="/admin/products" className="flex flex-wrap items-end gap-3">
           {status ? <input type="hidden" name="status" value={status} /> : null}
           <label className="grid gap-2 text-sm">
-            Product, SKU, studio, or department
+            {t("admin.productsSearchLabel")}
             <Input name="q" defaultValue={search} maxLength={80} />
           </label>
           <Button type="submit" size="sm">
-            Search
+            {t("common.search")}
           </Button>
         </form>
         <Button asChild variant="secondary" size="sm">
           <Link
             href={`/api/admin/products/export?${new URLSearchParams({ ...(status ? { status } : {}), ...(search ? { q: search } : {}) }).toString()}`}
           >
-            Export catalog
+            {t("admin.exportCatalog")}
           </Link>
         </Button>
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        {total.toLocaleString()} matching products.
+        {t("admin.productsCount", { count: formatNumber(total) })}
       </p>
 
       {products.length === 0 ? (
         <EmptyState
           icon={<Package className="size-5" aria-hidden="true" />}
-          title="Nothing in this view."
-          description="Objects appear here when studios create drafts or submit them for review."
+          title={t("admin.productsEmptyTitle")}
+          description={t("admin.productsEmptyBody")}
           className="mt-8"
         />
       ) : (
@@ -200,7 +213,7 @@ async function AdminProductsContent({
                       <ProductStatusBadge status={product.status} />
                       {product.featured ? (
                         <span className="font-mono text-[0.625rem] tracking-[0.14em] text-clay uppercase">
-                          Featured
+                          {t("common.featured")}
                         </span>
                       ) : null}
                     </div>
@@ -216,17 +229,21 @@ async function AdminProductsContent({
                     <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
                       {product.reviewNote ? (
                         <>
-                          <span className="font-medium text-foreground">Last note: </span>
+                          <span className="font-medium text-foreground">
+                            {t("admin.lastNote")}{" "}
+                          </span>
                           {product.reviewNote}
                         </>
                       ) : (
-                        `${formatMoney(product.priceCents, product.currency)} · ${product.stock} ${
-                          product.stock === 1 ? "unit" : "units"
-                        } on hand`
+                        t("admin.priceStockLine", {
+                          price: formatMoney(product.priceCents, product.currency),
+                          stock: formatNumber(product.stock),
+                          units: product.stock === 1 ? t("common.unit") : t("common.units"),
+                        })
                       )}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Updated {formatDate(product.updatedAt)}
+                      {t("admin.updatedOn", { date: formatDate(product.updatedAt) })}
                     </p>
                   </div>
                   {product.status === "PUBLISHED" ? (
@@ -234,7 +251,7 @@ async function AdminProductsContent({
                       href={`/products/${product.slug}`}
                       className="text-sm font-medium text-accent underline-offset-4 hover:underline"
                     >
-                      View public page
+                      {t("admin.viewPublicPage")}
                     </Link>
                   ) : null}
                 </div>
@@ -254,6 +271,7 @@ async function AdminProductsContent({
         params={{ status, q: search }}
         page={currentPage}
         pageCount={pageCount(total)}
+        label={t("common.pagination")}
       />
     </PageShell>
   );
@@ -286,10 +304,10 @@ function FilterLink({
   );
 }
 
-function AdminProductsSkeleton() {
+function AdminProductsSkeleton({ loadingLabel }: { loadingLabel: string }) {
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading catalog moderation">
+      <div role="status" aria-label={loadingLabel}>
         <div className="border-b border-border pb-8">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="mt-4 h-12 w-96 max-w-full" />
@@ -301,7 +319,9 @@ function AdminProductsSkeleton() {
           <Skeleton className="h-56 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{loadingLabel}</span>
     </PageShell>
   );
 }
+
+export const instant = false;

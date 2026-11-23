@@ -7,9 +7,9 @@ import { Field, Textarea } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { formatMoney } from "@/features/catalog/money";
 import { initialFormState } from "@/features/identity/form-state";
 import { createPayoutAction } from "@/features/payments/admin-actions";
+import { useI18n } from "@/i18n/client";
 
 export interface PayoutVendorOption {
   id: string;
@@ -31,37 +31,49 @@ export function PayoutCreateForm({
   defaultPeriodEnd,
 }: PayoutCreateFormProps) {
   const [state, action] = useActionState(createPayoutAction, initialFormState);
+  const { t, formatCurrency } = useI18n();
   const payables = vendors.filter((vendor) => vendor.availableCents > 0);
 
   return (
     <form action={action} className="space-y-4 rounded-xl border border-border bg-surface p-6">
       <div>
-        <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Record a payout</h2>
+        <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+          {t("payments.payout.recordTitle")}
+        </h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Payouts are created manually and reserve the studio&apos;s available balance. Mark a
-          payout paid once the transfer leaves your account, then reconcile it against the
-          statement.
+          {t("payments.payout.recordIntro")}
         </p>
       </div>
 
       {payables.length === 0 ? (
         <p className="rounded-md border border-border bg-surface-muted px-3.5 py-2.5 text-sm text-muted-foreground">
-          No studio has an available balance yet. Confirmed payments create vendor earnings first.
+          {t("payments.payout.noBalance")}
         </p>
       ) : (
         <>
-          <Field label="Studio" htmlFor="payout-vendor" error={state.fieldErrors?.vendorId}>
+          <Field
+            label={t("products.studio")}
+            htmlFor="payout-vendor"
+            error={state.fieldErrors?.vendorId}
+          >
             <Select id="payout-vendor" name="vendorId" defaultValue={payables[0]?.id}>
               {payables.map((vendor) => (
                 <option key={vendor.id} value={vendor.id}>
-                  {vendor.name} — {formatMoney(vendor.availableCents, currency)} available
+                  {t("payments.payout.availableOption", {
+                    name: vendor.name,
+                    amount: formatCurrency(vendor.availableCents, currency),
+                  })}
                 </option>
               ))}
             </Select>
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Amount" htmlFor="payout-amount" error={state.fieldErrors?.amount}>
+            <Field
+              label={t("payments.payout.amount")}
+              htmlFor="payout-amount"
+              error={state.fieldErrors?.amount}
+            >
               <Input
                 id="payout-amount"
                 name="amount"
@@ -72,7 +84,7 @@ export function PayoutCreateForm({
               />
             </Field>
             <Field
-              label="Period start"
+              label={t("payments.payout.periodStart")}
               htmlFor="payout-start"
               error={state.fieldErrors?.periodStart}
             >
@@ -84,7 +96,11 @@ export function PayoutCreateForm({
                 aria-invalid={state.fieldErrors?.periodStart ? true : undefined}
               />
             </Field>
-            <Field label="Period end" htmlFor="payout-end" error={state.fieldErrors?.periodEnd}>
+            <Field
+              label={t("payments.payout.periodEnd")}
+              htmlFor="payout-end"
+              error={state.fieldErrors?.periodEnd}
+            >
               <Input
                 id="payout-end"
                 name="periodEnd"
@@ -95,18 +111,23 @@ export function PayoutCreateForm({
             </Field>
           </div>
 
-          <Field label="Note" htmlFor="payout-note" hint="Optional" error={state.fieldErrors?.note}>
+          <Field
+            label={t("payments.payout.note")}
+            htmlFor="payout-note"
+            hint={t("common.optional")}
+            error={state.fieldErrors?.note}
+          >
             <Textarea
               id="payout-note"
               name="note"
               className="min-h-20"
-              placeholder="Bank transfer reference or payment run"
+              placeholder={t("payments.payout.notePlaceholder")}
             />
           </Field>
 
           <FormMessage state={state} />
-          <SubmitButton pendingLabel="Recording payout…" className="w-auto">
-            Record payout
+          <SubmitButton pendingLabel={t("payments.payout.pendingRecording")} className="w-auto">
+            {t("payments.payout.submit")}
           </SubmitButton>
         </>
       )}

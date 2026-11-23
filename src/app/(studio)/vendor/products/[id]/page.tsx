@@ -20,14 +20,20 @@ import {
   type StudioProductDetail,
 } from "@/features/catalog/vendor-queries";
 import { requireApprovedVendor } from "@/server/auth/guards";
+import { getServerI18n } from "@/i18n/server";
+import type { Translator } from "@/i18n/dictionary";
 
 const uuidSchema = z.uuid();
 
-export const metadata: Metadata = {
-  title: "Edit object",
-  description: "Manage an object in your SupplyHub studio.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("studio.editObjectTitle"),
+    description: t("studio.editObjectDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function searchParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -47,9 +53,10 @@ export default async function StudioProductPage({
     notFound();
   }
 
-  const [product, categories] = await Promise.all([
+  const [product, categories, i18n] = await Promise.all([
     getVendorProduct(vendorId, routeParams.id),
     listStudioCategoryOptions(),
+    getServerI18n(),
   ]);
 
   if (!product) {
@@ -58,7 +65,7 @@ export default async function StudioProductPage({
 
   return (
     <Suspense fallback={<ProductSkeleton />}>
-      <StudioProductContent product={product} categories={categories} query={query} />
+      <StudioProductContent product={product} categories={categories} query={query} t={i18n.t} />
     </Suspense>
   );
 }
@@ -67,10 +74,12 @@ function StudioProductContent({
   product,
   categories,
   query,
+  t,
 }: {
   product: StudioProductDetail;
   categories: Array<{ id: string; name: string }>;
   query: Awaited<PageProps<"/vendor/products/[id]">["searchParams"]>;
+  t: Translator;
 }) {
   const canEdit =
     product.status === "DRAFT" || product.status === "REJECTED" || product.status === "PUBLISHED";
@@ -84,7 +93,7 @@ function StudioProductContent({
         className="inline-flex items-center gap-1.5 rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
       >
         <ArrowLeft className="size-3.5" aria-hidden="true" />
-        Products
+        {t("studio.backToProducts")}
       </Link>
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
@@ -103,33 +112,32 @@ function StudioProductContent({
 
       {saved ? (
         <Notice tone="success" className="mt-4">
-          Changes saved.
+          {t("studio.changesSaved")}
         </Notice>
       ) : null}
 
       {published ? (
         <Notice tone="success" className="mt-4">
-          Your object is live on the storefront.
+          {t("studio.objectIsLive")}
         </Notice>
       ) : null}
 
       {product.status === "REJECTED" && product.reviewNote ? (
         <Notice tone="danger" className="mt-4">
-          <span className="font-medium">Changes requested: </span>
+          <span className="font-medium">{`${t("studio.changesRequestedPrefix")} `}</span>
           {product.reviewNote}
         </Notice>
       ) : null}
 
       {product.status === "PENDING_REVIEW" ? (
         <Notice tone="info" className="mt-4">
-          This object is waiting for review. Editing and image uploads are paused until an
-          administrator decides. Stock can still be adjusted.
+          {t("studio.pendingReviewNotice")}
         </Notice>
       ) : null}
 
       {product.status === "ARCHIVED" ? (
         <Notice tone="warning" className="mt-4">
-          This object is archived and no longer visible on the storefront.
+          {t("studio.archivedNotice")}
         </Notice>
       ) : null}
 
@@ -144,12 +152,12 @@ function StudioProductContent({
                 id="object-details-heading"
                 className="font-display text-xl font-medium tracking-[-0.02em]"
               >
-                Object details
+                {t("studio.objectDetails")}
               </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 {product.status === "PUBLISHED"
-                  ? "Saved changes to a published object appear on the storefront immediately."
-                  : "These details stay private until the object is published."}
+                  ? t("studio.publishedEditNote")
+                  : t("studio.privateUntilPublish")}
               </p>
               <div className="mt-6">
                 <StudioProductForm
@@ -176,17 +184,17 @@ function StudioProductContent({
                 id="object-details-heading"
                 className="font-display text-xl font-medium tracking-[-0.02em]"
               >
-                Object details
+                {t("studio.objectDetails")}
               </h2>
               <dl className="mt-5 grid gap-5 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="eyebrow text-muted-foreground">Price</dt>
+                  <dt className="eyebrow text-muted-foreground">{t("common.price")}</dt>
                   <dd className="mt-1 font-medium">
                     {product.currency} {centsToDecimalString(product.priceCents)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="eyebrow text-muted-foreground">Department</dt>
+                  <dt className="eyebrow text-muted-foreground">{t("products.department")}</dt>
                   <dd className="mt-1 font-medium">{product.categoryName}</dd>
                 </div>
               </dl>
@@ -201,7 +209,7 @@ function StudioProductContent({
             className="mt-8 rounded-xl border border-border bg-surface p-6 sm:p-8"
           >
             <span id="inventory-heading" className="sr-only">
-              Inventory
+              {t("studio.inventory")}
             </span>
             <InventoryPanel
               productId={product.id}
@@ -214,10 +222,11 @@ function StudioProductContent({
 
         <aside className="space-y-6">
           <section className="rounded-xl border border-border bg-surface p-6">
-            <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Publishing</h2>
+            <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+              {t("studio.publishing")}
+            </h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Objects go live instantly. Publish a draft, archive a live object, or remove it
-              entirely.
+              {t("studio.publishingNote")}
             </p>
             <div className="mt-5">
               <ProductLifecycleActions
@@ -243,9 +252,11 @@ function StudioProductContent({
   );
 }
 
-function ProductSkeleton() {
+async function ProductSkeleton() {
+  const { t } = await getServerI18n();
+
   return (
-    <div role="status" aria-label="Loading the object">
+    <div role="status" aria-label={t("studio.loadingObject")}>
       <div className="mb-4">
         <Skeleton className="h-3 w-20" />
       </div>
@@ -260,7 +271,9 @@ function ProductSkeleton() {
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
+
+export const instant = false;

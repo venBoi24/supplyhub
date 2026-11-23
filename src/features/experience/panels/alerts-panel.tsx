@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils/cn";
 
 import { useExperience } from "../store";
 import type { ExperienceTab, NotificationKind } from "../types";
-
 const ICON: Record<NotificationKind, typeof Bell> = {
   delivery: PackageCheck,
   price: TrendingDown,
@@ -42,16 +41,24 @@ const TONE: Record<NotificationKind, string> = {
   order: "text-foreground bg-surface-muted",
 };
 
-const when = (at: number) =>
-  new Date(at).toLocaleString("en-US", {
+const when = (at: number, locale: string) =>
+  new Date(at).toLocaleString(locale, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
 
+export const MILESTONE_KEYS: Record<string, string> = {
+  delivery: "experience.alerts.milestoneDelivery",
+  price: "experience.alerts.milestonePrice",
+  stock: "experience.alerts.milestoneStock",
+  chat: "experience.alerts.milestoneChat",
+  security: "experience.alerts.milestoneSecurity",
+};
+
 export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) => void }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { state, markRead, markAllRead, clearNotifications } = useExperience();
   const notifications = state.notifications;
   const unread = notifications.filter((n) => !n.read).length;
@@ -87,15 +94,19 @@ export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) =
         </div>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
-        Delivery milestones, price drops, studio replies and security events land here in real time.
+        {t("experience.alerts.subtitle", {
+          delivery: t(MILESTONE_KEYS.delivery!),
+          price: t(MILESTONE_KEYS.price!),
+          chat: t(MILESTONE_KEYS.chat!),
+          security: t(MILESTONE_KEYS.security!),
+        })}
       </p>
 
       {notifications.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-border p-8 text-center">
           <Bell className="mx-auto size-7 text-muted-foreground" />
           <p className="mt-2 text-sm text-muted-foreground">
-            {t("experience.alerts.empty")} Place a sandbox order or save a piece to see alerts
-            arrive.
+            {t("experience.alerts.empty")} {t("experience.alerts.emptyBody")}
           </p>
         </div>
       ) : (
@@ -129,13 +140,13 @@ export function AlertsPanel({ onNavigate }: { onNavigate: (tab: ExperienceTab) =
                       {!n.read ? (
                         <span
                           className="size-1.5 shrink-0 rounded-full bg-accent"
-                          aria-label="Unread"
+                          aria-label={t("experience.alerts.unread")}
                         />
                       ) : null}
                     </span>
                     <span className="mt-0.5 block text-xs text-muted-foreground">{n.body}</span>
                     <span className="mt-1 block text-[0.625rem] text-muted-foreground">
-                      {when(n.at)}
+                      {when(n.at, locale)}
                       {n.tab ? ` · ${t("experience.alerts.tapToOpen")}` : ""}
                     </span>
                   </span>

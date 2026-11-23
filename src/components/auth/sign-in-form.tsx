@@ -10,8 +10,10 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { signInAction } from "@/features/identity/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function SignInForm({ next }: { next?: string }) {
+  const t = useT();
   const [state, action] = useActionState(signInAction, initialFormState);
   const emailError = state.fieldErrors?.email;
   const passwordError = state.fieldErrors?.password;
@@ -21,7 +23,7 @@ export function SignInForm({ next }: { next?: string }) {
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <FormMessage state={state} />
 
-      <Field label="Email" htmlFor="sign-in-email" error={emailError}>
+      <Field label={t("auth.email")} htmlFor="sign-in-email" error={emailError}>
         <Input
           id="sign-in-email"
           name="email"
@@ -34,7 +36,7 @@ export function SignInForm({ next }: { next?: string }) {
         />
       </Field>
 
-      <Field label="Password" htmlFor="sign-in-password" error={passwordError}>
+      <Field label={t("auth.password")} htmlFor="sign-in-password" error={passwordError}>
         <PasswordInput
           id="sign-in-password"
           name="password"
@@ -50,11 +52,11 @@ export function SignInForm({ next }: { next?: string }) {
           href="/forgot-password"
           className="rounded-sm text-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         >
-          Forgot password?
+          {t("auth.forgot")}
         </Link>
       </div>
 
-      <SubmitButton pendingLabel="Signing in…">Sign in</SubmitButton>
+      <SubmitButton pendingLabel={t("auth.signingIn")}>{t("auth.signInTitle")}</SubmitButton>
     </form>
   );
 }

@@ -29,12 +29,14 @@ import {
 } from "@/features/catalog/queries";
 import { getServerI18n } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: { absolute: "SupplyHub — independent sellers, one marketplace" },
-  description:
-    "Shop home, fashion, beauty and more from independent studios and verified sellers — with the maker, materials and origin visible on every listing.",
-  alternates: { canonical: "/" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: { absolute: t("home.metaTitle") },
+    description: t("home.metaDescription"),
+    alternates: { canonical: "/" },
+  };
+}
 
 const trustItems = [
   { icon: Truck, key: "home.trustDelivery" },
@@ -332,3 +334,5 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["sea
     </>
   );
 }
+
+export const instant = false;

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
+import { getServerI18n } from "@/i18n/server";
 import { getServerEnv } from "@/lib/config/env";
 import { logger } from "@/lib/logging/logger";
 import { canCheckout } from "@/server/auth/policies";
@@ -13,13 +14,14 @@ import { AUTH_RATE_LIMITS } from "@/server/security/auth-rate-limits";
 import { consumeRateLimit } from "@/server/security/rate-limit";
 
 import { CheckoutError, placeOrder, releaseExpiredReservations } from "./service";
-import { checkoutAddressSchema } from "./validation";
+import { createCheckoutAddressSchema } from "./validation";
 
 export async function placeOrderAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
 
   if (!actor) {
     redirect("/sign-in?next=%2Fcheckout");
@@ -28,18 +30,18 @@ export async function placeOrderAction(
   if (!canCheckout(actor)) {
     return {
       status: "error",
-      message: "Only customer accounts can place orders. Sign in with a customer account.",
+      message: t("checkout.errors.customerOnly"),
     };
   }
 
   if (!consumeRateLimit(`checkout:user:${actor.id}`, AUTH_RATE_LIMITS.checkoutByUser)) {
     return {
       status: "error",
-      message: "Too many checkout attempts. Wait a few minutes and try again.",
+      message: t("checkout.errors.rateLimited"),
     };
   }
 
-  const parsed = checkoutAddressSchema.safeParse({
+  const parsed = createCheckoutAddressSchema(t).safeParse({
     recipientName: formValue(formData, "recipientName"),
     contactEmail: formValue(formData, "contactEmail"),
     contactPhone: formValue(formData, "contactPhone"),
@@ -65,7 +67,7 @@ export async function placeOrderAction(
   });
 
   if (!cart) {
-    return { status: "error", message: "Your cart is empty. Add an object before checking out." };
+    return { status: "error", message: t("checkout.errors.cartEmpty") };
   }
 
   try {

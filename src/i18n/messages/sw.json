@@ -393,7 +393,16 @@
     "mapTitle": "Eneo la usafirishaji kwenye Google Maps",
     "deliveryQuote": "Nukuu ya usafirishaji",
     "totalDelivery": "Jumla ya usafirishaji",
-    "addItemForQuote": "Ongeza bidhaa kwenye kikapu chako ili kuona umbali na bei za usafirishaji kwa kila studio."
+    "addItemForQuote": "Ongeza bidhaa kwenye kikapu chako ili kuona umbali na bei za usafirishaji kwa kila studio.",
+    "status": {
+      "awaitingPayment": "Inasubiri malipo",
+      "paid": "Imelipwa",
+      "processing": "Inachakatwa",
+      "shipped": "Imetumwa",
+      "delivered": "Imefikishwa",
+      "cancelled": "Imeghairiwa",
+      "expired": "Imeisha muda"
+    }
   },
   "auth": {
     "backToShop": "Rudi dukani",
@@ -411,6 +420,7 @@
     "noAccount": "Bado huna akaunti?",
     "haveAccount": "Tayari una akaunti?",
     "email": "Barua pepe",
+    "password": "Nenosiri",
     "name": "Jina",
     "phone": "Nambari ya simu",
     "phoneHint": "Jumuisha msimbo wa nchi yako, kwa mfano +255 754 123 456. Wanunuzi wanaweza kuongeza hii baadaye wakati wa kulipia.",
@@ -468,7 +478,29 @@
     "verifying": "Inathibitisha…",
     "verifyEmail": "Thibitisha barua pepe",
     "wrongAccount": "Akaunti si sahihi?",
-    "signInAgain": "Ingia tena"
+    "signInAgain": "Ingia tena",
+    "errors": {
+      "signInRateLimited": "Majaribio mengi sana ya kuingia. Subira dakika chache kisha ujaribu tena.",
+      "badCredentials": "Barua pepe au nenosiri si sahihi.",
+      "signUpRateLimited": "Majaribio mengi sana ya kujiandikisha. Subira kitu kichache kisha ujaribu tena.",
+      "signUpFailed": "Hatuwezi kuunda akaunti kwa maelezo hayo. Ikiwa tayari una akaunti, ingia au weka upya nenosiri lako.",
+      "accountCreated": "Akaunti imeundwa. Ingia ili kuendelea.",
+      "resetRateLimited": "Maombi mengi sana ya kuweka upya. Subira kitu kichache kisha ujaribu tena.",
+      "resetSent": "Ikiwa akaunti ipo kwa barua pepe hiyo, tumetuma kiungo cha kuweka upya nenosiri.",
+      "resetAttemptRateLimited": "Majaribio mengi sana ya kuweka upya. Subira kitu kichache kisha ujaribu tena.",
+      "resetLinkInvalid": "Kiungo hiki cha kuweka upya si halali au kimefikia muda wake. Omba kiungo kipya."
+    }
+  },
+  "validation": {
+    "emailInvalid": "Andika anuani sahihi ya barua pepe.",
+    "emailTooLong": "Tumia anuani ya barua pepe yenye herufi chini ya 254.",
+    "minCharacters": "Tumia angalau herufi {min}.",
+    "maxCharacters": "Tumia herufi {max} au chini.",
+    "passwordRequired": "Andika nenosiri lako.",
+    "passwordsDoNotMatch": "Manenosiri hayalingani.",
+    "phoneWithCountryCode": "Andika nambari ya simu pamoja na nambari ya nchi.",
+    "phoneDigits": "Tumia tarakimu 7–15 na ujumuishe nambari ya nchi.",
+    "linkInvalid": "Kiungo hiki si halali au hakikamiliki."
   },
   "studio": {
     "nav": "Urambazaji wa studio",
@@ -543,7 +575,21 @@
     "appealRejectionStands": "Rufaa yako ilikaguliwa na ukatalizi unabaki.",
     "appealAwaiting": "Rufaa yako inasubiri ukaguzi.",
     "suspendedNotice": "Nafasi hii ya kazi ya studio imesimamishwa.",
-    "suspendedBody": "Zana za kuorodhesha, oda na akaunti hazipatikani studio ikiwa imesimamishwa. Wasiliana na timu ya SupplyHub kwa maelezo."
+    "suspendedBody": "Zana za kuorodhesha, oda na akaunti hazipatikani studio ikiwa imesimamishwa. Wasiliana na timu ya SupplyHub kwa maelezo.",
+    "drafts": "Rasimu",
+    "draftsNote": "Bado hazijachapishwa",
+    "status": {
+      "draft": "Rasimu",
+      "inReview": "Inakaguliwa",
+      "published": "Ilichapishwa",
+      "changesRequested": "Marekebisho yanaombwa",
+      "archived": "Ilihifadhiwa"
+    },
+    "draftsPending": "{objects} {count} bado hazijachapishwa",
+    "publishWhenReady": "Zichapishe zilipo tayari.",
+    "allObjectsLive": "Bidhaa zote zipo hai",
+    "allObjectsLiveNote": "Kila bidhaa katika katalogi yako imechapishwa.",
+    "loadingWorkspace": "Inapakia eneo kazi la studio"
   },
   "admin": {
     "nav": "Utawala",

@@ -13,11 +13,16 @@ import { decimalToCents, formatMoney } from "@/features/catalog/money";
 import { listVendorOrders } from "@/features/checkout/vendor-operations";
 import { formatDate } from "@/lib/utils/format-date";
 import { requireApprovedVendor } from "@/server/auth/guards";
+import { getServerI18n } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Studio orders",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("studio.ordersTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default function VendorOrdersPage() {
   return (
@@ -28,17 +33,20 @@ export default function VendorOrdersPage() {
 }
 
 async function VendorOrdersContent() {
-  const { vendorId } = await requireApprovedVendor("/vendor/orders");
+  const [{ t }, { vendorId }] = await Promise.all([
+    getServerI18n(),
+    requireApprovedVendor("/vendor/orders"),
+  ]);
   const orders = await listVendorOrders(vendorId);
 
   return (
     <>
       <StudioPageHead
-        title="Orders"
-        description="Orders are limited to your studio. Move each paid order through processing, shipped, and delivered as work progresses."
+        title={t("studio.orders")}
+        description={t("studio.ordersIntro")}
         action={
           <Button asChild variant="secondary" size="sm">
-            <Link href="/api/vendor/orders/export">Export CSV</Link>
+            <Link href="/api/vendor/orders/export">{t("studio.exportCsv")}</Link>
           </Button>
         }
       />
@@ -46,8 +54,8 @@ async function VendorOrdersContent() {
       {orders.length === 0 ? (
         <EmptyState
           icon={<PackageCheck className="size-5" aria-hidden="true" />}
-          title="No studio orders yet."
-          description="Orders containing your products will appear here after payment is confirmed."
+          title={t("studio.noOrdersTitle")}
+          description={t("studio.noOrdersBody")}
         />
       ) : (
         <ul className="space-y-3">
@@ -57,7 +65,10 @@ async function VendorOrdersContent() {
                 <div>
                   <h2 className="font-mono text-sm font-medium">{order.order.orderNumber}</h2>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    For {order.order.recipientName} · {formatDate(order.createdAt)}
+                    {t("studio.orderFor", {
+                      name: order.order.recipientName,
+                      date: formatDate(order.createdAt),
+                    })}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -89,9 +100,11 @@ async function VendorOrdersContent() {
   );
 }
 
-function OrdersSkeleton() {
+async function OrdersSkeleton() {
+  const { t } = await getServerI18n();
+
   return (
-    <div role="status" aria-label="Loading studio orders">
+    <div role="status" aria-label={t("studio.loadingOrders")}>
       <div className="mb-5">
         <Skeleton className="h-7 w-28" />
         <Skeleton className="mt-2 h-3.5 w-80 max-w-full" />
@@ -101,7 +114,9 @@ function OrdersSkeleton() {
           <Skeleton key={index} className="h-48 w-full rounded-xl" />
         ))}
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
+
+export const instant = false;

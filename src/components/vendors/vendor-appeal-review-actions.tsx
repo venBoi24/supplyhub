@@ -7,8 +7,10 @@ import { Textarea } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { initialFormState } from "@/features/identity/form-state";
 import { reviewVendorAppealAction } from "@/features/vendors/actions";
+import { useT } from "@/i18n/client";
 
 export function VendorAppealReviewActions({ vendorId }: { vendorId: string }) {
+  const t = useT();
   const [approveState, approveAction] = useActionState(reviewVendorAppealAction, initialFormState);
   const [rejectState, rejectAction] = useActionState(reviewVendorAppealAction, initialFormState);
 
@@ -18,15 +20,15 @@ export function VendorAppealReviewActions({ vendorId }: { vendorId: string }) {
         <input type="hidden" name="vendorId" value={vendorId} />
         <input type="hidden" name="decision" value="approve" />
         <FormMessage state={approveState} />
-        <SubmitButton size="sm" pendingLabel="Approving…">
-          Approve appeal & unlock account
+        <SubmitButton size="sm" pendingLabel={t("studio.approvingPending")}>
+          {t("studio.approveAppeal")}
         </SubmitButton>
       </form>
       <form action={rejectAction} className="space-y-3">
         <input type="hidden" name="vendorId" value={vendorId} />
         <input type="hidden" name="decision" value="reject" />
         <label htmlFor={`appeal-note-${vendorId}`} className="sr-only">
-          Reason for declining appeal
+          {t("studio.declineAppealReason")}
         </label>
         <Textarea
           id={`appeal-note-${vendorId}`}
@@ -35,15 +37,15 @@ export function VendorAppealReviewActions({ vendorId }: { vendorId: string }) {
           maxLength={500}
           required
           className="min-h-20"
-          placeholder="Reason for declining this appeal"
+          placeholder={t("studio.declineAppealPlaceholder")}
           aria-invalid={rejectState.fieldErrors?.note ? true : undefined}
         />
         {rejectState.fieldErrors?.note ? (
           <p className="text-sm text-danger">{rejectState.fieldErrors.note}</p>
         ) : null}
         <FormMessage state={rejectState} />
-        <SubmitButton size="sm" variant="secondary" pendingLabel="Declining…">
-          Decline appeal
+        <SubmitButton size="sm" variant="secondary" pendingLabel={t("studio.decliningPending")}>
+          {t("studio.declineAppeal")}
         </SubmitButton>
       </form>
     </div>

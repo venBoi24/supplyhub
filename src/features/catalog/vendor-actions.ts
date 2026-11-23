@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
+import { getServerI18n } from "@/i18n/server";
+import type { Translator } from "@/i18n/dictionary";
 import { logger } from "@/lib/logging/logger";
 import { initialsFor } from "@/lib/utils/initials";
 import { recordAuditEvent } from "@/server/audit/audit-log";
@@ -20,10 +22,14 @@ import { firstFieldErrors, formValue, type FormState } from "@/features/identity
 
 import { DEFAULT_CURRENCY, MAX_PRODUCT_IMAGES } from "./constants";
 import { productImageAlt } from "./image-alt";
-import { applyStockAdjustment } from "./inventory";
+import { applyStockAdjustment, MAX_UNIT_STOCK, type StockErrorKey } from "./inventory";
 import { centsToDecimalString } from "./money";
 import { buildSearchText } from "./search";
-import { inventoryAdjustmentSchema, productInputSchema, studioProfileSchema } from "./validation";
+import {
+  createInventoryAdjustmentSchema,
+  createProductInputSchema,
+  createStudioProfileSchema,
+} from "./validation";
 
 const uuidSchema = z.uuid();
 
@@ -39,7 +45,7 @@ function isUniqueConstraintError(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
-function uniqueFieldErrors(error: unknown): FormState {
+function uniqueFieldErrors(error: unknown, t: Translator): FormState {
   const target = isUniqueConstraintError(error)
     ? String((error as Prisma.PrismaClientKnownRequestError).meta?.target ?? "")
     : "";
@@ -47,18 +53,18 @@ function uniqueFieldErrors(error: unknown): FormState {
   if (target.includes("sku")) {
     return {
       status: "error",
-      fieldErrors: { sku: "Another object in your studio already uses that SKU." },
+      fieldErrors: { sku: t("studio.errors.skuDuplicate") },
     };
   }
 
   if (target.includes("slug")) {
     return {
       status: "error",
-      fieldErrors: { slug: "That handle is already in use. Choose another one." },
+      fieldErrors: { slug: t("studio.errors.slugTaken") },
     };
   }
 
-  return { status: "error", message: "That change conflicts with an existing record." };
+  return { status: "error", message: t("studio.errors.conflict") };
 }
 
 async function requireStudio() {
@@ -97,7 +103,7 @@ async function requireManagedStudio(formData: FormData) {
   return { ...access, adminManaged: false as const };
 }
 
-function productFields(input: ReturnType<typeof productInputSchema.parse>) {
+function productFields(input: z.infer<ReturnType<typeof createProductInputSchema>>) {
   const summary = input.description.slice(0, 277).trimEnd();
   return {
     name: input.name,
@@ -117,21 +123,41 @@ function productFields(input: ReturnType<typeof productInputSchema.parse>) {
   };
 }
 
+/**
+ * The shared image validator is a pure, non-request helper, so it returns stable
+ * English sentinel strings. This map translates a sentinel back into the
+ * visitor's locale at the server-action boundary. An unrecognised sentinel falls
+ * through unchanged rather than being silently dropped.
+ */
+const IMAGE_MESSAGE_KEYS: Record<string, string> = {
+  "Choose an image file.": "chooseFile",
+  "Images must be 5 MB or smaller.": "tooLarge",
+  "The upload did not arrive in full. Try again.": "incomplete",
+  "Upload a JPEG, PNG, WebP, GIF, AVIF, or BMP image.": "unsupportedType",
+  "The file contents do not match the declared image type.": "typeMismatch",
+};
+
+function imageValidationMessage(sentinel: string, t: Translator): string {
+  const key = IMAGE_MESSAGE_KEYS[sentinel];
+  return key ? t(`studio.errors.image.${key}`) : sentinel;
+}
+
 export async function saveProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { actor, vendorId, adminManaged } = access;
   const rawProductId = formValue(formData, "productId");
   const productId = rawProductId ? asUuid(rawProductId) : null;
 
   if (rawProductId && !productId) {
-    return { status: "error", message: "That object reference is invalid." };
+    return { status: "error", message: t("validation.objectReferenceInvalid") };
   }
 
-  const parsed = productInputSchema.safeParse({
+  const parsed = createProductInputSchema(t).safeParse({
     name: formValue(formData, "name"),
     slug: formValue(formData, "slug"),
     categoryId: formValue(formData, "categoryId"),
@@ -161,10 +187,10 @@ export async function saveProductAction(
   } | null = null;
   if (!productId) {
     if (!(upload instanceof File) || upload.size === 0) {
-      return { status: "error", fieldErrors: { image: "Choose a cover photo." } };
+      return { status: "error", fieldErrors: { image: t("studio.errors.coverPhotoRequired") } };
     }
     if (upload.size > MAX_IMAGE_BYTES) {
-      return { status: "error", fieldErrors: { image: "Images must be 5 MB or smaller." } };
+      return { status: "error", fieldErrors: { image: t("studio.errors.imageTooLarge") } };
     }
     const bytes = new Uint8Array(await upload.arrayBuffer());
     const validation = validateImageUpload({
@@ -173,7 +199,10 @@ export async function saveProductAction(
       declaredSize: upload.size,
     });
     if (!validation.ok) {
-      return { status: "error", fieldErrors: { image: validation.error } };
+      return {
+        status: "error",
+        fieldErrors: { image: imageValidationMessage(validation.error, t) },
+      };
     }
     imagePayload = {
       bytes,
@@ -193,7 +222,7 @@ export async function saveProductAction(
   if (!category) {
     return {
       status: "error",
-      fieldErrors: { categoryId: "Choose an active department." },
+      fieldErrors: { categoryId: t("studio.errors.departmentInactive") },
     };
   }
 
@@ -226,14 +255,14 @@ export async function saveProductAction(
   if (location && !location.success) {
     return {
       status: "error",
-      message: "Enter a valid city, street, and address for the studio location.",
+      message: t("studio.errors.locationIncomplete"),
     };
   }
 
   try {
     if (!productId) {
       if (!imagePayload) {
-        return { status: "error", message: "Choose a cover photo." };
+        return { status: "error", message: t("studio.errors.coverPhotoRequired") };
       }
 
       const createdProductId = randomUUID();
@@ -241,7 +270,7 @@ export async function saveProductAction(
       try {
         await getStorage().put(storageKey, imagePayload.bytes, imagePayload.contentType);
       } catch {
-        return { status: "error", message: "The photo could not be uploaded. Please try again." };
+        return { status: "error", message: t("studio.errors.photoUploadFailed") };
       }
       const created = await database
         .$transaction(async (transaction) => {
@@ -319,7 +348,7 @@ export async function saveProductAction(
       logger.info("product.created", { actorId: actor.id, productId: created.id });
       revalidateCatalog();
       if (adminManaged) {
-        return { status: "success", message: "Product published for this vendor." };
+        return { status: "success", message: t("studio.success.publishedForVendor") };
       }
       redirect(`/vendor/products/${created.id}?published=1`);
     }
@@ -330,18 +359,18 @@ export async function saveProductAction(
     });
 
     if (!existing) {
-      return { status: "error", message: "That object could not be found in your studio." };
+      return { status: "error", message: t("studio.errors.objectNotInStudio") };
     }
 
     if (existing.status === "PENDING_REVIEW") {
       return {
         status: "error",
-        message: "This object is waiting for review. Stock can still be adjusted below.",
+        message: t("studio.errors.pendingReview"),
       };
     }
 
     if (existing.status === "ARCHIVED") {
-      return { status: "error", message: "Archived objects cannot be edited." };
+      return { status: "error", message: t("studio.errors.archivedReadOnly") };
     }
 
     const update: Prisma.ProductUpdateManyMutationInput = { ...data };
@@ -359,17 +388,17 @@ export async function saveProductAction(
     if (updated.count !== 1) {
       return {
         status: "error",
-        message: "That object changed while you were editing. Reload and retry.",
+        message: t("studio.errors.objectChanged"),
       };
     }
 
     logger.info("product.updated", { actorId: actor.id, productId: existing.id });
     revalidateCatalog();
-    if (adminManaged) return { status: "success", message: "Product details saved." };
+    if (adminManaged) return { status: "success", message: t("studio.success.detailsSaved") };
     redirect(`/vendor/products/${existing.id}?saved=1`);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      return uniqueFieldErrors(error);
+      return uniqueFieldErrors(error, t);
     }
 
     throw error;
@@ -380,13 +409,14 @@ export async function publishProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
-    return { status: "error", message: "That object reference is invalid." };
+    return { status: "error", message: t("validation.objectReferenceInvalid") };
   }
 
   const database = getDatabase();
@@ -401,19 +431,19 @@ export async function publishProductAction(
   });
 
   if (!product) {
-    return { status: "error", message: "That object could not be found in your studio." };
+    return { status: "error", message: t("studio.errors.objectNotInStudio") };
   }
 
   if (product.status !== "DRAFT" && product.status !== "REJECTED") {
-    return { status: "error", message: "Only drafts or rejected objects can be published." };
+    return { status: "error", message: t("studio.errors.publishOnlyDrafts") };
   }
 
   if (product.category.status !== "ACTIVE") {
-    return { status: "error", message: "Choose an active department before publishing." };
+    return { status: "error", message: t("studio.errors.departmentActiveRequired") };
   }
 
   if (product._count.images === 0) {
-    return { status: "error", message: "Add at least one image before publishing." };
+    return { status: "error", message: t("studio.errors.imageRequiredToPublish") };
   }
 
   const now = new Date();
@@ -431,7 +461,7 @@ export async function publishProductAction(
   });
 
   if (updated.count !== 1) {
-    return { status: "error", message: "That object already changed status. Reload and retry." };
+    return { status: "error", message: t("studio.errors.statusChanged") };
   }
 
   await database.$transaction((transaction) =>
@@ -446,7 +476,7 @@ export async function publishProductAction(
 
   logger.info("product.published", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
-  if (adminManaged) return { status: "success", message: "Product published." };
+  if (adminManaged) return { status: "success", message: t("studio.success.published") };
   redirect("/vendor/products?published=1");
 }
 
@@ -454,13 +484,14 @@ export async function archiveProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
-    return { status: "error", message: "That object reference is invalid." };
+    return { status: "error", message: t("validation.objectReferenceInvalid") };
   }
 
   const database = getDatabase();
@@ -470,11 +501,11 @@ export async function archiveProductAction(
   });
 
   if (!product) {
-    return { status: "error", message: "That object could not be found in your studio." };
+    return { status: "error", message: t("studio.errors.objectNotInStudio") };
   }
 
   if (product.status === "ARCHIVED") {
-    return { status: "success", message: "This object is already archived." };
+    return { status: "success", message: t("studio.success.alreadyArchived") };
   }
 
   const updated = await database.product.updateMany({
@@ -483,7 +514,7 @@ export async function archiveProductAction(
   });
 
   if (updated.count !== 1) {
-    return { status: "error", message: "That object already changed status. Reload and retry." };
+    return { status: "error", message: t("studio.errors.statusChanged") };
   }
 
   await database.$transaction((transaction) =>
@@ -498,7 +529,7 @@ export async function archiveProductAction(
 
   logger.info("product.archived", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
-  if (adminManaged) return { status: "success", message: "Product archived." };
+  if (adminManaged) return { status: "success", message: t("studio.success.archived") };
   redirect("/vendor/products?archived=1");
 }
 
@@ -506,13 +537,14 @@ export async function deleteProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
-    return { status: "error", message: "That object reference is invalid." };
+    return { status: "error", message: t("validation.objectReferenceInvalid") };
   }
 
   const database = getDatabase();
@@ -526,13 +558,13 @@ export async function deleteProductAction(
   });
 
   if (!product) {
-    return { status: "error", message: "That object could not be found in your studio." };
+    return { status: "error", message: t("studio.errors.objectNotInStudio") };
   }
 
   if (product.status !== "DRAFT" && product.status !== "REJECTED") {
     return {
       status: "error",
-      message: "Only unpublished drafts or rejected objects can be deleted. Archive it instead.",
+      message: t("studio.errors.deleteOnlyDrafts"),
     };
   }
 
@@ -541,7 +573,7 @@ export async function deleteProductAction(
   });
 
   if (deleted.count !== 1) {
-    return { status: "error", message: "That object already changed status. Reload and retry." };
+    return { status: "error", message: t("studio.errors.statusChanged") };
   }
 
   const storage = getStorage();
@@ -555,7 +587,7 @@ export async function deleteProductAction(
 
   logger.info("product.deleted", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
-  if (adminManaged) return { status: "success", message: "Product draft deleted." };
+  if (adminManaged) return { status: "success", message: t("studio.success.draftDeleted") };
   redirect("/vendor/products?deleted=1");
 }
 
@@ -563,9 +595,10 @@ export async function updateStudioProfileAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const { actor, vendorId } = await requireStudio();
 
-  const parsed = studioProfileSchema.safeParse({
+  const parsed = createStudioProfileSchema(t).safeParse({
     contactPhone: formValue(formData, "contactPhone"),
     departmentIds: formData
       .getAll("departmentIds")
@@ -591,7 +624,7 @@ export async function updateStudioProfileAction(
   if (activeDepartments !== new Set(parsed.data.departmentIds).size) {
     return {
       status: "error",
-      fieldErrors: { departmentIds: "Choose active departments from the list." },
+      fieldErrors: { departmentIds: t("studio.errors.departmentsInactive") },
     };
   }
 
@@ -622,15 +655,31 @@ export async function updateStudioProfileAction(
   redirect("/vendor/profile?saved=1");
 }
 
+class StockChangeError extends Error {
+  constructor(
+    message: string,
+    readonly key: string,
+  ) {
+    super(message);
+  }
+}
+
+/** Translate a stock-helper error key into the visitor's locale. */
+function stockErrorMessage(errorKey: StockErrorKey, t: Translator): string {
+  if (errorKey === "max") return t("studio.errors.stock.max", { max: MAX_UNIT_STOCK });
+  return t(`studio.errors.stock.${errorKey}`);
+}
+
 export async function adjustInventoryAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { actor, vendorId } = access;
 
-  const parsed = inventoryAdjustmentSchema.safeParse({
+  const parsed = createInventoryAdjustmentSchema(t).safeParse({
     productId: formValue(formData, "productId"),
     mode: formValue(formData, "mode"),
     quantity: formValue(formData, "quantity"),
@@ -652,11 +701,14 @@ export async function adjustInventoryAction(
       });
 
       if (!product) {
-        throw new StockChangeError("That object could not be found in your studio.");
+        throw new StockChangeError(
+          t("studio.errors.objectNotInStudio"),
+          "studio.errors.objectNotInStudio",
+        );
       }
 
       if (product.status === "ARCHIVED") {
-        throw new StockChangeError("Archived objects cannot change stock.");
+        throw new StockChangeError(t("studio.errors.archivedStock"), "studio.errors.archivedStock");
       }
 
       const result = applyStockAdjustment(product.stock, {
@@ -665,7 +717,10 @@ export async function adjustInventoryAction(
       });
 
       if (!result.ok) {
-        throw new StockChangeError(result.error);
+        throw new StockChangeError(
+          stockErrorMessage(result.errorKey, t),
+          `studio.errors.stock.${result.errorKey}`,
+        );
       }
 
       const updated = await transaction.product.updateMany({
@@ -674,9 +729,7 @@ export async function adjustInventoryAction(
       });
 
       if (updated.count !== 1) {
-        throw new StockChangeError(
-          "Stock changed while you were editing. Reload the page and try again.",
-        );
+        throw new StockChangeError(t("studio.errors.stockChanged"), "studio.errors.stockChanged");
       }
 
       await transaction.inventoryMovement.create({
@@ -690,7 +743,10 @@ export async function adjustInventoryAction(
         },
       });
 
-      return `Stock updated from ${result.previousStock} to ${result.nextStock}.`;
+      return t("studio.success.stockUpdated", {
+        from: result.previousStock,
+        to: result.nextStock,
+      });
     });
 
     logger.info("inventory.adjusted", {
@@ -702,36 +758,35 @@ export async function adjustInventoryAction(
     return { status: "success", message };
   } catch (error) {
     if (error instanceof StockChangeError) {
-      return { status: "error", message: error.message };
+      return { status: "error", message: t(error.key) };
     }
 
     throw error;
   }
 }
 
-class StockChangeError extends Error {}
-
 export async function uploadProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { actor, vendorId } = access;
   const productId = asUuid(formValue(formData, "productId"));
 
   if (!productId) {
-    return { status: "error", message: "That object reference is invalid." };
+    return { status: "error", message: t("validation.objectReferenceInvalid") };
   }
 
   const file = formData.get("image");
 
   if (!(file instanceof File) || file.size === 0) {
-    return { status: "error", fieldErrors: { image: "Choose an image file." } };
+    return { status: "error", fieldErrors: { image: t("studio.errors.image.chooseFile") } };
   }
 
   if (file.size > MAX_IMAGE_BYTES) {
-    return { status: "error", fieldErrors: { image: "Images must be 5 MB or smaller." } };
+    return { status: "error", fieldErrors: { image: t("studio.errors.image.tooLarge") } };
   }
 
   const database = getDatabase();
@@ -746,21 +801,21 @@ export async function uploadProductImageAction(
   });
 
   if (!product) {
-    return { status: "error", message: "That object could not be found in your studio." };
+    return { status: "error", message: t("studio.errors.objectNotInStudio") };
   }
 
   if (product.status === "PENDING_REVIEW") {
-    return { status: "error", message: "Wait for the review before changing images." };
+    return { status: "error", message: t("studio.errors.imagesLockedByReview") };
   }
 
   if (product.status === "ARCHIVED") {
-    return { status: "error", message: "Archived objects cannot change images." };
+    return { status: "error", message: t("studio.errors.archivedImages") };
   }
 
   if (product._count.images >= MAX_PRODUCT_IMAGES) {
     return {
       status: "error",
-      fieldErrors: { image: `Each object can have ${MAX_PRODUCT_IMAGES} images.` },
+      fieldErrors: { image: t("studio.errors.imageLimit", { max: MAX_PRODUCT_IMAGES }) },
     };
   }
 
@@ -772,7 +827,7 @@ export async function uploadProductImageAction(
   });
 
   if (!validation.ok) {
-    return { status: "error", fieldErrors: { image: validation.error } };
+    return { status: "error", fieldErrors: { image: imageValidationMessage(validation.error, t) } };
   }
 
   const key = `products/${product.id}/${randomUUID()}.${validation.image.extension}`;
@@ -804,20 +859,21 @@ export async function uploadProductImageAction(
 
   logger.info("product.image_uploaded", { actorId: actor.id, productId: product.id });
   revalidateCatalog();
-  return { status: "success", message: "Image uploaded." };
+  return { status: "success", message: t("studio.success.imageUploaded") };
 }
 
 export async function deleteProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { actor, vendorId } = access;
   const imageId = asUuid(formValue(formData, "imageId"));
 
   if (!imageId) {
-    return { status: "error", message: "That image reference is invalid." };
+    return { status: "error", message: t("validation.imageReferenceInvalid") };
   }
 
   const database = getDatabase();
@@ -837,17 +893,17 @@ export async function deleteProductImageAction(
   });
 
   if (!image) {
-    return { status: "error", message: "That image could not be found in your studio." };
+    return { status: "error", message: t("studio.errors.imageNotInStudio") };
   }
 
   if (image.product.status === "PENDING_REVIEW") {
-    return { status: "error", message: "Wait for the review before changing images." };
+    return { status: "error", message: t("studio.errors.imagesLockedByReview") };
   }
 
   if (image.product.status === "PUBLISHED" && image.product._count.images <= 1) {
     return {
       status: "error",
-      message: "A published object needs at least one image. Archive it or add another first.",
+      message: t("studio.errors.publishedNeedsImage"),
     };
   }
 
@@ -856,7 +912,7 @@ export async function deleteProductImageAction(
   });
 
   if (deleted.count !== 1) {
-    return { status: "error", message: "That image already changed. Reload and retry." };
+    return { status: "error", message: t("studio.errors.imageChanged") };
   }
 
   await getStorage()
@@ -867,21 +923,22 @@ export async function deleteProductImageAction(
 
   logger.info("product.image_deleted", { actorId: actor.id, productId: image.productId });
   revalidateCatalog();
-  return { status: "success", message: "Image removed." };
+  return { status: "success", message: t("studio.success.imageRemoved") };
 }
 
 export async function moveProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const access = await requireManagedStudio(formData);
-  if (!access) return { status: "error", message: "Administrator access is required." };
+  if (!access) return { status: "error", message: t("admin.errors.accessRequired") };
   const { vendorId } = access;
   const imageId = asUuid(formValue(formData, "imageId"));
   const direction = formValue(formData, "direction");
 
   if (!imageId || (direction !== "up" && direction !== "down")) {
-    return { status: "error", message: "That image reference is invalid." };
+    return { status: "error", message: t("validation.imageReferenceInvalid") };
   }
 
   const database = getDatabase();
@@ -891,11 +948,11 @@ export async function moveProductImageAction(
   });
 
   if (!image) {
-    return { status: "error", message: "That image could not be found in your studio." };
+    return { status: "error", message: t("studio.errors.imageNotInStudio") };
   }
 
   if (image.product.status === "PENDING_REVIEW" || image.product.status === "ARCHIVED") {
-    return { status: "error", message: "Images cannot be reordered right now." };
+    return { status: "error", message: t("studio.errors.imagesLocked") };
   }
 
   const images = await database.productImage.findMany({
@@ -910,7 +967,7 @@ export async function moveProductImageAction(
   const neighbour = images[neighbourIndex];
 
   if (!current || !neighbour) {
-    return { status: "success", message: "Image order unchanged." };
+    return { status: "success", message: t("studio.success.imageOrderUnchanged") };
   }
 
   await database.$transaction([
@@ -925,5 +982,5 @@ export async function moveProductImageAction(
   ]);
 
   revalidateCatalog();
-  return { status: "success", message: "Image order updated." };
+  return { status: "success", message: t("studio.success.imageOrderUpdated") };
 }

@@ -9,8 +9,10 @@ import { Field } from "@/components/ui/field";
 import { FormMessage } from "@/components/ui/form-message";
 import { resetPasswordAction } from "@/features/identity/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const t = useT();
   const [state, action] = useActionState(resetPasswordAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -20,9 +22,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <FormMessage state={state} />
 
       <Field
-        label="New password"
+        label={t("auth.newPassword")}
         htmlFor="reset-password"
-        hint="At least 12 characters"
+        hint={t("auth.passwordHint")}
         error={errors?.password}
       >
         <PasswordInput
@@ -36,7 +38,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </Field>
 
       <Field
-        label="Confirm new password"
+        label={t("auth.confirmNewPassword")}
         htmlFor="reset-confirm-password"
         error={errors?.confirmPassword}
       >
@@ -50,14 +52,16 @@ export function ResetPasswordForm({ token }: { token: string }) {
         />
       </Field>
 
-      <SubmitButton pendingLabel="Updating password…">Update password</SubmitButton>
+      <SubmitButton pendingLabel={t("auth.updatingPassword")}>
+        {t("auth.updatePassword")}
+      </SubmitButton>
 
       <p className="text-center text-sm text-muted-foreground">
         <Link
           href="/forgot-password"
           className="rounded-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         >
-          Request a new link
+          {t("auth.requestNewLink")}
         </Link>
       </p>
     </form>

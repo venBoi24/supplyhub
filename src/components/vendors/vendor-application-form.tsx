@@ -12,6 +12,7 @@ import {
 } from "@/components/vendors/vendor-department-picker";
 import { initialFormState } from "@/features/identity/form-state";
 import { applyForVendorAction } from "@/features/vendors/actions";
+import { useT } from "@/i18n/client";
 
 export function VendorApplicationForm({
   departments,
@@ -20,6 +21,7 @@ export function VendorApplicationForm({
   departments: VendorDepartmentOption[];
   defaultPhone: string;
 }) {
+  const t = useT();
   const [state, action] = useActionState(applyForVendorAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -27,7 +29,7 @@ export function VendorApplicationForm({
     <form action={action} className="space-y-5">
       <FormMessage state={state} />
 
-      <Field label="Studio name" htmlFor="vendor-name" error={errors?.name}>
+      <Field label={t("studio.studioName")} htmlFor="vendor-name" error={errors?.name}>
         <Input
           id="vendor-name"
           name="name"
@@ -39,9 +41,9 @@ export function VendorApplicationForm({
       </Field>
 
       <Field
-        label="Studio handle"
+        label={t("studio.studioHandle")}
         htmlFor="vendor-slug"
-        hint="Lowercase, hyphens"
+        hint={t("studio.handleHint")}
         error={errors?.slug}
       >
         <Input
@@ -57,9 +59,9 @@ export function VendorApplicationForm({
       </Field>
 
       <Field
-        label="Public contact phone"
+        label={t("studio.publicContactPhone")}
         htmlFor="vendor-contact-phone"
-        hint="Customers will use this to contact your studio. Include your country code."
+        hint={t("studio.contactPhoneHint")}
         error={errors?.contactPhone}
       >
         <Input
@@ -79,9 +81,9 @@ export function VendorApplicationForm({
       <VendorDepartmentPicker departments={departments} error={errors?.departmentIds} />
 
       <Field
-        label="What do you make?"
+        label={t("studio.whatDoYouMake")}
         htmlFor="vendor-description"
-        hint="20–1000 characters"
+        hint={t("studio.storyRange")}
         error={errors?.description}
       >
         <Textarea
@@ -93,12 +95,11 @@ export function VendorApplicationForm({
         />
       </Field>
 
-      <SubmitButton pendingLabel="Submitting application…">Submit application</SubmitButton>
+      <SubmitButton pendingLabel={t("studio.submittingApplication")}>
+        {t("studio.submitApplication")}
+      </SubmitButton>
 
-      <p className="text-xs leading-5 text-muted-foreground">
-        Applications are reviewed by a SupplyHub administrator. You cannot edit your application
-        while it is pending.
-      </p>
+      <p className="text-xs leading-5 text-muted-foreground">{t("studio.applicationReviewNote")}</p>
     </form>
   );
 }

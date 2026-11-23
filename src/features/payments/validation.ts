@@ -2,10 +2,17 @@ import { z } from "zod";
 
 import { ORDER_NUMBER_PATTERN } from "@/features/checkout/order-number";
 import { parseMoneyToCents } from "@/features/catalog/money";
+import { defaultTranslator, type Translator } from "@/i18n/dictionary";
 import { MOBILE_MONEY_METHODS, LYNXPAY_PAYMENT_METHODS } from "@/server/payments/types";
 
 const emptyToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
+
+/**
+ * Schema factories take a translator so server actions can emit field errors in
+ * the visitor's selected locale. The module-level `*Schema` consts below are the
+ * same factories bound to English for non-request callers and tests.
+ */
 
 /**
  * LynxPay expects Tanzanian mobile numbers in international form without a plus sign.
@@ -18,121 +25,144 @@ export function normalizeTanzanianPhone(input: string): string | null {
   return /^255[67]\d{8}$/.test(national) ? national : null;
 }
 
-const phoneField = z
-  .string()
-  .trim()
-  .optional()
-  .default("")
-  .transform((value, context) => {
-    if (!value) {
-      return "";
-    }
+const createPhoneField = (t: Translator) =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .default("")
+    .transform((value, context) => {
+      if (!value) {
+        return "";
+      }
 
-    const normalized = normalizeTanzanianPhone(value);
+      const normalized = normalizeTanzanianPhone(value);
 
-    if (!normalized) {
-      context.addIssue({
-        code: "custom",
-        message: "Enter a Tanzanian mobile number, for example 0754 123 456.",
-      });
-      return z.NEVER;
-    }
+      if (!normalized) {
+        context.addIssue({
+          code: "custom",
+          message: t("validation.tanzanianMobileExample"),
+        });
+        return z.NEVER;
+      }
 
-    return normalized;
-  });
+      return normalized;
+    });
 
-export const startPaymentSchema = z
-  .object({
-    orderNumber: z.string().regex(ORDER_NUMBER_PATTERN, "That order reference is invalid."),
-    method: z.enum(LYNXPAY_PAYMENT_METHODS),
-    phone: phoneField,
-  })
-  .superRefine((value, context) => {
-    if (MOBILE_MONEY_METHODS.includes(value.method) && !value.phone) {
-      context.addIssue({
-        code: "custom",
-        path: ["phone"],
-        message: "A mobile number is required for mobile money.",
-      });
-    }
-  });
+export const createStartPaymentSchema = (t: Translator) =>
+  z
+    .object({
+      orderNumber: z.string().regex(ORDER_NUMBER_PATTERN, {
+        error: t("validation.orderReferenceInvalid"),
+      }),
+      method: z.enum(LYNXPAY_PAYMENT_METHODS),
+      phone: createPhoneField(t),
+    })
+    .superRefine((value, context) => {
+      if (MOBILE_MONEY_METHODS.includes(value.method) && !value.phone) {
+        context.addIssue({
+          code: "custom",
+          path: ["phone"],
+          message: t("validation.mobileNumberRequiredForMoMo"),
+        });
+      }
+    });
+
+export const startPaymentSchema = createStartPaymentSchema(defaultTranslator);
 
 export type StartPaymentInput = z.infer<typeof startPaymentSchema>;
 
-const moneyField = z
-  .string()
-  .trim()
-  .superRefine((value, context) => {
-    const cents = parseMoneyToCents(value);
-
-    if (cents === null || cents <= 0) {
-      context.addIssue({
-        code: "custom",
-        message: "Enter a positive amount with up to two decimal places.",
-      });
-    }
-  })
-  .transform((value) => parseMoneyToCents(value) ?? 0);
-
-export const refundSchema = z.object({
-  orderNumber: z.string().regex(ORDER_NUMBER_PATTERN, "That order reference is invalid."),
-  paymentId: z.uuid("That payment reference is invalid."),
-  amountCents: moneyField,
-  reason: z
+const createMoneyField = (t: Translator) =>
+  z
     .string()
     .trim()
-    .min(3, "Give a short reason for the refund.")
-    .max(200, "Keep the reason under 200 characters."),
-});
+    .superRefine((value, context) => {
+      const cents = parseMoneyToCents(value);
+
+      if (cents === null || cents <= 0) {
+        context.addIssue({
+          code: "custom",
+          message: t("validation.positiveAmountTwoDecimals"),
+        });
+      }
+    })
+    .transform((value) => parseMoneyToCents(value) ?? 0);
+
+export const createRefundSchema = (t: Translator) =>
+  z.object({
+    orderNumber: z.string().regex(ORDER_NUMBER_PATTERN, {
+      error: t("validation.orderReferenceInvalid"),
+    }),
+    paymentId: z.uuid({ error: t("validation.paymentReferenceInvalid") }),
+    amountCents: createMoneyField(t),
+    reason: z
+      .string()
+      .trim()
+      .min(3, { error: t("validation.refundReasonRequired") })
+      .max(200, { error: t("validation.refundReasonMax", { max: 200 }) }),
+  });
+
+export const refundSchema = createRefundSchema(defaultTranslator);
 
 export type RefundInput = z.infer<typeof refundSchema>;
 
-const isoDate = z
-  .string()
-  .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date in YYYY-MM-DD form.")
-  .transform((value, context) => {
-    const date = new Date(`${value}T00:00:00.000Z`);
+const createIsoDate = (t: Translator) =>
+  z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: t("validation.dateFormatIso") })
+    .transform((value, context) => {
+      const date = new Date(`${value}T00:00:00.000Z`);
 
-    if (Number.isNaN(date.getTime())) {
-      context.addIssue({ code: "custom", message: "That date is invalid." });
-      return z.NEVER;
-    }
+      if (Number.isNaN(date.getTime())) {
+        context.addIssue({ code: "custom", message: t("validation.dateInvalid") });
+        return z.NEVER;
+      }
 
-    return date;
-  });
+      return date;
+    });
 
-export const payoutSchema = z
-  .object({
-    vendorId: z.uuid("Choose a studio."),
-    amountCents: moneyField,
-    periodStart: isoDate,
-    periodEnd: isoDate,
-    note: z.preprocess(
-      emptyToUndefined,
-      z.string().trim().max(200, "Keep the note under 200 characters.").optional(),
-    ),
-  })
-  .superRefine((value, context) => {
-    if (value.periodStart > value.periodEnd) {
-      context.addIssue({
-        code: "custom",
-        path: ["periodEnd"],
-        message: "The period end must not be before the start.",
-      });
-    }
+export const createPayoutSchema = (t: Translator) =>
+  z
+    .object({
+      vendorId: z.uuid({ error: t("validation.chooseStudio") }),
+      amountCents: createMoneyField(t),
+      periodStart: createIsoDate(t),
+      periodEnd: createIsoDate(t),
+      note: z.preprocess(
+        emptyToUndefined,
+        z
+          .string()
+          .trim()
+          .max(200, { error: t("validation.payoutNoteMax", { max: 200 }) })
+          .optional(),
+      ),
+    })
+    .superRefine((value, context) => {
+      if (value.periodStart > value.periodEnd) {
+        context.addIssue({
+          code: "custom",
+          path: ["periodEnd"],
+          message: t("validation.periodEndBeforeStart"),
+        });
+      }
 
-    if (value.periodEnd.getTime() > Date.now() + 24 * 60 * 60 * 1000) {
-      context.addIssue({
-        code: "custom",
-        path: ["periodEnd"],
-        message: "The period end cannot be in the future.",
-      });
-    }
-  });
+      if (value.periodEnd.getTime() > Date.now() + 24 * 60 * 60 * 1000) {
+        context.addIssue({
+          code: "custom",
+          path: ["periodEnd"],
+          message: t("validation.periodEndFuture"),
+        });
+      }
+    });
+
+export const payoutSchema = createPayoutSchema(defaultTranslator);
 
 export type PayoutInput = z.infer<typeof payoutSchema>;
 
-export const payoutActionSchema = z.object({
-  payoutId: z.uuid("That payout reference is invalid."),
-});
+export const createPayoutActionSchema = (t: Translator) =>
+  z.object({
+    payoutId: z.uuid({ error: t("validation.payoutReferenceInvalid") }),
+  });
+
+export const payoutActionSchema = createPayoutActionSchema(defaultTranslator);

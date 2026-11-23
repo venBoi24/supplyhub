@@ -15,11 +15,13 @@ import {
   UserRound,
 } from "lucide-react";
 
+import { useT } from "@/i18n/client";
+import type { Translator } from "@/i18n/dictionary";
 import { cn } from "@/lib/utils/cn";
 
 import {
   legProgress,
-  STATUS_LABEL,
+  STATUS_LABEL_KEYS,
   STATUS_ORDER,
   type Delivery,
   type DeliveryStatus,
@@ -45,33 +47,36 @@ const statusTone: Record<DeliveryStatus, string> = {
   delivered: "bg-[#12271f] text-[#4ade80]",
 };
 
-const LIVE_NOTE: Record<DeliveryStatus, string> = {
-  pending: "Waiting for the studio to dispatch a courier.",
-  assigned: "A courier has been assigned to your order.",
-  accepted: "Your courier accepted the job.",
-  to_pickup: "Your courier is heading to the studio.",
-  at_pickup: "Your courier is collecting your package.",
-  transit: "Your package is moving on the map.",
-  delivered: "Package handed over. Enjoy!",
+const LIVE_NOTE_KEYS: Record<DeliveryStatus, string> = {
+  pending: "delivery.notePending",
+  assigned: "delivery.noteAssigned",
+  accepted: "delivery.noteAccepted",
+  to_pickup: "delivery.noteToPickup",
+  at_pickup: "delivery.noteAtPickup",
+  transit: "delivery.noteTransit",
+  delivered: "delivery.noteDelivered",
 };
 
 function StatusPill({ status }: { status: DeliveryStatus }) {
+  const t = useT();
   return (
     <span
       className={cn("rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold", statusTone[status])}
     >
-      {STATUS_LABEL[status]}
+      {t(STATUS_LABEL_KEYS[status])}
     </span>
   );
 }
 
-function etaText(d: Delivery, now: number): string {
-  if (d.status === "delivered") return "Delivered";
-  if (d.status !== "transit" && d.status !== "to_pickup") return "Waiting for courier";
+function etaText(d: Delivery, now: number, t: Translator): string {
+  if (d.status === "delivered") return t("checkout.status.delivered");
+  if (d.status !== "transit" && d.status !== "to_pickup") return t("delivery.waitingForCourier");
   const remaining = Math.max(0, d.legDurationMs - (now - d.legStartedAt));
   const mins = Math.floor(remaining / 60_000);
   const secs = Math.floor((remaining % 60_000) / 1000);
-  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  return mins > 0
+    ? t("delivery.durationMinutes", { mins, secs })
+    : t("delivery.durationSeconds", { secs });
 }
 
 interface ViewProps {
@@ -79,6 +84,7 @@ interface ViewProps {
 }
 
 export function VendorView({ onFocus }: ViewProps) {
+  const t = useT();
   const { state, now, addAgent, toggleAgent, removeAgent, assignDelivery } = useDelivery();
   const [name, setName] = useState("");
   const [vehicle, setVehicle] = useState("");
@@ -114,9 +120,9 @@ export function VendorView({ onFocus }: ViewProps) {
     <div className="space-y-5">
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Couriers online", value: online },
-          { label: "Active deliveries", value: active },
-          { label: "Delivered", value: delivered },
+          { label: t("delivery.couriersOnline"), value: online },
+          { label: t("delivery.activeDeliveries"), value: active },
+          { label: t("checkout.status.delivered"), value: delivered },
         ].map((s) => (
           <div key={s.label} className={cn(panel, "p-4")}>
             <p className={cn("text-[0.6875rem] tracking-[0.12em] uppercase", muted)}>{s.label}</p>
@@ -127,7 +133,7 @@ export function VendorView({ onFocus }: ViewProps) {
 
       <section className={cn(panel, "p-5")}>
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-[#edf1fb]">
-          <Bike className="size-5 text-[#f97316]" /> Your delivery team
+          <Bike className="size-5 text-[#f97316]" /> {t("delivery.yourDeliveryTeam")}
         </h2>
         <ul className="mt-4 space-y-3">
           {state.agents.map((a) => (
@@ -149,7 +155,11 @@ export function VendorView({ onFocus }: ViewProps) {
                 </p>
               </div>
               <span className={cn("flex items-center gap-1 text-xs", muted)}>
-                <Star className="size-3.5 text-[#fbbf24]" /> {a.rating} · {a.trips} trips
+                <Star className="size-3.5 text-[#fbbf24]" /> {a.rating} ·{" "}
+                {t("common.countNoun", {
+                  count: a.trips,
+                  noun: t(a.trips === 1 ? "common.tripOne" : "common.tripMany"),
+                })}
               </span>
               <button
                 type="button"
@@ -163,13 +173,13 @@ export function VendorView({ onFocus }: ViewProps) {
                     a.status === "online" ? "bg-[#4ade80]" : "bg-[#5b6a8a]",
                   )}
                 />
-                {a.status === "online" ? "Online" : "Offline"}
+                {a.status === "online" ? t("delivery.online") : t("delivery.offline")}
               </button>
               <button
                 type="button"
                 onClick={() => removeAgent(a.id)}
                 className={btnGhost}
-                aria-label={`Remove ${a.name}`}
+                aria-label={t("delivery.removeCourier", { name: a.name })}
               >
                 <Trash2 className="size-4" />
               </button>
@@ -180,46 +190,44 @@ export function VendorView({ onFocus }: ViewProps) {
         <form onSubmit={submit} className="mt-4 grid gap-2 sm:grid-cols-2">
           <input
             className={input}
-            placeholder="Courier name"
+            placeholder={t("delivery.courierName")}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            aria-label="Courier name"
+            aria-label={t("delivery.courierName")}
           />
           <input
             className={input}
-            placeholder="Vehicle (e.g. Motorbike)"
+            placeholder={t("delivery.vehiclePlaceholder")}
             value={vehicle}
             onChange={(e) => setVehicle(e.target.value)}
-            aria-label="Vehicle"
+            aria-label={t("delivery.vehicle")}
           />
           <input
             className={input}
-            placeholder="Plate number"
+            placeholder={t("delivery.plateNumber")}
             value={plate}
             onChange={(e) => setPlate(e.target.value)}
-            aria-label="Plate number"
+            aria-label={t("delivery.plateNumber")}
           />
           <input
             className={input}
-            placeholder="Phone"
+            placeholder={t("checkout.phoneLabel")}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            aria-label="Phone"
+            aria-label={t("checkout.phoneLabel")}
           />
           <button type="submit" className={cn(btnPrimary, "sm:col-span-2")}>
-            <Plus className="size-4" /> Add courier
+            <Plus className="size-4" /> {t("delivery.addCourier")}
           </button>
         </form>
       </section>
 
       <section className={cn(panel, "p-5")}>
         <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-[#edf1fb]">
-          <Package className="size-5 text-[#f97316]" /> Dispatch board
+          <Package className="size-5 text-[#f97316]" /> {t("delivery.dispatchBoard")}
         </h2>
         {pending.length === 0 ? (
-          <p className={cn("mt-3 text-sm", muted)}>
-            Every order has a courier. New orders appear here.
-          </p>
+          <p className={cn("mt-3 text-sm", muted)}>{t("delivery.allDispatched")}</p>
         ) : (
           <ul className="mt-4 space-y-3">
             {pending.map((d) => (
@@ -236,9 +244,9 @@ export function VendorView({ onFocus }: ViewProps) {
                     className={input}
                     value={assignChoice[d.id] ?? ""}
                     onChange={(e) => setAssignChoice((p) => ({ ...p, [d.id]: e.target.value }))}
-                    aria-label={`Assign courier for ${d.orderNumber}`}
+                    aria-label={t("delivery.assignCourierFor", { order: d.orderNumber })}
                   >
-                    <option value="">Choose courier…</option>
+                    <option value="">{t("delivery.chooseCourier")}</option>
                     {state.agents
                       .filter((a) => a.status === "online")
                       .map((a) => (
@@ -256,7 +264,7 @@ export function VendorView({ onFocus }: ViewProps) {
                       if (choice) assignDelivery(d.id, choice);
                     }}
                   >
-                    Assign
+                    {t("delivery.assign")}
                   </button>
                 </div>
               </li>
@@ -275,9 +283,11 @@ export function VendorView({ onFocus }: ViewProps) {
                   className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#223047] px-3 py-2"
                 >
                   <span className="font-mono text-xs text-[#edf1fb]">{d.orderNumber}</span>
-                  <span className={cn("text-xs", muted)}>{agent?.name ?? "Unassigned"}</span>
+                  <span className={cn("text-xs", muted)}>
+                    {agent?.name ?? t("delivery.unassigned")}
+                  </span>
                   <StatusPill status={d.status} />
-                  <span className={cn("text-xs", muted)}>{etaText(d, now)}</span>
+                  <span className={cn("text-xs", muted)}>{etaText(d, now, t)}</span>
                 </li>
               );
             })}
@@ -288,6 +298,7 @@ export function VendorView({ onFocus }: ViewProps) {
 }
 
 export function AgentView({ onFocus }: ViewProps) {
+  const t = useT();
   const { state, now, acceptDelivery, startPickup, confirmPickup, completeDelivery } =
     useDelivery();
   const [agentId, setAgentId] = useState("ag-1");
@@ -297,7 +308,7 @@ export function AgentView({ onFocus }: ViewProps) {
 
   useEffect(() => onFocus(job?.id ?? null), [job?.id, onFocus]);
 
-  if (!agent) return <p className={muted}>No courier profile yet. Add one from the seller view.</p>;
+  if (!agent) return <p className={muted}>{t("delivery.noCourierProfile")}</p>;
 
   const progress = job ? legProgress(job, now) : 0;
 
@@ -321,7 +332,7 @@ export function AgentView({ onFocus }: ViewProps) {
           className={cn(input, "w-auto")}
           value={agent.id}
           onChange={(e) => setAgentId(e.target.value)}
-          aria-label="Switch courier profile"
+          aria-label={t("delivery.switchCourier")}
         >
           {state.agents.map((a) => (
             <option key={a.id} value={a.id}>
@@ -333,9 +344,9 @@ export function AgentView({ onFocus }: ViewProps) {
 
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Rating", value: agent.rating.toFixed(1) },
-          { label: "Trips", value: agent.trips },
-          { label: "Today", value: "TZS 38,000" },
+          { label: t("delivery.rating"), value: agent.rating.toFixed(1) },
+          { label: t("common.trips"), value: agent.trips },
+          { label: t("delivery.earningsToday"), value: "TZS 38,000" },
         ].map((s) => (
           <div key={s.label} className={cn(panel, "p-4")}>
             <p className={cn("text-[0.6875rem] tracking-[0.12em] uppercase", muted)}>{s.label}</p>
@@ -356,7 +367,7 @@ export function AgentView({ onFocus }: ViewProps) {
                 <Store className="mt-0.5 size-4 shrink-0 text-[#2dd4bf]" />
                 <div>
                   <p className={cn("text-[0.6875rem] tracking-[0.12em] uppercase", muted)}>
-                    Pickup
+                    {t("delivery.pickup")}
                   </p>
                   <p className="text-sm text-[#edf1fb]">{job.storeName}</p>
                 </div>
@@ -365,7 +376,7 @@ export function AgentView({ onFocus }: ViewProps) {
                 <MapPin className="mt-0.5 size-4 shrink-0 text-[#fb923c]" />
                 <div>
                   <p className={cn("text-[0.6875rem] tracking-[0.12em] uppercase", muted)}>
-                    Drop-off
+                    {t("delivery.dropOff")}
                   </p>
                   <p className="text-sm text-[#edf1fb]">
                     {job.buyer} · {job.buyerAddress}
@@ -382,7 +393,8 @@ export function AgentView({ onFocus }: ViewProps) {
                   />
                 </div>
                 <p className={cn("mt-2 flex items-center gap-1 text-xs", muted)}>
-                  <Clock className="size-3.5" /> {etaText(job, now)} remaining
+                  <Clock className="size-3.5" />{" "}
+                  {t("delivery.timeRemaining", { time: etaText(job, now, t) })}
                 </p>
               </div>
             ) : null}
@@ -394,7 +406,7 @@ export function AgentView({ onFocus }: ViewProps) {
                 className={cn(btnPrimary, "w-full")}
                 onClick={() => acceptDelivery(job.id)}
               >
-                Accept delivery
+                {t("delivery.acceptDelivery")}
               </button>
             ) : job.status === "accepted" ? (
               <button
@@ -402,11 +414,11 @@ export function AgentView({ onFocus }: ViewProps) {
                 className={cn(btnPrimary, "w-full")}
                 onClick={() => startPickup(job.id)}
               >
-                Head to pickup
+                {t("delivery.headToPickup")}
               </button>
             ) : job.status === "to_pickup" ? (
               <button type="button" className={cn(btnPrimary, "w-full")} disabled>
-                Driving to the studio…
+                {t("delivery.drivingToStudio")}
               </button>
             ) : job.status === "at_pickup" ? (
               <button
@@ -414,7 +426,7 @@ export function AgentView({ onFocus }: ViewProps) {
                 className={cn(btnPrimary, "w-full")}
                 onClick={() => confirmPickup(job.id)}
               >
-                Pick up & start delivery
+                {t("delivery.pickUpAndStart")}
               </button>
             ) : (
               <button
@@ -422,7 +434,7 @@ export function AgentView({ onFocus }: ViewProps) {
                 className={cn(btnPrimary, "w-full")}
                 onClick={() => completeDelivery(job.id)}
               >
-                <CheckCircle2 className="size-4" /> Complete delivery
+                <CheckCircle2 className="size-4" /> {t("delivery.completeDelivery")}
               </button>
             )}
           </div>
@@ -431,9 +443,9 @@ export function AgentView({ onFocus }: ViewProps) {
         <section className={cn(panel, "p-6 text-center")}>
           <CheckCircle2 className="mx-auto size-8 text-[#4ade80]" />
           <p className="mt-3 font-display text-lg font-semibold text-[#edf1fb]">
-            You&apos;re all caught up
+            {t("delivery.allCaughtUp")}
           </p>
-          <p className={cn("mt-1 text-sm", muted)}>New assignments from your seller appear here.</p>
+          <p className={cn("mt-1 text-sm", muted)}>{t("delivery.newAssignmentsHere")}</p>
         </section>
       )}
     </div>
@@ -441,6 +453,7 @@ export function AgentView({ onFocus }: ViewProps) {
 }
 
 export function BuyerView({ onFocus }: ViewProps) {
+  const t = useT();
   const { state, now } = useDelivery();
   const [selectedId, setSelectedId] = useState("dl-1");
   const delivery = state.deliveries.find((d) => d.id === selectedId) ?? state.deliveries[0];
@@ -448,7 +461,7 @@ export function BuyerView({ onFocus }: ViewProps) {
 
   useEffect(() => onFocus(delivery?.id ?? null), [delivery?.id, onFocus]);
 
-  if (!delivery) return <p className={muted}>No deliveries to track yet.</p>;
+  if (!delivery) return <p className={muted}>{t("delivery.noDeliveries")}</p>;
 
   const stepIndex = STATUS_ORDER.indexOf(delivery.status);
 
@@ -457,7 +470,7 @@ export function BuyerView({ onFocus }: ViewProps) {
       <div className={cn(panel, "flex flex-wrap items-center justify-between gap-3 p-4")}>
         <div>
           <p className={cn("text-[0.6875rem] tracking-[0.12em] uppercase", muted)}>
-            Tracking order
+            {t("delivery.trackingOrder")}
           </p>
           <p className="font-mono text-lg text-[#edf1fb]">{delivery.orderNumber}</p>
         </div>
@@ -465,7 +478,7 @@ export function BuyerView({ onFocus }: ViewProps) {
           className={cn(input, "w-auto")}
           value={delivery.id}
           onChange={(e) => setSelectedId(e.target.value)}
-          aria-label="Choose order to track"
+          aria-label={t("delivery.chooseOrder")}
         >
           {state.deliveries.map((d) => (
             <option key={d.id} value={d.id}>
@@ -479,7 +492,7 @@ export function BuyerView({ onFocus }: ViewProps) {
         <div className="flex items-center justify-between gap-2">
           <StatusPill status={delivery.status} />
           <span className={cn("flex items-center gap-1 text-sm font-semibold text-[#fb923c]")}>
-            <Clock className="size-4" /> {etaText(delivery, now)}
+            <Clock className="size-4" /> {etaText(delivery, now, t)}
           </span>
         </div>
 
@@ -508,10 +521,10 @@ export function BuyerView({ onFocus }: ViewProps) {
                 </span>
                 <div>
                   <p className={cn("text-sm font-medium", done ? "text-[#edf1fb]" : muted)}>
-                    {STATUS_LABEL[s]}
+                    {t(STATUS_LABEL_KEYS[s])}
                   </p>
                   {current ? (
-                    <p className={cn("text-xs", muted)}>{LIVE_NOTE[delivery.status]}</p>
+                    <p className={cn("text-xs", muted)}>{t(LIVE_NOTE_KEYS[delivery.status])}</p>
                   ) : null}
                 </div>
               </li>
@@ -541,17 +554,21 @@ export function BuyerView({ onFocus }: ViewProps) {
           <a
             href={`tel:${agent.phone.replace(/\s/g, "")}`}
             className={btnGhost}
-            aria-label={`Call ${agent.name}`}
+            aria-label={t("delivery.callCourier", { name: agent.name })}
           >
-            <Phone className="size-4" /> Call
+            <Phone className="size-4" /> {t("delivery.call")}
           </a>
         </section>
       ) : null}
 
       <section className={cn(panel, "p-5")}>
         <h2 className="flex items-center gap-2 font-display text-base font-semibold text-[#edf1fb]">
-          <Package className="size-4 text-[#f97316]" /> {delivery.items.length} items ·{" "}
-          {delivery.total}
+          <Package className="size-4 text-[#f97316]" />{" "}
+          {t("common.countNoun", {
+            count: delivery.items.length,
+            noun: t(delivery.items.length === 1 ? "common.item" : "common.items"),
+          })}{" "}
+          · {delivery.total}
         </h2>
         <ul className="mt-3 space-y-1">
           {delivery.items.map((it) => (

@@ -5,7 +5,8 @@ import { z } from "zod";
 
 import type { FormState } from "@/features/identity/form-state";
 import { firstFieldErrors, formValue } from "@/features/identity/form-state";
-import { studioProfileSchema } from "@/features/catalog/validation";
+import { createStudioProfileSchema } from "@/features/catalog/validation";
+import { getServerI18n } from "@/i18n/server";
 import { logger } from "@/lib/logging/logger";
 import { canPerformAdminAction } from "@/server/auth/policies";
 import { getSessionActor } from "@/server/auth/session";
@@ -23,8 +24,9 @@ export async function updateVendorProfileForUserAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
   if (!actor || !canPerformAdminAction(actor)) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   const profile = adminVendorProfileSchema.safeParse({
@@ -32,7 +34,7 @@ export async function updateVendorProfileForUserAction(
     vendorId: formValue(formData, "vendorId"),
     name: formValue(formData, "name"),
   });
-  const details = studioProfileSchema.safeParse({
+  const details = createStudioProfileSchema(t).safeParse({
     contactPhone: formValue(formData, "contactPhone"),
     departmentIds: formData
       .getAll("departmentIds")
@@ -47,7 +49,7 @@ export async function updateVendorProfileForUserAction(
     monogram: formValue(formData, "monogram"),
   });
   if (!profile.success)
-    return { status: "error", message: "The account reference or name is invalid." };
+    return { status: "error", message: t("admin.errors.accountReferenceOrNameInvalid") };
   if (!details.success) return { status: "error", fieldErrors: firstFieldErrors(details.error) };
 
   try {
@@ -107,15 +109,15 @@ export async function updateVendorProfileForUserAction(
     revalidatePath("/vendor");
     revalidatePath("/vendors");
     revalidatePath("/", "layout");
-    return { status: "success", message: "Vendor profile and map location saved." };
+    return { status: "success", message: t("admin.success.vendorProfileSaved") };
   } catch (error) {
     if (error instanceof Error && error.message === "invalid-target") {
-      return { status: "error", message: "That vendor profile is not available for this account." };
+      return { status: "error", message: t("admin.errors.vendorProfileUnavailable") };
     }
     if (error instanceof Error && error.message === "invalid-departments") {
       return {
         status: "error",
-        fieldErrors: { departmentIds: "Choose active departments from the list." },
+        fieldErrors: { departmentIds: t("studio.errors.departmentsInactive") },
       };
     }
     logger.error("admin.vendor_profile_update_failed", {
@@ -123,6 +125,6 @@ export async function updateVendorProfileForUserAction(
       targetId: profile.data.userId,
       error,
     });
-    return { status: "error", message: "The vendor profile could not be updated." };
+    return { status: "error", message: t("admin.errors.vendorProfileUpdateFailed") };
   }
 }

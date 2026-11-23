@@ -21,12 +21,14 @@ import { catalogHref, parseCatalogQuery } from "@/features/catalog/search-params
 import { PRODUCTS_PER_PAGE } from "@/features/catalog/types";
 import { getServerI18n } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "All objects",
-  description:
-    "Browse every object in the SupplyHub preview catalog: ceramics, leather goods, and textiles from independent studios.",
-  alternates: { canonical: "/products" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: t("products.metaTitle"),
+    description: t("products.metaDescription"),
+    alternates: { canonical: "/products" },
+  };
+}
 
 export default function ProductsPage({ searchParams }: PageProps<"/products">) {
   return (
@@ -160,3 +162,5 @@ async function ProductsContent({
     </PageShell>
   );
 }
+
+export const instant = false;

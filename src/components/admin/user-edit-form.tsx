@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteAdminUserAction, editAdminUserAction } from "@/features/admin/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function UserEditForm({
   userId,
@@ -16,6 +17,7 @@ export function UserEditForm({
   name: string;
   email: string;
 }) {
+  const t = useT();
   const [editState, editAction, editPending] = useActionState(
     editAdminUserAction,
     initialFormState,
@@ -29,20 +31,20 @@ export function UserEditForm({
     <div className="grid gap-3">
       <details>
         <summary className="cursor-pointer text-xs font-medium text-accent underline underline-offset-4">
-          Edit account
+          {t("admin.editAccount")}
         </summary>
         <form action={editAction} className="mt-3 grid min-w-64 gap-2">
           <input type="hidden" name="userId" value={userId} />
           <label className="grid gap-1 text-xs">
-            Name
+            {t("auth.name")}
             <Input name="name" defaultValue={name} maxLength={80} required minLength={2} />
           </label>
           <label className="grid gap-1 text-xs">
-            Email
+            {t("auth.email")}
             <Input name="email" type="email" defaultValue={email} maxLength={254} required />
           </label>
           <Button size="sm" type="submit" disabled={editPending}>
-            {editPending ? "Saving…" : "Save changes"}
+            {editPending ? t("common.saving") : t("admin.saveChanges")}
           </Button>
           {editState.message ? (
             <p role="status" className="text-xs text-muted-foreground">
@@ -55,14 +57,14 @@ export function UserEditForm({
       <form
         action={deleteAction}
         onSubmit={(event) => {
-          if (!window.confirm("Permanently delete this account? This cannot be undone.")) {
+          if (!window.confirm(t("admin.deleteAccountConfirm"))) {
             event.preventDefault();
           }
         }}
       >
         <input type="hidden" name="userId" value={userId} />
         <Button type="submit" variant="secondary" size="sm" disabled={deletePending}>
-          {deletePending ? "Deleting…" : "Delete"}
+          {deletePending ? t("admin.deletingPending") : t("common.delete")}
         </Button>
         {deleteState.message ? (
           <p role="status" className="mt-2 max-w-56 text-xs text-muted-foreground">

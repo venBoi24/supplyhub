@@ -19,21 +19,24 @@ import {
 } from "@/features/identity/actions";
 import { getAccountProfile } from "@/features/identity/queries";
 import { requireActor } from "@/server/auth/guards";
+import { getServerI18n } from "@/i18n/server";
 import type { UserRole } from "@/generated/prisma/enums";
-import { formatDate } from "@/lib/utils/format-date";
 import { initialsFor } from "@/lib/utils/initials";
 
-export const metadata: Metadata = {
-  title: "Your account",
-  description: "Manage your SupplyHub account, email verification, and studio application.",
-  robots: { index: false, follow: false },
+const ROLE_LABEL_KEYS: Record<UserRole, string> = {
+  CUSTOMER: "account.role.customer",
+  VENDOR: "account.role.vendor",
+  ADMIN: "account.role.admin",
 };
 
-const roleLabels: Record<UserRole, string> = {
-  CUSTOMER: "Customer",
-  VENDOR: "Studio owner",
-  ADMIN: "Administrator",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: t("account.metaTitle"),
+    description: t("account.metaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function searchParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -47,12 +50,36 @@ export default function AccountPage({ searchParams }: PageProps<"/account">) {
   );
 }
 
+async function AccountSkeleton() {
+  const { t } = await getServerI18n();
+  return (
+    <PageShell className="pt-10 sm:pt-14">
+      <div role="status" aria-label={t("account.loadingAccount")}>
+        <div className="border-b border-border pb-8">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="mt-4 h-12 w-72 max-w-full" />
+          <Skeleton className="mt-4 h-4 w-full max-w-lg" />
+        </div>
+        <div className="mt-10 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
+          <Skeleton className="h-72 w-full rounded-xl" />
+          <div className="space-y-6">
+            <Skeleton className="h-44 w-full rounded-xl" />
+            <Skeleton className="h-44 w-full rounded-xl" />
+            <Skeleton className="h-52 w-full rounded-xl" />
+          </div>
+        </div>
+      </div>
+      <span className="sr-only">{t("common.loading")}</span>
+    </PageShell>
+  );
+}
+
 async function AccountContent({
   searchParams,
 }: {
   searchParams: PageProps<"/account">["searchParams"];
 }) {
-  const actor = await requireActor("/account");
+  const [{ t, formatDate }, actor] = await Promise.all([getServerI18n(), requireActor("/account")]);
   const [params, profile] = await Promise.all([searchParams, getAccountProfile(actor.id)]);
 
   if (!profile) {
@@ -70,57 +97,44 @@ async function AccountContent({
     <PageShell className="pt-10 sm:pt-14">
       <div className="flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <p className="eyebrow text-muted-foreground">Account</p>
+          <p className="eyebrow text-muted-foreground">{t("account.eyebrow")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] text-balance sm:text-5xl">
-            Good to see you, {firstName}.
+            {t("account.greeting", { name: firstName })}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
             {profile.role === "VENDOR" && profile.vendor
-              ? "Your profile, email verification, orders, and studio status in one place."
-              : "Your profile, email verification, and orders in one place."}
+              ? t("account.subtitleWithStudio")
+              : t("account.subtitle")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="accent">{roleLabels[profile.role]}</Badge>
+          <Badge tone="accent">{t(ROLE_LABEL_KEYS[profile.role])}</Badge>
           <Badge tone={profile.status === "ACTIVE" ? "success" : "danger"}>
-            {profile.status === "ACTIVE" ? "Active" : "Suspended"}
+            {profile.status === "ACTIVE" ? t("account.active") : t("account.suspended")}
           </Badge>
-          {profile.emailVerifiedAt ? <Badge tone="neutral">Email verified</Badge> : null}
+          {profile.emailVerifiedAt ? (
+            <Badge tone="neutral">{t("account.emailVerified")}</Badge>
+          ) : null}
         </div>
       </div>
 
       <div className="mt-8 space-y-3">
-        {verified ? (
-          <Notice tone="success">Your email address is verified. Thank you.</Notice>
-        ) : null}
+        {verified ? <Notice tone="success">{t("account.noticeVerifiedEmail")}</Notice> : null}
         {verification === "sent" ? (
-          <Notice tone="success">
-            Verification email sent. Check your inbox for the link, which expires in 24 hours.
-          </Notice>
+          <Notice tone="success">{t("account.noticeEmailSent")}</Notice>
         ) : null}
         {verification === "slow-down" ? (
-          <Notice tone="warning">
-            You requested verification emails too often. Wait a little while before trying again.
-          </Notice>
+          <Notice tone="warning">{t("account.noticeTooManyEmails")}</Notice>
         ) : null}
         {verification === "invalid" ? (
-          <Notice tone="warning">
-            That verification link is invalid or has expired. Request a new one below.
-          </Notice>
+          <Notice tone="warning">{t("account.noticeLinkInvalid")}</Notice>
         ) : null}
-        {denied === "admin" ? (
-          <Notice tone="warning">Administrator access is required for that page.</Notice>
-        ) : null}
+        {denied === "admin" ? <Notice tone="warning">{t("account.noticeAdminOnly")}</Notice> : null}
         {denied === "vendor" ? (
-          <Notice tone="warning">
-            Only customer accounts without an existing studio can apply for a vendor workspace.
-          </Notice>
+          <Notice tone="warning">{t("account.noticeVendorApplyOnly")}</Notice>
         ) : null}
         {denied === "checkout" ? (
-          <Notice tone="warning">
-            Only customer accounts can place orders. Studio and administrator accounts keep their
-            operational role.
-          </Notice>
+          <Notice tone="warning">{t("account.noticeCheckoutCustomerOnly")}</Notice>
         ) : null}
       </div>
 
@@ -135,7 +149,7 @@ async function AccountContent({
             className="rounded-xl border border-border bg-surface p-6 sm:p-8"
           >
             <h2 id="account-identity" className="eyebrow text-muted-foreground">
-              Identity
+              {t("account.identityHeading")}
             </h2>
             <div className="mt-5 flex items-center gap-4">
               <span
@@ -154,21 +168,21 @@ async function AccountContent({
 
             <dl className="mt-7 space-y-3.5 border-t border-border pt-6 text-sm">
               <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">Account type</dt>
-                <dd className="font-medium">{roleLabels[profile.role]}</dd>
+                <dt className="text-muted-foreground">{t("account.accountTypeLabel")}</dt>
+                <dd className="font-medium">{t(ROLE_LABEL_KEYS[profile.role])}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">Phone</dt>
-                <dd className="font-medium">{profile.phone || "Not added"}</dd>
+                <dt className="text-muted-foreground">{t("account.phoneLabel")}</dt>
+                <dd className="font-medium">{profile.phone || t("account.notAdded")}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">Member since</dt>
+                <dt className="text-muted-foreground">{t("account.memberSinceLabel")}</dt>
                 <dd className="font-medium">{formatDate(profile.createdAt)}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-muted-foreground">Email status</dt>
+                <dt className="text-muted-foreground">{t("account.emailStatusLabel")}</dt>
                 <dd className="font-medium">
-                  {profile.emailVerifiedAt ? "Verified" : "Not verified"}
+                  {profile.emailVerifiedAt ? t("common.verified") : t("account.notVerified")}
                 </dd>
               </div>
             </dl>
@@ -181,11 +195,10 @@ async function AccountContent({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="account-orders" className="eyebrow text-muted-foreground">
-                  Orders
+                  {t("account.ordersHeading")}
                 </h2>
                 <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                  Every checkout records the prices and stock checked at that moment. Reservations
-                  release automatically when they expire.
+                  {t("account.ordersBody")}
                 </p>
               </div>
               <PackageSearch
@@ -195,10 +208,10 @@ async function AccountContent({
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               <Button asChild variant="secondary" size="sm">
-                <Link href="/account/orders">View your orders</Link>
+                <Link href="/account/orders">{t("account.viewYourOrders")}</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
-                <Link href="/cart">Open your cart</Link>
+                <Link href="/cart">{t("account.openYourCart")}</Link>
               </Button>
             </div>
           </section>
@@ -215,10 +228,10 @@ async function AccountContent({
                   id="account-email"
                   className="font-display text-xl font-medium tracking-[-0.02em]"
                 >
-                  Email verification
+                  {t("account.emailVerificationHeading")}
                 </h2>
                 <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                  A verified address keeps password recovery and account notices working.
+                  {t("account.emailVerificationBody")}
                 </p>
               </div>
               <MailCheck
@@ -229,22 +242,22 @@ async function AccountContent({
 
             {profile.emailVerifiedAt ? (
               <p className="mt-5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <Badge tone="success">Verified</Badge>
-                <span>Confirmed {formatDate(profile.emailVerifiedAt)}</span>
+                <Badge tone="success">{t("common.verified")}</Badge>
+                <span>
+                  {t("account.confirmedOn", { date: formatDate(profile.emailVerifiedAt) })}
+                </span>
               </p>
             ) : (
               <div className="mt-5 space-y-4">
-                <Notice tone="warning">
-                  This address is not verified yet. Request a link and open it within 24 hours.
-                </Notice>
+                <Notice tone="warning">{t("account.unverifiedNotice")}</Notice>
                 <form action={resendVerificationAction}>
                   <SubmitButton
-                    pendingLabel="Sending…"
+                    pendingLabel={t("account.sendingEmail")}
                     variant="secondary"
                     size="sm"
                     className="w-auto"
                   >
-                    Send verification email
+                    {t("account.sendVerificationEmail")}
                   </SubmitButton>
                 </form>
               </div>
@@ -262,10 +275,10 @@ async function AccountContent({
                     id="account-studio"
                     className="font-display text-xl font-medium tracking-[-0.02em]"
                   >
-                    Studio
+                    {t("account.studioHeading")}
                   </h2>
                   <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                    Your studio workspace, reviewed by a SupplyHub administrator.
+                    {t("account.studioBody")}
                   </p>
                 </div>
                 <Store className="mt-1 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -277,10 +290,10 @@ async function AccountContent({
                   <VendorStatusBadge status={profile.vendor.status} />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Applied {formatDate(profile.vendor.createdAt)}
+                  {t("account.appliedOn", { date: formatDate(profile.vendor.createdAt) })}
                 </p>
                 <Button asChild variant="secondary" size="sm" className="w-fit">
-                  <Link href="/vendor">Open studio workspace</Link>
+                  <Link href="/vendor">{t("account.openStudioWorkspace")}</Link>
                 </Button>
               </div>
             </section>
@@ -296,10 +309,10 @@ async function AccountContent({
                   id="account-security"
                   className="font-display text-xl font-medium tracking-[-0.02em]"
                 >
-                  Security
+                  {t("account.securityHeading")}
                 </h2>
                 <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                  Sessions last seven days. Resetting your password ends every other session.
+                  {t("account.securityBody")}
                 </p>
               </div>
               <KeyRound className="mt-1 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -307,36 +320,36 @@ async function AccountContent({
 
             <div className="mt-5 flex flex-wrap gap-2">
               <Button asChild variant="secondary" size="sm">
-                <Link href="/forgot-password">Send a password reset link</Link>
+                <Link href="/forgot-password">{t("account.sendPasswordResetLink")}</Link>
               </Button>
             </div>
 
             <div className="mt-6 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-medium">Sessions</p>
+                <p className="text-sm font-medium">{t("account.sessionsHeading")}</p>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Sign out here, or end every session including other devices.
+                  {t("account.sessionsBody")}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <form action={signOutAction}>
                   <SubmitButton
-                    pendingLabel="Signing out…"
+                    pendingLabel={t("account.signingOut")}
                     variant="secondary"
                     size="sm"
                     className="w-auto"
                   >
-                    Sign out
+                    {t("account.signOut")}
                   </SubmitButton>
                 </form>
                 <form action={signOutEverywhereAction}>
                   <SubmitButton
-                    pendingLabel="Ending sessions…"
+                    pendingLabel={t("account.endingSessions")}
                     variant="ghost"
                     size="sm"
                     className="w-auto"
                   >
-                    Sign out everywhere
+                    {t("account.signOutEverywhere")}
                   </SubmitButton>
                 </form>
               </div>
@@ -348,25 +361,4 @@ async function AccountContent({
   );
 }
 
-function AccountSkeleton() {
-  return (
-    <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading your account">
-        <div className="border-b border-border pb-8">
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="mt-4 h-12 w-72 max-w-full" />
-          <Skeleton className="mt-4 h-4 w-full max-w-lg" />
-        </div>
-        <div className="mt-10 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
-          <Skeleton className="h-72 w-full rounded-xl" />
-          <div className="space-y-6">
-            <Skeleton className="h-44 w-full rounded-xl" />
-            <Skeleton className="h-44 w-full rounded-xl" />
-            <Skeleton className="h-52 w-full rounded-xl" />
-          </div>
-        </div>
-      </div>
-      <span className="sr-only">Loading…</span>
-    </PageShell>
-  );
-}
+export const instant = false;

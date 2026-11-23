@@ -14,6 +14,7 @@ import { getPaymentGateway } from "@/server/payments/gateway";
 import { LynxPayRequestError } from "@/server/payments/lynxpay/client";
 import { AUTH_RATE_LIMITS } from "@/server/security/auth-rate-limits";
 import { consumeRateLimit } from "@/server/security/rate-limit";
+import { getServerI18n } from "@/i18n/server";
 
 import { PaymentError, startPayment, syncPaymentStatus } from "./service";
 import type { PaymentActionState } from "./state";
@@ -53,6 +54,7 @@ export async function startPaymentAction(
   _previousState: PaymentActionState,
   formData: FormData,
 ): Promise<PaymentActionState> {
+  const { t } = await getServerI18n();
   const actor = await getSessionActor();
 
   if (!actor) {
@@ -60,11 +62,11 @@ export async function startPaymentAction(
   }
 
   if (!canCheckout(actor)) {
-    return startState("error", "Only customer accounts can pay for orders.");
+    return startState("error", t("payments.messages.onlyCustomerAccounts"));
   }
 
   if (!consumeRateLimit(`payment:user:${actor.id}`, AUTH_RATE_LIMITS.paymentByUser)) {
-    return startState("error", "Too many payment attempts. Wait a few minutes and try again.");
+    return startState("error", t("payments.messages.tooManyAttempts"));
   }
 
   const parsed = startPaymentSchema.safeParse({
@@ -100,7 +102,7 @@ export async function startPaymentAction(
         paymentId: result.paymentId,
       });
 
-      return startState("paid", "Payment received. Your order is confirmed.", {
+      return startState("paid", t("payments.messages.received"), {
         paymentStatus: result.status,
       });
     }
@@ -109,25 +111,23 @@ export async function startPaymentAction(
       const checkoutUrl = safeCheckoutUrl(result.checkoutUrl);
 
       if (checkoutUrl) {
-        return startState("redirect", "Redirecting you to LynxPay's secure card page.", {
+        return startState("redirect", t("payments.messages.redirecting"), {
           checkoutUrl,
           paymentStatus: result.status,
         });
       }
 
       logger.warn("payment.checkout_url_rejected", { paymentId: result.paymentId });
-      return startState(
-        "error",
-        "LynxPay returned an unsafe checkout address. Contact support before paying by card.",
-        { paymentStatus: result.status },
-      );
+      return startState("error", t("payments.messages.unsafeRedirect"), {
+        paymentStatus: result.status,
+      });
     }
 
     return startState(
       "processing",
       parsed.data.method === "card"
-        ? "LynxPay is preparing the card page. Try again in a moment."
-        : "Approve the LynxPay prompt on your phone. This page checks the status automatically.",
+        ? t("payments.messages.preparingCard")
+        : t("payments.messages.approveOnPhone"),
       { paymentStatus: result.status },
     );
   } catch (error) {
@@ -140,23 +140,24 @@ export async function startPaymentAction(
       error,
     });
 
-    return startState("error", "Payment could not be started. Try again in a moment.");
+    return startState("error", t("payments.messages.couldNotStart"));
   }
 }
 
 export async function refreshPaymentAction(orderNumber: string): Promise<PaymentActionState> {
+  const { t } = await getServerI18n();
   const actor = await getSessionActor();
 
   if (!actor) {
-    return startState("error", "Sign in again to check this payment.");
+    return startState("error", t("payments.messages.signInAgain"));
   }
 
   if (!ORDER_NUMBER_PATTERN.test(orderNumber)) {
-    return startState("error", "That order reference is invalid.");
+    return startState("error", t("payments.messages.invalidOrder"));
   }
 
   if (!consumeRateLimit(`payment-poll:user:${actor.id}`, AUTH_RATE_LIMITS.paymentStatusByUser)) {
-    return startState("processing", "Still checking. Give it a moment.");
+    return startState("processing", t("payments.messages.stillChecking"));
   }
 
   const database = getDatabase();
@@ -173,30 +174,30 @@ export async function refreshPaymentAction(orderNumber: string): Promise<Payment
   });
 
   if (!order || !canViewCustomerOrder(actor, order.customerId)) {
-    return startState("error", "That order could not be found.");
+    return startState("error", t("payments.messages.orderNotFound"));
   }
 
   const payment = order.payments[0];
 
   if (!payment) {
-    return startState("processing", "Start a payment to continue.");
+    return startState("processing", t("payments.messages.startToContinue"));
   }
 
   if (payment.status === "SUCCEEDED") {
     revalidatePath(`/orders/${orderNumber}`);
-    return startState("paid", "Payment received. Your order is confirmed.", {
+    return startState("paid", t("payments.messages.received"), {
       paymentStatus: payment.status,
     });
   }
 
   if (payment.status === "FAILED" || payment.status === "EXPIRED") {
-    return startState("error", payment.failureMessage ?? "The payment did not complete.", {
+    return startState("error", payment.failureMessage ?? t("payments.messages.didNotComplete"), {
       paymentStatus: payment.status,
     });
   }
 
   if (!payment.providerPaymentId) {
-    return startState("processing", "Waiting for LynxPay to create this payment.", {
+    return startState("processing", t("payments.messages.waitingForProvider"), {
       paymentStatus: payment.status,
     });
   }
@@ -206,30 +207,28 @@ export async function refreshPaymentAction(orderNumber: string): Promise<Payment
 
     if (status === "SUCCEEDED") {
       revalidatePath(`/orders/${orderNumber}`);
-      return startState("paid", "Payment received. Your order is confirmed.", {
+      return startState("paid", t("payments.messages.received"), {
         paymentStatus: status,
       });
     }
 
     if (status === "FAILED" || status === "EXPIRED") {
-      return startState("error", "The payment did not complete. Try again with another method.", {
+      return startState("error", t("payments.messages.didNotCompleteOther"), {
         paymentStatus: status,
       });
     }
 
-    return startState("processing", "LynxPay is still confirming this payment.", {
+    return startState("processing", t("payments.messages.stillConfirming"), {
       paymentStatus: status ?? payment.status,
     });
   } catch (error) {
     if (error instanceof LynxPayRequestError) {
-      return startState(
-        "processing",
-        "LynxPay is still confirming this payment. Keep this page open.",
-        { paymentStatus: payment.status },
-      );
+      return startState("processing", t("payments.messages.keepOpen"), {
+        paymentStatus: payment.status,
+      });
     }
 
     logger.error("payment.status_refresh_failed", { orderNumber, error });
-    return startState("error", "The payment status could not be checked. Try again.");
+    return startState("error", t("payments.messages.statusCheckFailed"));
   }
 }

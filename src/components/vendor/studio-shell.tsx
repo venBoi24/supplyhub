@@ -32,7 +32,7 @@ export async function StudioShell({ studio, children }: StudioShellProps) {
         <div className="mx-auto flex h-16 w-full max-w-[1180px] items-center gap-3 px-4 sm:px-6">
           <Link
             href="/"
-            aria-label="SupplyHub home"
+            aria-label={t("studio.studioHomeAria")}
             className="inline-flex shrink-0 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
           >
             <Wordmark compact />

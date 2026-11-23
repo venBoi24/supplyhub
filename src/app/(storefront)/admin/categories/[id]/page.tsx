@@ -12,26 +12,33 @@ import { Badge } from "@/components/ui/badge";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAdminCategory } from "@/features/catalog/admin-queries";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
 const uuidSchema = z.uuid();
 
-export const metadata: Metadata = {
-  title: "Manage department",
-  description: "Edit or archive a department in the SupplyHub catalog.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("admin.manageDepartment"),
+    description: t("admin.manageDepartmentMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function searchParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default function AdminCategoryPage({
+export default async function AdminCategoryPage({
   params,
   searchParams,
 }: PageProps<"/admin/categories/[id]">) {
+  const { t } = await getServerI18n();
+
   return (
-    <Suspense fallback={<CategorySkeleton />}>
+    <Suspense fallback={<CategorySkeleton loadingLabel={t("common.loading")} />}>
       <AdminCategoryContent params={params} searchParams={searchParams} />
     </Suspense>
   );
@@ -44,6 +51,7 @@ async function AdminCategoryContent({
   params: PageProps<"/admin/categories/[id]">["params"];
   searchParams: PageProps<"/admin/categories/[id]">["searchParams"];
 }) {
+  const { t } = await getServerI18n();
   const [, routeParams, query] = await Promise.all([requireAdmin(), params, searchParams]);
 
   if (!uuidSchema.safeParse(routeParams.id).success) {
@@ -65,7 +73,7 @@ async function AdminCategoryContent({
         className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
-        Departments
+        {t("admin.departments")}
       </Link>
 
       <div className="mt-8 flex flex-wrap items-center gap-3 border-b border-border pb-8">
@@ -73,19 +81,19 @@ async function AdminCategoryContent({
           {category.name}
         </h1>
         <Badge tone={category.status === "ACTIVE" ? "success" : "neutral"}>
-          {category.status === "ACTIVE" ? "Active" : "Archived"}
+          {category.status === "ACTIVE" ? t("admin.status.active") : t("studio.status.archived")}
         </Badge>
       </div>
 
       {saved ? (
         <Notice tone="success" className="mt-6">
-          Department saved.
+          {t("admin.noticeDepartmentSaved")}
         </Notice>
       ) : null}
 
       {category.status === "ARCHIVED" ? (
         <Notice tone="warning" className="mt-6">
-          This department is archived. Its objects are hidden from the storefront.
+          {t("admin.noticeDepartmentArchivedState")}
         </Notice>
       ) : null}
 
@@ -104,19 +112,19 @@ async function AdminCategoryContent({
           ) : (
             <dl className="space-y-5 text-sm">
               <div>
-                <dt className="eyebrow text-muted-foreground">Handle</dt>
+                <dt className="eyebrow text-muted-foreground">{t("studio.handle")}</dt>
                 <dd className="mt-1 font-mono text-xs tracking-[0.08em]">
                   /categories/{category.slug}
                 </dd>
               </div>
               <div>
-                <dt className="eyebrow text-muted-foreground">Headline</dt>
-                <dd className="mt-1">{category.headline || "None"}</dd>
+                <dt className="eyebrow text-muted-foreground">{t("admin.fieldHeadline")}</dt>
+                <dd className="mt-1">{category.headline || t("admin.none")}</dd>
               </div>
               <div>
-                <dt className="eyebrow text-muted-foreground">Description</dt>
+                <dt className="eyebrow text-muted-foreground">{t("product.description")}</dt>
                 <dd className="mt-1 leading-6 whitespace-pre-line">
-                  {category.description || "None"}
+                  {category.description || t("admin.none")}
                 </dd>
               </div>
             </dl>
@@ -126,17 +134,17 @@ async function AdminCategoryContent({
         <aside className="space-y-6">
           <section className="rounded-xl border border-border bg-surface p-6 text-sm">
             <h2 className="font-display text-lg font-medium tracking-[-0.02em]">
-              Catalog footprint
+              {t("admin.catalogFootprint")}
             </h2>
             <dl className="mt-4 grid grid-cols-2 gap-4">
               <div>
-                <dt className="eyebrow text-muted-foreground">Published</dt>
+                <dt className="eyebrow text-muted-foreground">{t("studio.published")}</dt>
                 <dd className="mt-1 font-display text-2xl font-medium">
                   {category.publishedCount}
                 </dd>
               </div>
               <div>
-                <dt className="eyebrow text-muted-foreground">All objects</dt>
+                <dt className="eyebrow text-muted-foreground">{t("admin.allObjects")}</dt>
                 <dd className="mt-1 font-display text-2xl font-medium">{category.productCount}</dd>
               </div>
             </dl>
@@ -144,9 +152,11 @@ async function AdminCategoryContent({
 
           {category.status === "ACTIVE" ? (
             <section className="rounded-xl border border-border bg-surface p-6">
-              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Archive</h2>
+              <h2 className="font-display text-lg font-medium tracking-[-0.02em]">
+                {t("admin.archiveHeading")}
+              </h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Archiving hides the department without deleting its objects.
+                {t("admin.archiveHint")}
               </p>
               <div className="mt-4">
                 <CategoryArchiveAction
@@ -162,10 +172,10 @@ async function AdminCategoryContent({
   );
 }
 
-function CategorySkeleton() {
+function CategorySkeleton({ loadingLabel }: { loadingLabel: string }) {
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading the department">
+      <div role="status" aria-label={loadingLabel}>
         <div className="border-b border-border pb-8">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="mt-4 h-12 w-72 max-w-full" />
@@ -175,7 +185,9 @@ function CategorySkeleton() {
           <Skeleton className="h-40 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{loadingLabel}</span>
     </PageShell>
   );
 }
+
+export const instant = false;

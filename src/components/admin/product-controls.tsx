@@ -8,6 +8,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { featureProductAction, moderateProductAction } from "@/features/catalog/admin-actions";
 import { initialFormState } from "@/features/identity/form-state";
 import type { ProductStatus } from "@/generated/prisma/enums";
+import { useT } from "@/i18n/client";
 
 export function ProductControls({
   productId,
@@ -18,6 +19,7 @@ export function ProductControls({
   status: ProductStatus;
   featured: boolean;
 }) {
+  const t = useT();
   const [approveState, approveAction] = useActionState(moderateProductAction, initialFormState);
   const [rejectState, rejectAction] = useActionState(moderateProductAction, initialFormState);
   const [featureState, featureAction] = useActionState(featureProductAction, initialFormState);
@@ -35,43 +37,47 @@ export function ProductControls({
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-3">
             <p className="font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
-              Approve
+              {t("admin.approveHeading")}
             </p>
             <form action={approveAction} className="space-y-3">
               <input type="hidden" name="productId" value={productId} />
               <input type="hidden" name="decision" value="approve" />
               <FormMessage state={approveState} />
-              <SubmitButton pendingLabel="Publishing…" size="sm" className="w-auto">
-                Publish object
+              <SubmitButton
+                pendingLabel={t("admin.publishingPending")}
+                size="sm"
+                className="w-auto"
+              >
+                {t("admin.publishObject")}
               </SubmitButton>
             </form>
           </div>
 
           <div className="space-y-3">
             <p className="font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
-              Request changes
+              {t("admin.requestChangesHeading")}
             </p>
             <form action={rejectAction} className="space-y-3">
               <input type="hidden" name="productId" value={productId} />
               <input type="hidden" name="decision" value="reject" />
               <FormMessage state={rejectState} />
-              <Field label="Reason for the studio" htmlFor={noteId} error={rejectError}>
+              <Field label={t("admin.reasonForStudio")} htmlFor={noteId} error={rejectError}>
                 <Textarea
                   id={noteId}
                   name="note"
-                  placeholder="The materials list needs more detail."
+                  placeholder={t("admin.notePlaceholder")}
                   aria-invalid={rejectError ? true : undefined}
                   aria-describedby={rejectError ? `${noteId}-error` : undefined}
                   className="min-h-20"
                 />
               </Field>
               <SubmitButton
-                pendingLabel="Returning…"
+                pendingLabel={t("admin.returningPending")}
                 variant="secondary"
                 size="sm"
                 className="w-auto"
               >
-                Return to studio
+                {t("admin.returnToStudio")}
               </SubmitButton>
             </form>
           </div>
@@ -83,8 +89,13 @@ export function ProductControls({
           <input type="hidden" name="productId" value={productId} />
           <input type="hidden" name="featured" value={featured ? "0" : "1"} />
           <FormMessage state={featureState} />
-          <SubmitButton pendingLabel="Updating…" variant="secondary" size="sm" className="w-auto">
-            {featured ? "Remove from featured" : "Feature on the storefront"}
+          <SubmitButton
+            pendingLabel={t("common.saving")}
+            variant="secondary"
+            size="sm"
+            className="w-auto"
+          >
+            {featured ? t("admin.removeFromFeatured") : t("admin.featureOnStorefront")}
           </SubmitButton>
         </form>
       ) : null}

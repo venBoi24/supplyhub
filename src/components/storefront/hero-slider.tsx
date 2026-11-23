@@ -4,22 +4,25 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+import { useT } from "@/i18n/client";
+
 const slides = [
   {
     src: "/images/demo/hero.jpg",
-    alt: "A cream stoneware vessel, two speckled cups, a folded linen throw, and a tan leather tote arranged on a limestone plinth.",
+    altKey: "home.heroSlideOneAlt",
   },
   {
     src: "/images/demo/hero-carafe.jpg",
-    alt: "A speckled stoneware carafe with a pinched spout on a neutral studio backdrop.",
+    altKey: "home.heroSlideTwoAlt",
   },
   {
     src: "/images/demo/hero-throw.jpg",
-    alt: "A folded stonewashed linen throw with a fringed edge in a warm neutral tone.",
+    altKey: "home.heroSlideThreeAlt",
   },
 ] as const;
 
 export function HeroSlider() {
+  const t = useT();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -71,7 +74,7 @@ export function HeroSlider() {
           <Image
             key={item.src}
             src={item.src}
-            alt={item.alt}
+            alt={t(item.altKey)}
             fill
             priority={itemIndex === 0}
             sizes="(min-width: 1024px) 48vw, 100vw"
@@ -91,7 +94,7 @@ export function HeroSlider() {
           type="button"
           className="grid size-9 place-items-center rounded-full bg-white/85 text-[#0b1020] shadow-sm transition-colors hover:bg-white focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
           onClick={() => goTo(index - 1)}
-          aria-label="Previous slide"
+          aria-label={t("common.previousSlide")}
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
         </button>
@@ -101,7 +104,7 @@ export function HeroSlider() {
           type="button"
           className="grid size-9 place-items-center rounded-full bg-white/85 text-[#0b1020] shadow-sm transition-colors hover:bg-white focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
           onClick={() => goTo(index + 1)}
-          aria-label="Next slide"
+          aria-label={t("common.nextSlide")}
         >
           <ChevronRight className="size-4" aria-hidden="true" />
         </button>
@@ -117,7 +120,7 @@ export function HeroSlider() {
               key={item.src}
               type="button"
               onClick={() => goTo(itemIndex)}
-              aria-label={`Go to slide ${itemIndex + 1}`}
+              aria-label={t("common.goToSlide", { index: itemIndex + 1 })}
               aria-current={itemIndex === index}
               className={`h-1.5 rounded-full transition-all ${
                 itemIndex === index ? "w-6 bg-white" : "w-1.5 bg-white/55 hover:bg-white/80"

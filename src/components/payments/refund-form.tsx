@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { formatMoney } from "@/features/catalog/money";
 import { initialFormState } from "@/features/identity/form-state";
 import { refundPaymentAction } from "@/features/payments/admin-actions";
+import { useT } from "@/i18n/client";
 
 export interface RefundFormProps {
   orderNumber: string;
@@ -19,6 +20,7 @@ export interface RefundFormProps {
 
 export function RefundForm({ orderNumber, paymentId, remainingCents, currency }: RefundFormProps) {
   const [state, action] = useActionState(refundPaymentAction, initialFormState);
+  const t = useT();
   const amountId = `refund-amount-${paymentId}`;
   const reasonId = `refund-reason-${paymentId}`;
 
@@ -29,9 +31,11 @@ export function RefundForm({ orderNumber, paymentId, remainingCents, currency }:
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field
-          label="Refund amount"
+          label={t("payments.refund.amount")}
           htmlFor={amountId}
-          hint={`Up to ${formatMoney(remainingCents, currency)}`}
+          hint={t("payments.refund.upTo", {
+            amount: formatMoney(remainingCents, currency),
+          })}
           error={state.fieldErrors?.amount}
         >
           <Input
@@ -45,15 +49,15 @@ export function RefundForm({ orderNumber, paymentId, remainingCents, currency }:
         </Field>
 
         <Field
-          label="Reason"
+          label={t("experience.protection.reason")}
           htmlFor={reasonId}
-          hint="Shared with the customer"
+          hint={t("payments.refund.sharedWithCustomer")}
           error={state.fieldErrors?.reason}
         >
           <Input
             id={reasonId}
             name="reason"
-            placeholder="Damaged item returned"
+            placeholder={t("payments.refund.reasonPlaceholder")}
             aria-invalid={state.fieldErrors?.reason ? true : undefined}
             aria-describedby={state.fieldErrors?.reason ? `${reasonId}-error` : undefined}
           />
@@ -62,12 +66,12 @@ export function RefundForm({ orderNumber, paymentId, remainingCents, currency }:
 
       <FormMessage state={state} />
       <SubmitButton
-        pendingLabel="Recording refund…"
+        pendingLabel={t("payments.refund.pendingRecording")}
         variant="secondary"
         size="sm"
         className="w-auto"
       >
-        Record refund
+        {t("payments.refund.submit")}
       </SubmitButton>
     </form>
   );

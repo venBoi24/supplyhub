@@ -40,7 +40,7 @@ export function MobileNav({ categories, vendors }: MobileNavProps) {
         <SheetDescription className="sr-only">{t("nav.menuDescription")}</SheetDescription>
 
         <SheetClose asChild>
-          <Link href="/" className="inline-flex w-fit" aria-label="SupplyHub home">
+          <Link href="/" className="inline-flex w-fit" aria-label={t("nav.homeAria")}>
             <Wordmark />
           </Link>
         </SheetClose>

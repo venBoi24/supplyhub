@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
 import type { FormState } from "@/features/identity/form-state";
+import { getServerI18n } from "@/i18n/server";
 import { logger } from "@/lib/logging/logger";
 import { canPerformAdminAction } from "@/server/auth/policies";
 import { getSessionActor } from "@/server/auth/session";
@@ -38,8 +39,9 @@ export async function editAdminUserAppealAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
   if (!actor || !canPerformAdminAction(actor)) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   const parsed = adminAppealEditSchema.safeParse({
@@ -50,7 +52,7 @@ export async function editAdminUserAppealAction(
     appealReason: formData.get("appealReason"),
   });
   if (!parsed.success) {
-    return { status: "error", message: "Enter a valid name, store name, and appeal reason." };
+    return { status: "error", message: t("admin.errors.appealFieldsInvalid") };
   }
 
   try {
@@ -93,12 +95,12 @@ export async function editAdminUserAppealAction(
     revalidatePath("/admin/users");
     revalidatePath("/admin/vendors");
     revalidatePath("/vendor");
-    return { status: "success", message: "User and appeal details updated." };
+    return { status: "success", message: t("admin.success.userAppealUpdated") };
   } catch (error) {
     if (error instanceof Error && error.message === "protected-user") {
       return {
         status: "error",
-        message: "Administrator accounts or invalid appeals cannot be edited.",
+        message: t("admin.errors.appealProtected"),
       };
     }
     logger.error("admin.user_appeal_edit_failed", {
@@ -106,7 +108,7 @@ export async function editAdminUserAppealAction(
       targetId: parsed.data.userId,
       error,
     });
-    return { status: "error", message: "The user and appeal details could not be updated." };
+    return { status: "error", message: t("admin.errors.userAppealUpdateFailed") };
   }
 }
 
@@ -115,17 +117,18 @@ export async function updateUserStatusAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
   if (!actor || !canPerformAdminAction(actor)) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   const parsed = userStatusSchema.safeParse({
     userId: formData.get("userId"),
     status: formData.get("status"),
   });
-  if (!parsed.success) return { status: "error", message: "The user update is invalid." };
+  if (!parsed.success) return { status: "error", message: t("admin.errors.userUpdateInvalid") };
   if (parsed.data.userId === actor.id) {
-    return { status: "error", message: "You cannot change your own account status." };
+    return { status: "error", message: t("admin.errors.selfStatusForbidden") };
   }
 
   try {
@@ -150,10 +153,10 @@ export async function updateUserStatusAction(
       });
     });
     revalidatePath("/admin/users");
-    return { status: "success", message: "Account status updated." };
+    return { status: "success", message: t("admin.success.accountStatusUpdated") };
   } catch (error) {
     if (error instanceof Error && error.message === "protected-user") {
-      return { status: "error", message: "Administrator accounts cannot be suspended here." };
+      return { status: "error", message: t("admin.errors.adminNotSuspendable") };
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.warn("admin.user_status_update_rejected", {
@@ -163,7 +166,7 @@ export async function updateUserStatusAction(
     } else {
       logger.error("admin.user_status_update_failed", { actorId: actor.id, error });
     }
-    return { status: "error", message: "The account status could not be updated." };
+    return { status: "error", message: t("admin.errors.accountStatusUpdateFailed") };
   }
 }
 
@@ -172,8 +175,9 @@ export async function editAdminUserAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
   if (!actor || !canPerformAdminAction(actor)) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   const parsed = adminUserEditSchema.safeParse({
@@ -181,9 +185,9 @@ export async function editAdminUserAction(
     name: formData.get("name"),
     email: formData.get("email"),
   });
-  if (!parsed.success) return { status: "error", message: "Enter a valid name and email." };
+  if (!parsed.success) return { status: "error", message: t("admin.errors.nameEmailInvalid") };
   if (parsed.data.userId === actor.id) {
-    return { status: "error", message: "You cannot edit your own account here." };
+    return { status: "error", message: t("admin.errors.selfEditForbidden") };
   }
 
   try {
@@ -211,20 +215,20 @@ export async function editAdminUserAction(
       });
     });
     revalidatePath("/admin/users");
-    return { status: "success", message: "Account details updated." };
+    return { status: "success", message: t("admin.success.accountDetailsUpdated") };
   } catch (error) {
     if (error instanceof Error && error.message === "protected-user") {
-      return { status: "error", message: "Administrator accounts are protected." };
+      return { status: "error", message: t("admin.errors.adminProtected") };
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return { status: "error", message: "That email address is already in use." };
+      return { status: "error", message: t("admin.errors.emailInUse") };
     }
     logger.error("admin.user_edit_failed", {
       actorId: actor.id,
       targetId: parsed.data.userId,
       error,
     });
-    return { status: "error", message: "The account could not be updated." };
+    return { status: "error", message: t("admin.errors.accountUpdateFailed") };
   }
 }
 
@@ -233,14 +237,16 @@ export async function deleteAdminUserAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
   if (!actor || !canPerformAdminAction(actor)) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
   const parsed = adminUserDeleteSchema.safeParse({ userId: formData.get("userId") });
-  if (!parsed.success) return { status: "error", message: "The account reference is invalid." };
+  if (!parsed.success)
+    return { status: "error", message: t("admin.errors.accountReferenceInvalid") };
   if (parsed.data.userId === actor.id) {
-    return { status: "error", message: "You cannot delete your own account." };
+    return { status: "error", message: t("admin.errors.selfDeleteForbidden") };
   }
 
   try {
@@ -287,16 +293,15 @@ export async function deleteAdminUserAction(
       await transaction.user.delete({ where: { id: target.id } });
     });
     revalidatePath("/admin/users");
-    return { status: "success", message: "Account deleted." };
+    return { status: "success", message: t("admin.success.accountDeleted") };
   } catch (error) {
     if (error instanceof Error && error.message === "protected-user") {
-      return { status: "error", message: "Administrator accounts are protected." };
+      return { status: "error", message: t("admin.errors.adminProtected") };
     }
     if (error instanceof Error && error.message === "account-has-records") {
       return {
         status: "error",
-        message:
-          "Accounts with orders, products, vendor sales, or payout records cannot be deleted. Suspend them instead.",
+        message: t("admin.errors.accountHasRecords"),
       };
     }
     logger.error("admin.user_delete_failed", {
@@ -304,6 +309,6 @@ export async function deleteAdminUserAction(
       targetId: parsed.data.userId,
       error,
     });
-    return { status: "error", message: "The account could not be deleted." };
+    return { status: "error", message: t("admin.errors.accountDeleteFailed") };
   }
 }

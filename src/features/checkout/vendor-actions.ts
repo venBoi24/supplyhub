@@ -6,6 +6,7 @@ import { z } from "zod";
 import { recordAuditEvent } from "@/server/audit/audit-log";
 import { requireApprovedVendor } from "@/server/auth/guards";
 import { getDatabase } from "@/server/db/client";
+import { getServerI18n } from "@/i18n/server";
 import { logger } from "@/lib/logging/logger";
 import type { FormState } from "@/features/identity/form-state";
 import { nextVendorOrderStatus } from "./status";
@@ -19,12 +20,13 @@ export async function updateVendorOrderStatusAction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  const { t } = await getServerI18n();
   const { actor, vendorId } = await requireApprovedVendor("/vendor/orders");
   const parsed = fulfillmentSchema.safeParse({
     vendorOrderId: formData.get("vendorOrderId"),
     status: formData.get("status"),
   });
-  if (!parsed.success) return { status: "error", message: "The order update is invalid." };
+  if (!parsed.success) return { status: "error", message: t("checkout.errors.orderUpdateInvalid") };
 
   const database = getDatabase();
   try {
@@ -93,15 +95,15 @@ export async function updateVendorOrderStatusAction(
         status: "error",
         message:
           result === "not-found"
-            ? "That order is no longer available."
-            : "That order changed or cannot move to the requested status.",
+            ? t("checkout.errors.orderGone")
+            : t("checkout.errors.orderTransition"),
       };
     }
     revalidatePath("/vendor/orders");
     revalidatePath("/account/orders");
-    return { status: "success", message: "Order status updated." };
+    return { status: "success", message: t("checkout.success.orderStatusUpdated") };
   } catch (error) {
     logger.error("vendor.order_status_update_failed", { actorId: actor.id, error });
-    return { status: "error", message: "The order could not be updated." };
+    return { status: "error", message: t("checkout.errors.orderUpdateFailed") };
   }
 }

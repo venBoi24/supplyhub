@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bike, MapPinned, RotateCcw, Store, UserRound } from "lucide-react";
 
 import { Wordmark } from "@/components/storefront/wordmark";
+import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { DeliveryMap } from "./delivery-map";
@@ -12,16 +13,17 @@ import { AgentView, BuyerView, VendorView } from "./views";
 
 type Persona = "seller" | "courier" | "buyer";
 
-const personas: { id: Persona; label: string; icon: typeof Store }[] = [
-  { id: "seller", label: "Seller", icon: Store },
-  { id: "courier", label: "Delivery agent", icon: Bike },
-  { id: "buyer", label: "Buyer", icon: UserRound },
-];
-
 function HubInner({ initialPersona }: { initialPersona: Persona }) {
+  const t = useT();
   const [persona, setPersona] = useState<Persona>(initialPersona);
   const [focusId, setFocusId] = useState<string | null>(null);
   const { state, now, resetDemo } = useDelivery();
+
+  const personas: { id: Persona; label: string; icon: typeof Store }[] = [
+    { id: "seller", label: t("delivery.personaSeller"), icon: Store },
+    { id: "courier", label: t("delivery.personaCourier"), icon: Bike },
+    { id: "buyer", label: t("delivery.personaBuyer"), icon: UserRound },
+  ];
 
   return (
     <div className="min-h-dvh bg-[#070a14] text-[#edf1fb]">
@@ -33,7 +35,7 @@ function HubInner({ initialPersona }: { initialPersona: Persona }) {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#2dd4bf] opacity-60" />
               <span className="relative inline-flex size-2 rounded-full bg-[#2dd4bf]" />
             </span>
-            LIVE · SIMULATED GPS
+            {t("delivery.liveBadge")}
           </span>
           <div className="ml-auto flex items-center gap-2">
             <button
@@ -41,11 +43,11 @@ function HubInner({ initialPersona }: { initialPersona: Persona }) {
               onClick={resetDemo}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#2a3a5f] px-2.5 py-1.5 text-xs text-[#a7b1c7] transition hover:border-[#f97316] hover:text-[#edf1fb]"
             >
-              <RotateCcw className="size-3.5" /> Reset demo
+              <RotateCcw className="size-3.5" /> {t("delivery.resetDemo")}
             </button>
           </div>
           <nav
-            aria-label="Choose perspective"
+            aria-label={t("delivery.choosePerspective")}
             className="flex w-full gap-1 rounded-xl border border-[#223047] bg-[#0d1222] p-1 sm:w-auto"
           >
             {personas.map((p) => (
@@ -70,7 +72,7 @@ function HubInner({ initialPersona }: { initialPersona: Persona }) {
 
       <main className="mx-auto grid max-w-[1400px] gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[1.25fr_0.9fr] lg:items-start">
         <section
-          aria-label="Live map"
+          aria-label={t("delivery.liveMap")}
           className="relative overflow-hidden rounded-2xl border border-[#223047] bg-[#0a0f1d]"
         >
           <div className="h-[320px] sm:h-[420px] lg:sticky lg:top-20 lg:h-[600px]">
@@ -79,18 +81,18 @@ function HubInner({ initialPersona }: { initialPersona: Persona }) {
           <div className="pointer-events-none absolute top-3 left-3 flex items-center gap-2 rounded-lg border border-[#223047] bg-[#070a14]/80 px-2.5 py-1.5 text-[0.6875rem] text-[#a7b1c7] backdrop-blur">
             <MapPinned className="size-3.5 text-[#f97316]" />
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full bg-[#2dd4bf]" /> Studio
+              <span className="size-2 rounded-full bg-[#2dd4bf]" /> {t("products.studio")}
             </span>
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full bg-[#fb923c]" /> Buyer
+              <span className="size-2 rounded-full bg-[#fb923c]" /> {t("delivery.personaBuyer")}
             </span>
             <span className="flex items-center gap-1">
-              <span className="size-2 rounded-full bg-[#f97316]" /> Courier
+              <span className="size-2 rounded-full bg-[#f97316]" /> {t("delivery.courier")}
             </span>
           </div>
         </section>
 
-        <section aria-label="Details">
+        <section aria-label={t("product.details")}>
           {persona === "seller" ? (
             <VendorView onFocus={setFocusId} />
           ) : persona === "courier" ? (

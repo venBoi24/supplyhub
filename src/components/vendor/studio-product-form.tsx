@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { LocationMapField } from "@/components/vendor/location-map-field";
 import { saveProductAction } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export interface StudioProductFormValues {
   id?: string;
@@ -42,6 +43,7 @@ export function StudioProductForm({
   adminVendorId?: string;
   location?: StudioLocationValues;
 }) {
+  const t = useT();
   const [state, action] = useActionState(saveProductAction, initialFormState);
   const errors = state.fieldErrors;
   const editing = Boolean(product?.id);
@@ -55,9 +57,9 @@ export function StudioProductForm({
       <FormMessage state={state} />
 
       <fieldset className="space-y-5">
-        <legend className="eyebrow text-muted-foreground">The object</legend>
+        <legend className="eyebrow text-muted-foreground">{t("studio.theObject")}</legend>
 
-        <Field label="Name" htmlFor={`${prefix}-name`} error={errors?.name}>
+        <Field label={t("auth.name")} htmlFor={`${prefix}-name`} error={errors?.name}>
           <Input
             id={`${prefix}-name`}
             name="name"
@@ -71,9 +73,9 @@ export function StudioProductForm({
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field
-            label="Handle"
+            label={t("studio.handle")}
             htmlFor={`${prefix}-slug`}
-            hint="Public web address"
+            hint={t("studio.publicWebAddress")}
             error={errors?.slug}
           >
             <Input
@@ -88,7 +90,11 @@ export function StudioProductForm({
             />
           </Field>
 
-          <Field label="Department" htmlFor={`${prefix}-category`} error={errors?.categoryId}>
+          <Field
+            label={t("products.department")}
+            htmlFor={`${prefix}-category`}
+            error={errors?.categoryId}
+          >
             <Select
               id={`${prefix}-category`}
               name="categoryId"
@@ -98,7 +104,7 @@ export function StudioProductForm({
               aria-describedby={errors?.categoryId ? `${prefix}-category-error` : undefined}
             >
               <option value="" disabled>
-                Choose a department
+                {t("studio.chooseDepartment")}
               </option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -110,7 +116,12 @@ export function StudioProductForm({
         </div>
 
         <div className="grid gap-5 sm:grid-cols-3">
-          <Field label="Price" htmlFor={`${prefix}-price`} hint="TZS" error={errors?.priceCents}>
+          <Field
+            label={t("common.price")}
+            htmlFor={`${prefix}-price`}
+            hint="TZS"
+            error={errors?.priceCents}
+          >
             <Input
               id={`${prefix}-price`}
               name="price"
@@ -126,9 +137,9 @@ export function StudioProductForm({
 
         {!editing ? (
           <Field
-            label="Opening stock"
+            label={t("studio.openingStock")}
             htmlFor="new-initial-stock"
-            hint="Units on hand"
+            hint={t("studio.unitsOnHandHint")}
             error={errors?.initialStock}
           >
             <Input
@@ -147,12 +158,12 @@ export function StudioProductForm({
       </fieldset>
 
       <fieldset className="space-y-5 border-t border-border pt-8">
-        <legend className="eyebrow text-muted-foreground">The story</legend>
+        <legend className="eyebrow text-muted-foreground">{t("studio.theStory")}</legend>
 
         <Field
-          label="Description"
+          label={t("product.description")}
           htmlFor={`${prefix}-description`}
-          hint="20–4000 characters"
+          hint={t("studio.descriptionRange")}
           error={errors?.description}
         >
           <Textarea
@@ -168,9 +179,9 @@ export function StudioProductForm({
         </Field>
 
         <Field
-          label="Maker note"
+          label={t("studio.makerNote")}
           htmlFor={`${prefix}-maker-note`}
-          hint="Optional"
+          hint={t("common.optional")}
           error={errors?.makerNote}
         >
           <Textarea
@@ -185,12 +196,12 @@ export function StudioProductForm({
       </fieldset>
 
       <fieldset className="space-y-5 border-t border-border pt-8">
-        <legend className="eyebrow text-muted-foreground">Details</legend>
+        <legend className="eyebrow text-muted-foreground">{t("studio.detailsLegend")}</legend>
 
         <Field
-          label="Materials"
+          label={t("studio.materials")}
           htmlFor={`${prefix}-materials`}
-          hint="One per line"
+          hint={t("studio.onePerLine")}
           error={errors?.materials}
         >
           <Textarea
@@ -206,11 +217,8 @@ export function StudioProductForm({
 
       {!editing ? (
         <fieldset className="space-y-5 border-t border-border pt-8">
-          <legend className="eyebrow text-muted-foreground">Studio location</legend>
-          <p className="text-sm text-muted-foreground">
-            Enter your city, street, and address, or allow location access to place a Google Maps
-            pin.
-          </p>
+          <legend className="eyebrow text-muted-foreground">{t("studio.studioLocation")}</legend>
+          <p className="text-sm text-muted-foreground">{t("studio.studioLocationNote")}</p>
           <LocationMapField
             defaultValue={[location?.address, location?.street, location?.city]
               .filter(Boolean)
@@ -227,12 +235,9 @@ export function StudioProductForm({
 
       {!editing ? (
         <fieldset className="space-y-5 border-t border-border pt-8">
-          <legend className="eyebrow text-muted-foreground">Product photo</legend>
-          <p className="text-sm text-muted-foreground">
-            Add a JPEG, PNG, WebP, GIF, AVIF, or BMP cover image up to 5 MB. You can add more photos
-            after publishing.
-          </p>
-          <Field label="Image file" htmlFor="new-image" error={errors?.image}>
+          <legend className="eyebrow text-muted-foreground">{t("studio.productPhoto")}</legend>
+          <p className="text-sm text-muted-foreground">{t("studio.productPhotoNote")}</p>
+          <Field label={t("studio.imageFile")} htmlFor="new-image" error={errors?.image}>
             <Input
               id="new-image"
               name="image"
@@ -246,13 +251,13 @@ export function StudioProductForm({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-6">
-        <SubmitButton pendingLabel={editing ? "Saving…" : "Publishing…"} className="w-auto">
-          {editing ? "Save changes" : "Publish object"}
+        <SubmitButton
+          pendingLabel={editing ? t("common.saving") : t("studio.publishingPending")}
+          className="w-auto"
+        >
+          {editing ? t("studio.saveChanges") : t("studio.publishObject")}
         </SubmitButton>
-        <p className="text-xs leading-5 text-muted-foreground">
-          New objects go live on the storefront immediately. Add a cover image now; more images can
-          be added after saving.
-        </p>
+        <p className="text-xs leading-5 text-muted-foreground">{t("studio.formFooterNote")}</p>
       </div>
     </form>
   );

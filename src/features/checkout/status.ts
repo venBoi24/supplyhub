@@ -10,6 +10,21 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   EXPIRED: "Expired",
 };
 
+/**
+ * English `ORDER_STATUS_LABELS` stays the source for CSV exports and for
+ * enumerating the filter options; rendered UI resolves these keys against the
+ * visitor's locale instead.
+ */
+export const ORDER_STATUS_LABEL_KEYS: Record<OrderStatus, string> = {
+  AWAITING_PAYMENT: "checkout.status.awaitingPayment",
+  PAID: "checkout.status.paid",
+  PROCESSING: "checkout.status.processing",
+  SHIPPED: "checkout.status.shipped",
+  DELIVERED: "checkout.status.delivered",
+  CANCELLED: "checkout.status.cancelled",
+  EXPIRED: "checkout.status.expired",
+};
+
 export const NEXT_VENDOR_ORDER_STATUS = {
   PAID: "PROCESSING",
   PROCESSING: "SHIPPED",

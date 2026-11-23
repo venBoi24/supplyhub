@@ -17,14 +17,18 @@ import { listVendorApplications } from "@/features/vendors/queries";
 import type { VendorStatus } from "@/generated/prisma/enums";
 import { parseEnumParam, parseSearchTerm, searchParamValue } from "@/features/admin/filters";
 import { pageCount, parsePage } from "@/lib/utils/pagination";
-import { formatDate } from "@/lib/utils/format-date";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
-export const metadata: Metadata = {
-  title: "Vendor applications",
-  description: "Review studio applications for SupplyHub.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("admin.vendorsMetaTitle"),
+    description: t("admin.vendorsMetaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const statuses = [
   "PENDING",
@@ -33,9 +37,18 @@ const statuses = [
   "SUSPENDED",
 ] as const satisfies readonly VendorStatus[];
 
-export default function AdminVendorsPage({ searchParams }: PageProps<"/admin/vendors">) {
+const statusLabelKeys: Record<VendorStatus, string> = {
+  PENDING: "admin.pending",
+  APPROVED: "vendor.approved",
+  REJECTED: "admin.rejected",
+  SUSPENDED: "admin.suspended",
+};
+
+export default async function AdminVendorsPage({ searchParams }: PageProps<"/admin/vendors">) {
+  const { t } = await getServerI18n();
+
   return (
-    <Suspense fallback={<AdminSkeleton />}>
+    <Suspense fallback={<AdminSkeleton loadingLabel={t("common.loading")} />}>
       <AdminVendorsContent searchParams={searchParams} />
     </Suspense>
   );
@@ -46,6 +59,7 @@ async function AdminVendorsContent({
 }: {
   searchParams: PageProps<"/admin/vendors">["searchParams"];
 }) {
+  const { t, formatDate, formatNumber } = await getServerI18n();
   const admin = await requireAdmin();
   const params = await searchParams;
   const status = parseEnumParam(params.status, statuses);
@@ -65,47 +79,54 @@ async function AdminVendorsContent({
     <PageShell className="pt-10 sm:pt-14">
       <div className="flex flex-col gap-6 border-b border-border pb-8 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
-          <p className="eyebrow text-muted-foreground">Administration</p>
+          <p className="eyebrow text-muted-foreground">{t("admin.nav")}</p>
           <h1 className="mt-3 font-display text-4xl leading-none font-medium tracking-[-0.04em] text-balance sm:text-5xl">
-            Vendor applications.
+            {t("admin.vendorsTitle")}
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
-            Review studio applications and open workspaces. Approving an application grants the
-            owner the vendor role; every decision is recorded in the audit log.
+            {t("admin.vendorsIntro")}
           </p>
           <p className="mt-3 font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
-            Signed in as {admin.name}
+            {t("admin.signedInAs", { name: admin.name })}
           </p>
         </div>
 
         <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-4 lg:gap-x-10">
           <div>
-            <dt className="eyebrow text-muted-foreground">Pending</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.PENDING}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("admin.pending")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.PENDING)}
+            </dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Approved</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.APPROVED}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("vendor.approved")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.APPROVED)}
+            </dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Rejected</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.REJECTED}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("admin.rejected")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.REJECTED)}
+            </dd>
           </div>
           <div>
-            <dt className="eyebrow text-muted-foreground">Suspended</dt>
-            <dd className="mt-1 font-display text-2xl font-medium">{counts.SUSPENDED}</dd>
+            <dt className="eyebrow text-muted-foreground">{t("admin.suspended")}</dt>
+            <dd className="mt-1 font-display text-2xl font-medium">
+              {formatNumber(counts.SUSPENDED)}
+            </dd>
           </div>
         </dl>
       </div>
 
       {reviewed === "approved" ? (
         <Notice tone="success" className="mt-8">
-          Studio approved. The owner now has the vendor role and an open workspace.
+          {t("admin.noticeStudioApproved")}
         </Notice>
       ) : null}
       {reviewed === "rejected" ? (
         <Notice tone="warning" className="mt-8">
-          Application rejected. The owner can see your note in their studio workspace.
+          {t("admin.noticeApplicationRejected")}
         </Notice>
       ) : null}
 
@@ -114,39 +135,39 @@ async function AdminVendorsContent({
         className="mt-8 grid gap-3 rounded-xl border border-border bg-surface p-4 md:grid-cols-[minmax(0,1fr)_14rem_auto] md:items-end"
       >
         <label className="grid gap-2 text-sm">
-          Studio, owner, or email
+          {t("admin.vendorsSearchLabel")}
           <Input name="q" defaultValue={search} maxLength={80} />
         </label>
         <label className="grid gap-2 text-sm">
-          Application status
+          {t("admin.applicationStatusLabel")}
           <Select name="status" defaultValue={status ?? ""}>
-            <option value="">All statuses</option>
+            <option value="">{t("admin.allStatuses")}</option>
             {statuses.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {t(statusLabelKeys[value])}
               </option>
             ))}
           </Select>
         </label>
         <Button type="submit" size="sm">
-          Filter
+          {t("common.filter")}
         </Button>
       </form>
       <p className="mt-4 text-xs text-muted-foreground">
-        {total.toLocaleString()} matching studios. Status totals above include all applications.
+        {t("admin.vendorsCount", { count: formatNumber(total) })}
       </p>
 
       {applications.length === 0 ? (
         <EmptyState
           icon={<Store className="size-5" aria-hidden="true" />}
-          title="No studio applications yet."
-          description="When a customer applies for a vendor workspace, the application appears here for review."
+          title={t("admin.vendorsEmptyTitle")}
+          description={t("admin.vendorsEmptyBody")}
           className="mt-8"
         />
       ) : (
         <div className="mt-8 space-y-5">
           {pendingCount === 0 ? (
-            <p className="text-xs text-muted-foreground">No applications are waiting for review.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.noApplicationsWaiting")}</p>
           ) : null}
 
           <ul className="space-y-5">
@@ -166,23 +187,23 @@ async function AdminVendorsContent({
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Applied {formatDate(application.createdAt)}
+                      {t("admin.appliedOn", { date: formatDate(application.createdAt) })}
                     </p>
                   </div>
 
                   <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-2 border-t border-border pt-4 text-sm">
                     <div>
-                      <dt className="inline text-muted-foreground">Owner </dt>
+                      <dt className="inline text-muted-foreground">{t("admin.ownerLabel")} </dt>
                       <dd className="inline font-medium">{application.owner.name}</dd>
                     </div>
                     <div>
-                      <dt className="inline text-muted-foreground">Email </dt>
+                      <dt className="inline text-muted-foreground">{t("auth.email")} </dt>
                       <dd className="inline font-medium break-all">{application.owner.email}</dd>
                     </div>
                   </dl>
 
                   <p className="mt-4 max-w-3xl text-sm leading-6 whitespace-pre-line">
-                    {application.description || "No description provided."}
+                    {application.description || t("admin.noDescription")}
                   </p>
 
                   {application.status === "PENDING" ? (
@@ -191,24 +212,28 @@ async function AdminVendorsContent({
                     <div className="mt-5 border-t border-border pt-4 text-sm">
                       <p className="text-muted-foreground">
                         {application.reviewedAt
-                          ? `Reviewed ${formatDate(application.reviewedAt)}`
-                          : "Reviewed"}
+                          ? t("admin.reviewedOn", { date: formatDate(application.reviewedAt) })
+                          : t("admin.reviewed")}
                       </p>
                       {application.reviewNote ? (
                         <p className="mt-2 max-w-3xl leading-6">
-                          <span className="text-muted-foreground">Note: </span>
+                          <span className="text-muted-foreground">{t("admin.noteLabel")} </span>
                           {application.reviewNote}
                         </p>
                       ) : null}
                       {application.appealedAt && application.appealReason ? (
                         <section className="mt-4 rounded-lg bg-surface-muted p-4">
-                          <p className="eyebrow text-muted-foreground">Applicant appeal</p>
+                          <p className="eyebrow text-muted-foreground">
+                            {t("admin.applicantAppeal")}
+                          </p>
                           <p className="mt-2 leading-6 whitespace-pre-line">
                             {application.appealReason}
                           </p>
                           {application.appealReviewedAt ? (
                             <p className="mt-3 text-xs text-muted-foreground">
-                              Appeal reviewed {formatDate(application.appealReviewedAt)}
+                              {t("admin.appealReviewedOn", {
+                                date: formatDate(application.appealReviewedAt),
+                              })}
                               {application.appealReviewNote
                                 ? ` · ${application.appealReviewNote}`
                                 : ""}
@@ -231,15 +256,16 @@ async function AdminVendorsContent({
         params={{ status, q: search }}
         page={currentPage}
         pageCount={pageCount(total)}
+        label={t("common.pagination")}
       />
     </PageShell>
   );
 }
 
-function AdminSkeleton() {
+function AdminSkeleton({ loadingLabel }: { loadingLabel: string }) {
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading vendor applications">
+      <div role="status" aria-label={loadingLabel}>
         <div className="border-b border-border pb-8">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="mt-4 h-12 w-80 max-w-full" />
@@ -250,7 +276,9 @@ function AdminSkeleton() {
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{loadingLabel}</span>
     </PageShell>
   );
 }
+
+export const instant = false;

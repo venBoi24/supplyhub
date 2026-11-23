@@ -17,11 +17,14 @@ import { getServerI18n } from "@/i18n/server";
 import { getServerEnv } from "@/lib/config/env";
 import { requireCustomer } from "@/server/auth/guards";
 
-export const metadata: Metadata = {
-  title: "Checkout",
-  description: "Confirm the delivery details for your SupplyHub order.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+  return {
+    title: t("checkout.metaTitle"),
+    description: t("checkout.metaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default function CheckoutPage() {
   return (
@@ -190,10 +193,11 @@ async function CheckoutContent() {
   );
 }
 
-function CheckoutSkeleton() {
+async function CheckoutSkeleton() {
+  const { t } = await getServerI18n();
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <div role="status" aria-label="Loading checkout">
+      <div role="status" aria-label={t("checkout.loadingCheckout")}>
         <div className="border-b border-border pb-8">
           <Skeleton className="h-3 w-20" />
           <Skeleton className="mt-4 h-12 w-80 max-w-full" />
@@ -203,7 +207,9 @@ function CheckoutSkeleton() {
           <Skeleton className="h-80 w-full rounded-xl" />
         </div>
       </div>
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </PageShell>
   );
 }
+
+export const instant = false;

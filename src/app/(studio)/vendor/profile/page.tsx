@@ -10,12 +10,17 @@ import { listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
 import { getVendorForOwner } from "@/features/vendors/queries";
 import { initialsFor } from "@/lib/utils/initials";
 import { requireApprovedVendor } from "@/server/auth/guards";
+import { getServerI18n } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Studio profile",
-  description: "Edit the public profile for your SupplyHub studio.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("studio.profile"),
+    description: t("studio.profileDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function searchParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -34,7 +39,8 @@ async function ProfileContent({
 }: {
   searchParams: PageProps<"/vendor/profile">["searchParams"];
 }) {
-  const [{ actor, vendorId }, query] = await Promise.all([
+  const [{ t }, { actor, vendorId }, query] = await Promise.all([
+    getServerI18n(),
     requireApprovedVendor("/vendor/profile"),
     searchParams,
   ]);
@@ -53,13 +59,13 @@ async function ProfileContent({
   return (
     <>
       <StudioPageHead
-        title="Studio profile"
-        description={`This is what customers read on your public studio page at /vendors/${vendor.slug}.`}
+        title={t("studio.profile")}
+        description={t("studio.profileIntro", { slug: vendor.slug })}
       />
 
       {saved ? (
         <Notice tone="success" className="mb-4">
-          Studio profile saved.
+          {t("studio.profileSaved")}
         </Notice>
       ) : null}
 
@@ -85,15 +91,19 @@ async function ProfileContent({
   );
 }
 
-function ProfileSkeleton() {
+async function ProfileSkeleton() {
+  const { t } = await getServerI18n();
+
   return (
-    <div role="status" aria-label="Loading the studio profile">
+    <div role="status" aria-label={t("studio.loadingProfile")}>
       <div className="mb-5">
         <Skeleton className="h-7 w-40" />
         <Skeleton className="mt-2 h-3.5 w-80 max-w-full" />
       </div>
       <Skeleton className="h-[28rem] w-full max-w-3xl rounded-xl" />
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
+
+export const instant = false;

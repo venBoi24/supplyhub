@@ -18,15 +18,19 @@ import { decimalToCents, formatMoney } from "@/features/catalog/money";
 import { getStudioProductStats, listVendorProducts } from "@/features/catalog/vendor-queries";
 import { listVendorOrders } from "@/features/checkout/vendor-operations";
 import { getVendorForOwner } from "@/features/vendors/queries";
-import { formatDate } from "@/lib/utils/format-date";
+import { getServerI18n } from "@/i18n/server";
 import { requireActor } from "@/server/auth/guards";
 import { canApplyForVendor } from "@/server/auth/policies";
 
-export const metadata: Metadata = {
-  title: "Studio workspace",
-  description: "Track your SupplyHub studio application and workspace status.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("studio.title"),
+    description: t("studio.overviewDescription"),
+    robots: { index: false, follow: false },
+  };
+}
 
 function searchParamValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -45,6 +49,7 @@ async function VendorContent({
 }: {
   searchParams: PageProps<"/vendor">["searchParams"];
 }) {
+  const { t, formatDate } = await getServerI18n();
   const actor = await requireActor("/vendor");
   const [params, vendor] = await Promise.all([searchParams, getVendorForOwner(actor.id)]);
 
@@ -65,56 +70,54 @@ async function VendorContent({
         <StudioPageHead
           title={
             vendor.status === "PENDING"
-              ? "Application under review"
+              ? t("studio.applicationUnderReview")
               : vendor.status === "REJECTED"
-                ? "Application not approved"
-                : "Studio suspended"
+                ? t("studio.applicationNotApproved")
+                : t("studio.studioSuspended")
           }
-          description="Your studio application and its review status are shown here. Selling tools open after approval."
+          description={t("studio.applicationStatusDescription")}
           action={<VendorStatusBadge status={vendor.status} className="rounded-full" />}
         />
 
         {submitted ? (
           <Notice tone="success" className="mb-4">
-            Application submitted. A SupplyHub administrator will review it before your workspace
-            opens.
+            {t("studio.submittedNotice")}
           </Notice>
         ) : null}
 
         {appealRequested && vendor.status === "REJECTED" ? (
           <Notice tone="info" className="mb-4">
-            Your studio application was rejected. Review the decision and submit your appeal below.
+            {t("studio.appealNotice")}
           </Notice>
         ) : null}
 
         {vendor.status === "PENDING" ? (
           <section className="rounded-xl border border-border bg-surface p-6 sm:p-8">
             <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
-              Your application is under review.
+              {t("studio.underReviewTitle")}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              An administrator reviews every studio before it can list objects. Nothing else is
-              needed from you right now.
+              {t("studio.underReviewBody")}
             </p>
 
             <dl className="mt-7 grid gap-4 border-t border-border pt-6 text-sm sm:grid-cols-3">
               <div>
-                <dt className="eyebrow text-muted-foreground">Handle</dt>
+                <dt className="eyebrow text-muted-foreground">{t("studio.handle")}</dt>
                 <dd className="mt-1.5 font-mono text-xs tracking-[0.08em]">/{vendor.slug}</dd>
               </div>
               <div>
-                <dt className="eyebrow text-muted-foreground">Submitted</dt>
+                <dt className="eyebrow text-muted-foreground">{t("studio.submitted")}</dt>
                 <dd className="mt-1.5 font-medium">{formatDate(vendor.createdAt)}</dd>
               </div>
               <div>
-                <dt className="eyebrow text-muted-foreground">Status</dt>
-                <dd className="mt-1.5 font-medium">Waiting for review</dd>
+                <dt className="eyebrow text-muted-foreground">{t("common.status")}</dt>
+                <dd className="mt-1.5 font-medium">{t("studio.waitingForReview")}</dd>
               </div>
             </dl>
 
             {vendor.description ? (
               <div className="mt-6 border-t border-border pt-6">
-                <p className="eyebrow text-muted-foreground">Your application</p>
+                <p className="eyebrow text-muted-foreground">{t("studio.yourApplication")}</p>
                 <p className="mt-2 max-w-2xl text-sm leading-6 whitespace-pre-line">
                   {vendor.description}
                 </p>
@@ -128,37 +131,35 @@ async function VendorContent({
             id="appeal"
             className="scroll-mt-8 rounded-xl border border-border bg-surface p-6 sm:p-8"
           >
-            <Notice tone="danger">This studio application was not approved.</Notice>
+            <Notice tone="danger">{t("studio.notApprovedNotice")}</Notice>
             <h2 className="mt-6 font-display text-xl font-medium tracking-[-0.02em]">
-              What happens next
+              {t("studio.whatNext")}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Applications cannot be resubmitted from this preview. Contact the SupplyHub team if
-              you believe the decision was made in error.
+              {t("studio.whatNextBody")}
             </p>
             <div className="mt-6 border-t border-border pt-6">
-              <p className="eyebrow text-muted-foreground">Reviewer note</p>
+              <p className="eyebrow text-muted-foreground">{t("studio.reviewerNote")}</p>
               <p className="mt-2 max-w-2xl text-sm leading-6">
-                {vendor.reviewNote || "No note was included with this decision."}
+                {vendor.reviewNote || t("studio.noReviewNote")}
               </p>
               {vendor.reviewedAt ? (
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Reviewed {formatDate(vendor.reviewedAt)}
+                  {t("studio.reviewedOn", { date: formatDate(vendor.reviewedAt) })}
                 </p>
               ) : null}
             </div>
             {vendor.appealedAt ? (
               <div className="mt-6 border-t border-border pt-6">
-                <p className="eyebrow text-muted-foreground">Appeal submitted</p>
+                <p className="eyebrow text-muted-foreground">{t("studio.appealSubmitted")}</p>
                 <p className="mt-2 text-sm leading-6 whitespace-pre-line">{vendor.appealReason}</p>
                 {vendor.appealReviewedAt ? (
                   <p className="mt-3 text-sm leading-6" role="status">
-                    {vendor.appealReviewNote ||
-                      "Your appeal was reviewed and the rejection stands."}
+                    {vendor.appealReviewNote || t("studio.appealRejectionStands")}
                   </p>
                 ) : (
                   <p className="mt-3 text-sm text-muted-foreground" role="status">
-                    Your appeal is awaiting review.
+                    {t("studio.appealAwaiting")}
                   </p>
                 )}
               </div>
@@ -170,21 +171,20 @@ async function VendorContent({
 
         {vendor.status === "SUSPENDED" ? (
           <section className="rounded-xl border border-border bg-surface p-6 sm:p-8">
-            <Notice tone="danger">This studio workspace is suspended.</Notice>
+            <Notice tone="danger">{t("studio.suspendedNotice")}</Notice>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Listing, order, and account tools are unavailable while the studio is suspended.
-              Contact the SupplyHub team for details.
+              {t("studio.suspendedBody")}
             </p>
           </section>
         ) : null}
 
         <p className="mt-8 border-t border-border pt-5 text-xs text-muted-foreground">
-          Email settings and account details live on your{" "}
+          {t("studio.accountSettingsBefore")}{" "}
           <Link
             href="/account"
             className="rounded-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
           >
-            account page
+            {t("studio.accountPageLink")}
           </Link>
           .
         </p>
@@ -207,14 +207,14 @@ async function VendorContent({
   return (
     <>
       <StudioPageHead
-        title="Overview"
-        description="What needs your attention in the studio today."
+        title={t("studio.overview")}
+        description={t("studio.overviewDescription")}
         action={
           <Badge
             tone="neutral"
             className="rounded-full border-0 bg-sky font-sans text-[0.6563rem] font-medium tracking-normal text-sky-ink normal-case"
           >
-            Last updated just now
+            {t("studio.lastUpdated")}
           </Badge>
         }
       />
@@ -228,17 +228,29 @@ async function VendorContent({
 
       <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StudioKpi
-          label="Total objects"
+          label={t("studio.totalObjects")}
           value={stats.total}
           note={
             departmentCount > 0
-              ? `Across ${departmentCount} ${departmentCount === 1 ? "department" : "departments"}`
-              : "No departments yet"
+              ? t("studio.acrossDepartments", {
+                  count: departmentCount,
+                  departments:
+                    departmentCount === 1 ? t("common.departmentOne") : t("common.departmentMany"),
+                })
+              : t("studio.noDepartments")
           }
         />
-        <StudioKpi label="Published" value={stats.published} note="Visible in the catalog" />
-        <StudioKpi label="Drafts" value={stats.drafts} note="Not yet published" />
-        <StudioKpi label="Low stock" value={stats.lowStock} note="Published items at 4 or fewer" />
+        <StudioKpi
+          label={t("studio.published")}
+          value={stats.published}
+          note={t("studio.visibleInCatalog")}
+        />
+        <StudioKpi label={t("studio.drafts")} value={stats.drafts} note={t("studio.draftsNote")} />
+        <StudioKpi
+          label={t("common.lowStock")}
+          value={stats.lowStock}
+          note={t("studio.lowStockNote")}
+        />
       </div>
 
       <div className="mt-3 grid items-start gap-3 lg:grid-cols-[1.5fr_1fr]">
@@ -248,19 +260,19 @@ async function VendorContent({
         >
           <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5">
             <h2 id="recent-orders-heading" className="text-[0.8125rem] font-semibold">
-              Recent orders
+              {t("studio.recentOrders")}
             </h2>
             <Link
               href="/vendor/orders"
               className="rounded-sm text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
             >
-              View all
+              {t("common.viewAll")}
             </Link>
           </div>
 
           {recentOrders.length === 0 ? (
             <p className="px-4 py-10 text-center text-xs text-muted-foreground">
-              No orders yet. Paid orders containing your objects will appear here.
+              {t("studio.noOrders")}
             </p>
           ) : (
             <>
@@ -290,16 +302,16 @@ async function VendorContent({
                   <thead>
                     <tr className="border-b border-border bg-surface-muted/60">
                       <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
-                        Order
+                        {t("studio.order")}
                       </th>
                       <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
-                        Buyer
+                        {t("studio.buyer")}
                       </th>
                       <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
-                        Total
+                        {t("common.total")}
                       </th>
                       <th className="px-4 py-2 font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
-                        Status
+                        {t("common.status")}
                       </th>
                     </tr>
                   </thead>
@@ -332,7 +344,7 @@ async function VendorContent({
           >
             <div className="border-b border-border px-4 py-3.5">
               <h2 id="attention-heading" className="text-[0.8125rem] font-semibold">
-                Needs attention
+                {t("studio.needsAttention")}
               </h2>
             </div>
             <ul className="px-4 py-1">
@@ -340,18 +352,19 @@ async function VendorContent({
                 <AttentionRow
                   icon={AlertCircle}
                   tone="bg-warning/10 text-warning"
-                  title={`${stats.drafts} ${
-                    stats.drafts === 1 ? "draft" : "drafts"
-                  } not yet published`}
-                  copy="Publish them when they are ready."
+                  title={t("studio.draftsPending", {
+                    count: stats.drafts,
+                    objects: stats.drafts === 1 ? t("nav.object") : t("nav.objects"),
+                  })}
+                  copy={t("studio.publishWhenReady")}
                   href="/vendor/products"
                 />
               ) : (
                 <AttentionRow
                   icon={BadgeCheck}
                   tone="bg-sage-soft text-sage"
-                  title="All objects are live"
-                  copy="Every object in your catalog is published."
+                  title={t("studio.allObjectsLive")}
+                  copy={t("studio.allObjectsLiveNote")}
                 />
               )}
 
@@ -359,17 +372,18 @@ async function VendorContent({
                 <AttentionRow
                   icon={Package}
                   tone="bg-accent-soft text-accent"
-                  title={`${stats.lowStock} published ${
-                    stats.lowStock === 1 ? "object is" : "objects are"
-                  } low on stock`}
-                  copy="Adjust inventory before the next order."
+                  title={t("studio.lowStockCount", {
+                    count: stats.lowStock,
+                    objects: stats.lowStock === 1 ? t("nav.object") : t("nav.objects"),
+                  })}
+                  copy={t("studio.adjustInventory")}
                 />
               ) : (
                 <AttentionRow
                   icon={BadgeCheck}
                   tone="bg-sage-soft text-sage"
-                  title="Stock levels look healthy"
-                  copy="No published object is at 4 or fewer."
+                  title={t("studio.stockHealthy")}
+                  copy={t("studio.stockHealthyNote")}
                 />
               )}
 
@@ -377,15 +391,15 @@ async function VendorContent({
                 <AttentionRow
                   icon={ShieldCheck}
                   tone="bg-sage-soft text-sage"
-                  title="Studio profile is complete"
-                  copy="Location and departments are set."
+                  title={t("studio.profileComplete")}
+                  copy={t("studio.profileCompleteNote")}
                 />
               ) : (
                 <AttentionRow
                   icon={AlertCircle}
                   tone="bg-warning/10 text-warning"
-                  title="Finish your studio profile"
-                  copy="Add your story, departments and pickup location."
+                  title={t("studio.finishProfile")}
+                  copy={t("studio.finishProfileNote")}
                   href="/vendor/profile"
                 />
               )}
@@ -398,24 +412,24 @@ async function VendorContent({
           >
             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5">
               <h2 id="top-objects-heading" className="text-[0.8125rem] font-semibold">
-                Top objects
+                {t("studio.topObjects")}
               </h2>
               <Link
                 href="/vendor/products"
                 className="rounded-sm text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
               >
-                Manage
+                {t("studio.manage")}
               </Link>
             </div>
 
             {products.length === 0 ? (
               <p className="px-4 py-8 text-center text-xs text-muted-foreground">
-                No objects yet.{" "}
+                {t("studio.noObjects")}{" "}
                 <Link
                   href="/vendor/products/new"
                   className="rounded-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
                 >
-                  Add your first object
+                  {t("studio.addFirstObject")}
                 </Link>
                 .
               </p>
@@ -443,8 +457,8 @@ async function VendorContent({
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-xs font-medium">{product.name}</span>
                         <span className="mt-0.5 block text-[0.6563rem] text-muted-foreground">
-                          {formatMoney(product.priceCents, product.currency)} · {product.stock} in
-                          stock
+                          {formatMoney(product.priceCents, product.currency)} ·{" "}
+                          {t("studio.inStock", { count: product.stock })}
                         </span>
                       </span>
                       <ProductStatusBadge status={product.status} />
@@ -458,12 +472,12 @@ async function VendorContent({
       </div>
 
       <p className="mt-6 border-t border-border pt-5 text-xs text-muted-foreground">
-        Email settings and account details live on your{" "}
+        {t("studio.accountSettingsBefore")}{" "}
         <Link
           href="/account"
           className="rounded-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         >
-          account page
+          {t("studio.accountPageLink")}
         </Link>
         .
       </p>
@@ -528,9 +542,11 @@ function AttentionRow({
   );
 }
 
-function VendorSkeleton() {
+async function VendorSkeleton() {
+  const { t } = await getServerI18n();
+
   return (
-    <div role="status" aria-label="Loading the studio workspace">
+    <div role="status" aria-label={t("studio.loadingWorkspace")}>
       <div className="mb-5">
         <Skeleton className="h-7 w-36" />
         <Skeleton className="mt-2 h-3.5 w-64 max-w-full" />
@@ -541,7 +557,9 @@ function VendorSkeleton() {
         ))}
       </div>
       <Skeleton className="mt-3 h-72 w-full rounded-xl" />
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
+
+export const instant = false;

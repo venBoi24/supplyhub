@@ -12,12 +12,17 @@ import { Notice } from "@/components/ui/notice";
 import { formatMoney } from "@/features/catalog/money";
 import { listStudioCategoryOptions, listVendorProducts } from "@/features/catalog/vendor-queries";
 import { getDatabase } from "@/server/db/client";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
-export const metadata: Metadata = {
-  title: "Manage user store",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("admin.manageStoreMetaTitle"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const uuidSchema = z.uuid();
 
@@ -25,6 +30,7 @@ export default async function AdminUserInventoryPage({
   params,
   searchParams,
 }: PageProps<"/admin/users/[userId]/inventory">) {
+  const { t } = await getServerI18n();
   const [admin, { userId }, query] = await Promise.all([requireAdmin(), params, searchParams]);
   if (!uuidSchema.safeParse(userId).success) notFound();
 
@@ -66,35 +72,32 @@ export default async function AdminUserInventoryPage({
   return (
     <PageShell className="pt-10 sm:pt-14">
       <Link href="/admin/users" className="text-sm text-accent underline underline-offset-4">
-        Back to users
+        {t("admin.backToUsers")}
       </Link>
       <div className="mt-6 border-b border-border pb-8">
         <p className="eyebrow text-muted-foreground">
-          Admin assisted store management · {admin.name}
+          {t("admin.assistedStoreEyebrow", { name: admin.name })}
         </p>
         <h1 className="mt-3 font-display text-4xl font-medium tracking-[-0.04em]">
           {user.vendor.name}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {user.name} · {user.email} · Store status: {user.vendor.status}
+          {user.name} · {user.email} · {t("admin.storeStatusLabel", { status: user.vendor.status })}
         </p>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Help this user set up their store location and product catalog. New products remain drafts
-          until they are sent for review and published by an administrator.
+          {t("admin.assistedStoreIntro")}
         </p>
       </div>
 
       {query.saved === "1" ? (
         <Notice tone="success" className="mt-6">
-          Store profile saved.
+          {t("admin.noticeStoreProfileSaved")}
         </Notice>
       ) : null}
 
       <section className="mt-8 rounded-xl border border-border bg-surface p-6 sm:p-8">
-        <h2 className="font-display text-2xl font-medium">Store profile & location</h2>
-        <p className="mt-2 mb-6 text-sm text-muted-foreground">
-          Choose the location and confirm it in the embedded Google Map before saving.
-        </p>
+        <h2 className="font-display text-2xl font-medium">{t("admin.storeProfileHeading")}</h2>
+        <p className="mt-2 mb-6 text-sm text-muted-foreground">{t("admin.storeProfileHint")}</p>
         <AdminVendorProfileForm
           user={{ id: user.id, name: user.name }}
           departments={categories}
@@ -116,11 +119,9 @@ export default async function AdminUserInventoryPage({
       </section>
 
       <section className="mt-8 rounded-xl border border-border bg-surface p-6 sm:p-8">
-        <h2 className="font-display text-2xl font-medium">Add a product</h2>
+        <h2 className="font-display text-2xl font-medium">{t("admin.addProductHeading")}</h2>
         {categories.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">
-            Create an active product category first.
-          </p>
+          <p className="mt-4 text-sm text-muted-foreground">{t("admin.createCategoryFirst")}</p>
         ) : (
           <div className="mt-6">
             <StudioProductForm
@@ -141,11 +142,13 @@ export default async function AdminUserInventoryPage({
       <section className="mt-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="eyebrow text-muted-foreground">Inventory</p>
-            <h2 className="mt-2 font-display text-3xl font-medium">Products for this store</h2>
+            <p className="eyebrow text-muted-foreground">{t("admin.inventoryEyebrow")}</p>
+            <h2 className="mt-2 font-display text-3xl font-medium">
+              {t("admin.storeProductsHeading")}
+            </h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            {products.length} products (up to 200 shown)
+            {t("admin.productCountShown", { count: products.length })}
           </p>
         </div>
         {products.length ? (
@@ -157,14 +160,15 @@ export default async function AdminUserInventoryPage({
                     <p className="font-medium">{product.name}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {product.sku} · {product.categoryName} ·{" "}
-                      {formatMoney(product.priceCents, product.currency)} · Stock {product.stock}
+                      {formatMoney(product.priceCents, product.currency)} ·{" "}
+                      {t("studio.inStock", { count: product.stock })}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <ProductStatusBadge status={product.status} />
                     <Button asChild variant="secondary" size="sm">
                       <Link href={`/admin/users/${user.id}/inventory/${product.id}`}>
-                        Manage product
+                        {t("admin.manageProduct")}
                       </Link>
                     </Button>
                   </div>
@@ -174,10 +178,12 @@ export default async function AdminUserInventoryPage({
           </ul>
         ) : (
           <p className="mt-5 rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            No products yet. Add the user’s first product above.
+            {t("admin.noStoreProducts")}
           </p>
         )}
       </section>
     </PageShell>
   );
 }
+
+export const instant = false;

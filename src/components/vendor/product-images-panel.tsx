@@ -14,6 +14,7 @@ import {
   uploadProductImageAction,
 } from "@/features/catalog/vendor-actions";
 import { initialFormState, type FormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export interface StudioImage {
   id: string;
@@ -35,17 +36,17 @@ export function ProductImagesPanel({
   limitReached: boolean;
   adminVendorId?: string;
 }) {
+  const t = useT();
   const [state, action] = useActionState(uploadProductImageAction, initialFormState);
   const errors = state.fieldErrors;
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Images</h2>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          JPEG, PNG, WebP, GIF, AVIF, or BMP up to 5 MB. The first image is the cover. Up to six
-          images per object.
-        </p>
+        <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+          {t("studio.images")}
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("studio.imagesNote")}</p>
       </div>
 
       {images.length > 0 ? (
@@ -64,7 +65,7 @@ export function ProductImagesPanel({
         </ul>
       ) : (
         <p className="rounded-md border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-          No images yet. At least one image is needed before this object can be submitted.
+          {t("studio.noImagesYet")}
         </p>
       )}
 
@@ -76,7 +77,7 @@ export function ProductImagesPanel({
           ) : null}
           <FormMessage state={state} />
 
-          <Field label="Image file" htmlFor="image-file" error={errors?.image}>
+          <Field label={t("studio.imageFile")} htmlFor="image-file" error={errors?.image}>
             <Input
               id="image-file"
               name="image"
@@ -89,16 +90,19 @@ export function ProductImagesPanel({
             />
           </Field>
 
-          <SubmitButton pendingLabel="Uploading…" variant="secondary" className="w-auto" size="sm">
-            Add image
+          <SubmitButton
+            pendingLabel={t("studio.uploadingImage")}
+            variant="secondary"
+            className="w-auto"
+            size="sm"
+          >
+            {t("studio.addImage")}
           </SubmitButton>
         </form>
       ) : null}
 
       {limitReached ? (
-        <p className="text-xs text-muted-foreground">
-          The image limit is reached. Remove an image to add another.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("studio.imageLimitReached")}</p>
       ) : null}
     </div>
   );
@@ -117,6 +121,7 @@ function ImageRow({
   isLast: boolean;
   adminVendorId?: string;
 }) {
+  const t = useT();
   const [deleteState, deleteAction] = useActionState(deleteProductImageAction, initialFormState);
   const [moveState, moveAction] = useActionState(moveProductImageAction, initialFormState);
 
@@ -133,7 +138,7 @@ function ImageRow({
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-5">{image.alt}</p>
         <p className="mt-1 font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
-          Position {image.sortOrder + 1}
+          {t("studio.imagePosition", { position: image.sortOrder + 1 })}
         </p>
 
         <RowError state={deleteState} />
@@ -151,7 +156,7 @@ function ImageRow({
                 type="submit"
                 disabled={isFirst}
                 className="inline-flex size-8 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40"
-                aria-label="Move image earlier"
+                aria-label={t("studio.moveImageEarlier")}
               >
                 <ArrowUp className="size-3.5" aria-hidden="true" />
               </button>
@@ -166,7 +171,7 @@ function ImageRow({
                 type="submit"
                 disabled={isLast}
                 className="inline-flex size-8 items-center justify-center rounded-sm border border-border text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40"
-                aria-label="Move image later"
+                aria-label={t("studio.moveImageLater")}
               >
                 <ArrowDown className="size-3.5" aria-hidden="true" />
               </button>
@@ -181,7 +186,7 @@ function ImageRow({
                 className="inline-flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <Trash2 className="size-3.5" aria-hidden="true" />
-                Remove
+                {t("common.remove")}
               </button>
             </form>
           </div>
@@ -191,7 +196,7 @@ function ImageRow({
       {isFirst ? (
         <span className="inline-flex items-center gap-1 font-mono text-[0.625rem] tracking-[0.14em] text-clay uppercase">
           <ImagePlus className="size-3" aria-hidden="true" />
-          Cover
+          {t("studio.coverBadge")}
         </span>
       ) : null}
     </div>

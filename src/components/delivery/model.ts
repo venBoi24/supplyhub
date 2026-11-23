@@ -159,14 +159,14 @@ export async function fetchRoadRoute(a: Point, b: Point): Promise<Point[] | null
   }
 }
 
-export const STATUS_LABEL: Record<DeliveryStatus, string> = {
-  pending: "Awaiting courier",
-  assigned: "Courier assigned",
-  accepted: "Courier accepted",
-  to_pickup: "Heading to pickup",
-  at_pickup: "At the studio",
-  transit: "On the way to you",
-  delivered: "Delivered",
+export const STATUS_LABEL_KEYS: Record<DeliveryStatus, string> = {
+  pending: "delivery.statusPending",
+  assigned: "delivery.statusAssigned",
+  accepted: "delivery.statusAccepted",
+  to_pickup: "delivery.statusToPickup",
+  at_pickup: "delivery.statusAtPickup",
+  transit: "delivery.statusTransit",
+  delivered: "delivery.statusDelivered",
 };
 
 export const STATUS_ORDER: DeliveryStatus[] = [

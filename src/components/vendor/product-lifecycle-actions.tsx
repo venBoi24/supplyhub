@@ -12,6 +12,7 @@ import {
 } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
 import type { ProductStatus } from "@/generated/prisma/enums";
+import { useT } from "@/i18n/client";
 
 export function ProductLifecycleActions({
   productId,
@@ -26,6 +27,7 @@ export function ProductLifecycleActions({
   imageCount: number;
   adminVendorId?: string;
 }) {
+  const t = useT();
   const [publishState, publishAction] = useActionState(publishProductAction, initialFormState);
   const [archiveState, archiveAction] = useActionState(archiveProductAction, initialFormState);
   const [deleteState, deleteAction] = useActionState(deleteProductAction, initialFormState);
@@ -47,11 +49,11 @@ export function ProductLifecycleActions({
             <input type="hidden" name="adminVendorId" value={adminVendorId} />
           ) : null}
           <FormMessage state={publishState} />
-          <SubmitButton pendingLabel="Publishing…" disabled={imageCount === 0}>
-            Publish object
+          <SubmitButton pendingLabel={t("studio.publishingPending")} disabled={imageCount === 0}>
+            {t("studio.publishObject")}
           </SubmitButton>
           {imageCount === 0 ? (
-            <p className="text-xs text-muted-foreground">Add an image before publishing.</p>
+            <p className="text-xs text-muted-foreground">{t("studio.addImageBeforePublish")}</p>
           ) : null}
         </form>
       ) : null}
@@ -61,7 +63,7 @@ export function ProductLifecycleActions({
           href={publicHref}
           className="inline-flex text-sm font-medium text-accent underline-offset-4 hover:underline"
         >
-          View on the storefront
+          {t("studio.viewOnStorefront")}
         </Link>
       ) : null}
 
@@ -73,11 +75,11 @@ export function ProductLifecycleActions({
           ) : null}
           <FormMessage state={archiveState} />
           <SubmitButton
-            pendingLabel="Archiving…"
+            pendingLabel={t("studio.archivingPending")}
             variant="secondary"
             className="w-full justify-start"
           >
-            Archive object
+            {t("studio.archiveObject")}
           </SubmitButton>
         </form>
       ) : null}
@@ -87,7 +89,7 @@ export function ProductLifecycleActions({
           action={deleteAction}
           className="space-y-2"
           onSubmit={(event) => {
-            if (!window.confirm("Delete this draft permanently? Images will be removed too.")) {
+            if (!window.confirm(t("studio.confirmDeleteDraft"))) {
               event.preventDefault();
             }
           }}
@@ -98,11 +100,11 @@ export function ProductLifecycleActions({
           ) : null}
           <FormMessage state={deleteState} />
           <SubmitButton
-            pendingLabel="Deleting…"
+            pendingLabel={t("studio.deletingPending")}
             variant="ghost"
             className="w-full justify-start text-danger hover:bg-danger/10"
           >
-            Delete draft
+            {t("studio.deleteDraft")}
           </SubmitButton>
         </form>
       ) : null}

@@ -21,16 +21,22 @@ import { getServerI18n } from "@/i18n/server";
 export async function generateMetadata({
   params,
 }: PageProps<"/vendors/[slug]">): Promise<Metadata> {
+  const { t } = await getServerI18n();
   const { slug } = await params;
   const vendor = await getVendorBySlug(slug);
 
   if (!vendor) {
-    return { title: "Studio not found" };
+    return { title: t("vendor.notFoundTitle") };
   }
 
   return {
     title: vendor.name,
-    description: `${vendor.name} is an independent ${vendor.discipline.toLowerCase()} studio in ${vendor.location}. ${vendor.story}`,
+    description: t("vendor.metaDescriptionFor", {
+      studio: vendor.name,
+      discipline: vendor.discipline.toLowerCase(),
+      location: vendor.location,
+      story: vendor.story,
+    }),
     alternates: { canonical: `/vendors/${vendor.slug}` },
   };
 }
@@ -231,3 +237,5 @@ async function VendorContent({
     </PageShell>
   );
 }
+
+export const instant = false;

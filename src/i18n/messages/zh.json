@@ -393,7 +393,16 @@
     "mapTitle": "Google 地图配送位置",
     "deliveryQuote": "配送报价",
     "totalDelivery": "配送合计",
-    "addItemForQuote": "将商品加入购物车，即可查看各工作室的配送距离和价格。"
+    "addItemForQuote": "将商品加入购物车，即可查看各工作室的配送距离和价格。",
+    "status": {
+      "awaitingPayment": "待付款",
+      "paid": "已付款",
+      "processing": "处理中",
+      "shipped": "已发货",
+      "delivered": "已送达",
+      "cancelled": "已取消",
+      "expired": "已过期"
+    }
   },
   "auth": {
     "backToShop": "返回商城",
@@ -411,6 +420,7 @@
     "noAccount": "还没有账户？",
     "haveAccount": "已有账户？",
     "email": "电子邮箱",
+    "password": "密码",
     "name": "姓名",
     "phone": "电话号码",
     "phoneHint": "请带上国家代码，例如 +255 754 123 456。买家也可以稍后在结账时添加。",
@@ -468,7 +478,29 @@
     "verifying": "正在验证…",
     "verifyEmail": "验证邮箱",
     "wrongAccount": "账户不对？",
-    "signInAgain": "重新登录"
+    "signInAgain": "重新登录",
+    "errors": {
+      "signInRateLimited": "登录尝试次数过多。请几分钟后再试。",
+      "badCredentials": "电子邮箱或密码不正确。",
+      "signUpRateLimited": "注册尝试次数过多。请稍后再试。",
+      "signUpFailed": "我们无法使用该信息创建账户。如果您已有账户，请登录或重置密码。",
+      "accountCreated": "账户已创建。请登录以继续。",
+      "resetRateLimited": "重置请求过多。请稍后再试。",
+      "resetSent": "如果该邮箱已注册账户，我们已发送密码重置链接。",
+      "resetAttemptRateLimited": "重置尝试次数过多。请稍后再试。",
+      "resetLinkInvalid": "此重置链接无效或已过期。请重新申请一个。"
+    }
+  },
+  "validation": {
+    "emailInvalid": "请输入有效的电子邮箱地址。",
+    "emailTooLong": "请使用少于 254 个字符的电子邮箱地址。",
+    "minCharacters": "请至少使用 {min} 个字符。",
+    "maxCharacters": "请使用不超过 {max} 个字符。",
+    "passwordRequired": "请输入您的密码。",
+    "passwordsDoNotMatch": "两次输入的密码不一致。",
+    "phoneWithCountryCode": "请输入带国家代码的电话号码。",
+    "phoneDigits": "请使用 7–15 位数字并包含国家代码。",
+    "linkInvalid": "此链接无效或不完整。"
   },
   "studio": {
     "nav": "工作室导航",
@@ -543,7 +575,21 @@
     "appealRejectionStands": "您的申诉已审核，维持原拒绝决定。",
     "appealAwaiting": "您的申诉正在等待审核。",
     "suspendedNotice": "该工作室工作区已停用。",
-    "suspendedBody": "工作室停用期间，上架、订单和账户工具不可用。详情请联系 SupplyHub 团队。"
+    "suspendedBody": "工作室停用期间，上架、订单和账户工具不可用。详情请联系 SupplyHub 团队。",
+    "drafts": "草稿",
+    "draftsNote": "尚未发布",
+    "status": {
+      "draft": "草稿",
+      "inReview": "审核中",
+      "published": "已发布",
+      "changesRequested": "要求修改",
+      "archived": "已归档"
+    },
+    "draftsPending": "{count} 件{objects}尚未发布",
+    "publishWhenReady": "准备好后发布它们。",
+    "allObjectsLive": "所有作品均已上架",
+    "allObjectsLiveNote": "您目录中的每件作品都已发布。",
+    "loadingWorkspace": "正在加载工作室工作台"
   },
   "admin": {
     "nav": "管理后台",

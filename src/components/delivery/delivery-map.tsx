@@ -5,6 +5,8 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
 
+import { useT } from "@/i18n/client";
+
 import { activeRoute, MAP_CENTER, MAP_ZOOM, vehiclePosition, type Delivery } from "./model";
 
 interface DeliveryMapProps {
@@ -43,6 +45,7 @@ interface LayerMeta {
 type GroupWithMeta = Leaflet.LayerGroup & { dhMeta?: LayerMeta };
 
 export function DeliveryMap({ deliveries, focusId, now }: DeliveryMapProps) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
   const LRef = useRef<typeof Leaflet | null>(null);
@@ -272,12 +275,12 @@ export function DeliveryMap({ deliveries, focusId, now }: DeliveryMapProps) {
       <div
         ref={containerRef}
         role="img"
-        aria-label="Live delivery map showing couriers moving between studios and buyers across the city"
+        aria-label={t("delivery.mapAriaLabel")}
         className="dh-map h-full w-full"
       />
       {!tilesOk ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-9 z-[500] mx-auto w-fit rounded-lg border border-[#2a3a5f] bg-[#070a14]/90 px-3 py-1.5 text-[0.6875rem] text-[#fbbf24] backdrop-blur">
-          Map tiles are slow to load — tracking continues on the fallback route.
+          {t("delivery.tilesSlow")}
         </div>
       ) : null}
       <style jsx global>{`

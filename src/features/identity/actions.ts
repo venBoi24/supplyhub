@@ -16,14 +16,15 @@ import { getDatabase } from "@/server/db/client";
 import { deliverAccountEmail } from "@/server/email/account-email";
 import { AUTH_RATE_LIMITS } from "@/server/security/auth-rate-limits";
 import { consumeRateLimits, getClientAddress } from "@/server/security/rate-limit";
+import { getServerI18n } from "@/i18n/server";
 
 import { firstFieldErrors, formValue, type FormState } from "./form-state";
 import {
-  forgotPasswordSchema,
-  resetPasswordSchema,
-  signInSchema,
-  signUpSchema,
-  verifyEmailSchema,
+  createForgotPasswordSchema,
+  createResetPasswordSchema,
+  createSignInSchema,
+  createSignUpSchema,
+  createVerifyEmailSchema,
 } from "./validation";
 
 function isUniqueConstraintError(error: unknown): boolean {
@@ -34,7 +35,8 @@ export async function signInAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = signInSchema.safeParse({
+  const { t } = await getServerI18n();
+  const parsed = createSignInSchema(t).safeParse({
     email: formValue(formData, "email"),
     password: formValue(formData, "password"),
     next: formValue(formData, "next") || undefined,
@@ -55,7 +57,7 @@ export async function signInAction(
   if (!allowed) {
     return {
       status: "error",
-      message: "Too many sign-in attempts. Wait a few minutes and try again.",
+      message: t("auth.errors.signInRateLimited"),
     };
   }
 
@@ -68,7 +70,7 @@ export async function signInAction(
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { status: "error", message: "Email or password is incorrect." };
+      return { status: "error", message: t("auth.errors.badCredentials") };
     }
 
     throw error;
@@ -90,7 +92,8 @@ export async function signUpAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = signUpSchema.safeParse({
+  const { t } = await getServerI18n();
+  const parsed = createSignUpSchema(t).safeParse({
     name: formValue(formData, "name"),
     email: formValue(formData, "email"),
     phone: formValue(formData, "phone") || undefined,
@@ -114,7 +117,7 @@ export async function signUpAction(
   if (!allowed) {
     return {
       status: "error",
-      message: "Too many sign-up attempts. Wait a little while and try again.",
+      message: t("auth.errors.signUpRateLimited"),
     };
   }
 
@@ -136,8 +139,7 @@ export async function signUpAction(
     if (isUniqueConstraintError(error)) {
       return {
         status: "error",
-        message:
-          "We could not create an account with those details. If you already have an account, sign in or reset your password.",
+        message: t("auth.errors.signUpFailed"),
       };
     }
 
@@ -167,7 +169,7 @@ export async function signUpAction(
 
     return {
       status: "success",
-      message: "Account created. Sign in to continue.",
+      message: t("auth.errors.accountCreated"),
     };
   }
 
@@ -197,7 +199,8 @@ export async function forgotPasswordAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = forgotPasswordSchema.safeParse({
+  const { t } = await getServerI18n();
+  const parsed = createForgotPasswordSchema(t).safeParse({
     email: formValue(formData, "email"),
   });
 
@@ -216,7 +219,7 @@ export async function forgotPasswordAction(
   if (!allowed) {
     return {
       status: "error",
-      message: "Too many reset requests. Wait a little while and try again.",
+      message: t("auth.errors.resetRateLimited"),
     };
   }
 
@@ -236,7 +239,7 @@ export async function forgotPasswordAction(
 
   return {
     status: "success",
-    message: "If an account exists for that email, we sent a password reset link.",
+    message: t("auth.errors.resetSent"),
   };
 }
 
@@ -244,7 +247,8 @@ export async function resetPasswordAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = resetPasswordSchema.safeParse({
+  const { t } = await getServerI18n();
+  const parsed = createResetPasswordSchema(t).safeParse({
     token: formValue(formData, "token"),
     password: formValue(formData, "password"),
     confirmPassword: formValue(formData, "confirmPassword"),
@@ -261,7 +265,7 @@ export async function resetPasswordAction(
   ) {
     return {
       status: "error",
-      message: "Too many reset attempts. Wait a little while and try again.",
+      message: t("auth.errors.resetAttemptRateLimited"),
     };
   }
 
@@ -270,7 +274,7 @@ export async function resetPasswordAction(
   if (!consumed) {
     return {
       status: "error",
-      message: "This reset link is invalid or has expired. Request a new one.",
+      message: t("auth.errors.resetLinkInvalid"),
     };
   }
 
@@ -288,7 +292,8 @@ export async function resetPasswordAction(
 }
 
 export async function verifyEmailAction(formData: FormData): Promise<void> {
-  const parsed = verifyEmailSchema.safeParse({
+  const { t } = await getServerI18n();
+  const parsed = createVerifyEmailSchema(t).safeParse({
     token: formValue(formData, "token"),
   });
 

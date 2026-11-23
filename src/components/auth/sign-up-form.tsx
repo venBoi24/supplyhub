@@ -9,8 +9,10 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { signUpAction } from "@/features/identity/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function SignUpForm() {
+  const t = useT();
   const [state, action] = useActionState(signUpAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -18,7 +20,7 @@ export function SignUpForm() {
     <form action={action} className="space-y-5">
       <FormMessage state={state} />
 
-      <Field label="Name" htmlFor="sign-up-name" error={errors?.name}>
+      <Field label={t("auth.name")} htmlFor="sign-up-name" error={errors?.name}>
         <Input
           id="sign-up-name"
           name="name"
@@ -29,7 +31,7 @@ export function SignUpForm() {
         />
       </Field>
 
-      <Field label="Email" htmlFor="sign-up-email" error={errors?.email}>
+      <Field label={t("auth.email")} htmlFor="sign-up-email" error={errors?.email}>
         <Input
           id="sign-up-email"
           name="email"
@@ -43,9 +45,9 @@ export function SignUpForm() {
       </Field>
 
       <Field
-        label="Phone number"
+        label={t("auth.phone")}
         htmlFor="sign-up-phone"
-        hint="Include your country code, for example +255 754 123 456. Buyers can add this later at checkout."
+        hint={t("auth.phoneHint")}
         error={errors?.phone}
       >
         <Input
@@ -61,22 +63,22 @@ export function SignUpForm() {
       </Field>
 
       <fieldset className="space-y-2">
-        <legend className="mb-2 text-sm font-medium">I want to</legend>
+        <legend className="mb-2 text-sm font-medium">{t("auth.iWantTo")}</legend>
         <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm hover:bg-surface-muted">
           <input type="radio" name="accountType" value="BUYER" defaultChecked required />
           <span>
-            <span className="block font-medium">Buy products</span>
+            <span className="block font-medium">{t("auth.buyProducts")}</span>
             <span className="block text-xs leading-5 text-muted-foreground">
-              Browse the marketplace and place orders.
+              {t("auth.buyProductsBody")}
             </span>
           </span>
         </label>
         <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 text-sm hover:bg-surface-muted">
           <input type="radio" name="accountType" value="SELLER" required />
           <span>
-            <span className="block font-medium">Sell products</span>
+            <span className="block font-medium">{t("auth.sellProducts")}</span>
             <span className="block text-xs leading-5 text-muted-foreground">
-              Continue to the seller application. An administrator must approve the store.
+              {t("auth.sellProductsBody")}
             </span>
           </span>
         </label>
@@ -88,9 +90,9 @@ export function SignUpForm() {
       </fieldset>
 
       <Field
-        label="Password"
+        label={t("auth.password")}
         htmlFor="sign-up-password"
-        hint="At least 12 characters"
+        hint={t("auth.passwordHint")}
         error={errors?.password}
       >
         <PasswordInput
@@ -104,7 +106,7 @@ export function SignUpForm() {
       </Field>
 
       <Field
-        label="Confirm password"
+        label={t("auth.confirmPassword")}
         htmlFor="sign-up-confirm-password"
         error={errors?.confirmPassword}
       >
@@ -118,7 +120,9 @@ export function SignUpForm() {
         />
       </Field>
 
-      <SubmitButton pendingLabel="Creating account…">Create account</SubmitButton>
+      <SubmitButton pendingLabel={t("auth.creatingAccount")}>
+        {t("auth.createAnAccount")}
+      </SubmitButton>
     </form>
   );
 }

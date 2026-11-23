@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { Prisma } from "@/generated/prisma/client";
+import { getServerI18n } from "@/i18n/server";
 import { logger } from "@/lib/logging/logger";
 import { recordAuditEvent } from "@/server/audit/audit-log";
 import { canApplyForVendor, canReviewVendorApplication } from "@/server/auth/policies";
@@ -14,10 +15,10 @@ import { consumeRateLimits } from "@/server/security/rate-limit";
 
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
 import {
-  vendorApplicationSchema,
-  vendorAppealReviewSchema,
-  vendorAppealSchema,
-  vendorReviewSchema,
+  createVendorAppealReviewSchema,
+  createVendorAppealSchema,
+  createVendorApplicationSchema,
+  createVendorReviewSchema,
 } from "@/features/identity/validation";
 
 function isUniqueConstraintError(error: unknown): boolean {
@@ -29,6 +30,7 @@ export async function applyForVendorAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
 
   if (!actor) {
     redirect("/sign-in?next=/vendor/apply");
@@ -37,7 +39,7 @@ export async function applyForVendorAction(
   if (!canApplyForVendor(actor)) {
     return {
       status: "error",
-      message: "This account already has a vendor application or is not eligible to apply.",
+      message: t("vendor.errors.notEligible"),
     };
   }
 
@@ -48,11 +50,11 @@ export async function applyForVendorAction(
   ) {
     return {
       status: "error",
-      message: "Too many application attempts. Wait a little while and try again.",
+      message: t("vendor.errors.applyRateLimited"),
     };
   }
 
-  const parsed = vendorApplicationSchema.safeParse({
+  const parsed = createVendorApplicationSchema(t).safeParse({
     name: formValue(formData, "name"),
     slug: formValue(formData, "slug"),
     description: formValue(formData, "description"),
@@ -100,14 +102,14 @@ export async function applyForVendorAction(
     if (error instanceof Error && error.message === "invalid-departments") {
       return {
         status: "error",
-        fieldErrors: { departmentIds: "Choose active departments from the list." },
+        fieldErrors: { departmentIds: t("studio.errors.departmentsInactive") },
       };
     }
     if (isUniqueConstraintError(error)) {
       return {
         status: "error",
         fieldErrors: {
-          slug: "That studio handle is already taken. Choose another one.",
+          slug: t("vendor.errors.handleTaken"),
         },
       };
     }
@@ -126,16 +128,17 @@ export async function reviewVendorApplicationAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
 
   if (!actor) {
     redirect("/sign-in?next=/admin/vendors");
   }
 
   if (!canReviewVendorApplication(actor)) {
-    return { status: "error", message: "You are not allowed to review vendor applications." };
+    return { status: "error", message: t("admin.errors.vendorReviewForbidden") };
   }
 
-  const parsed = vendorReviewSchema.safeParse({
+  const parsed = createVendorReviewSchema(t).safeParse({
     vendorId: formValue(formData, "vendorId"),
     decision: formValue(formData, "decision"),
     note: formValue(formData, "note"),
@@ -151,13 +154,13 @@ export async function reviewVendorApplicationAction(
   });
 
   if (!vendor) {
-    return { status: "error", message: "That vendor application no longer exists." };
+    return { status: "error", message: t("admin.errors.applicationGone") };
   }
 
   if (vendor.status !== "PENDING") {
     return {
       status: "error",
-      message: "That application has already been reviewed.",
+      message: t("admin.errors.applicationAlreadyReviewed"),
     };
   }
 
@@ -202,7 +205,7 @@ export async function reviewVendorApplicationAction(
   if (!reviewed) {
     return {
       status: "error",
-      message: "Another administrator reviewed that application first. Reload to see the result.",
+      message: t("admin.errors.reviewedByOtherAdmin"),
     };
   }
 
@@ -221,12 +224,13 @@ export async function submitVendorAppealAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
   if (!actor) redirect("/sign-in?next=/vendor");
   if (actor.status !== "ACTIVE") {
-    return { status: "error", message: "An active account is required to submit an appeal." };
+    return { status: "error", message: t("vendor.errors.activeAccountRequired") };
   }
 
-  const parsed = vendorAppealSchema.safeParse({ reason: formValue(formData, "reason") });
+  const parsed = createVendorAppealSchema(t).safeParse({ reason: formValue(formData, "reason") });
   if (!parsed.success) return { status: "error", fieldErrors: firstFieldErrors(parsed.error) };
 
   const submitted = await getDatabase().$transaction(async (transaction) => {
@@ -251,12 +255,12 @@ export async function submitVendorAppealAction(
   if (!submitted) {
     return {
       status: "error",
-      message: "An appeal can only be submitted once for a rejected application.",
+      message: t("vendor.errors.appealOnceOnly"),
     };
   }
   revalidatePath("/vendor");
   revalidatePath("/admin/vendors");
-  return { status: "success", message: "Your appeal was sent for administrator review." };
+  return { status: "success", message: t("vendor.success.appealSent") };
 }
 
 export async function reviewVendorAppealAction(
@@ -264,11 +268,12 @@ export async function reviewVendorAppealAction(
   formData: FormData,
 ): Promise<FormState> {
   const actor = await getSessionActor();
+  const { t } = await getServerI18n();
   if (!actor || !canReviewVendorApplication(actor)) {
-    return { status: "error", message: "Administrator access is required." };
+    return { status: "error", message: t("admin.errors.accessRequired") };
   }
 
-  const parsed = vendorAppealReviewSchema.safeParse({
+  const parsed = createVendorAppealReviewSchema(t).safeParse({
     vendorId: formValue(formData, "vendorId"),
     decision: formValue(formData, "decision"),
     note: formValue(formData, "note"),
@@ -324,13 +329,16 @@ export async function reviewVendorAppealAction(
   });
 
   if (!resolved) {
-    return { status: "error", message: "This appeal has already been reviewed or is unavailable." };
+    return { status: "error", message: t("admin.errors.appealUnavailable") };
   }
   revalidatePath("/admin/vendors");
   revalidatePath("/admin/users");
   revalidatePath("/vendor");
   return {
     status: "success",
-    message: parsed.data.decision === "approve" ? "Appeal approved." : "Appeal declined.",
+    message:
+      parsed.data.decision === "approve"
+        ? t("admin.success.appealApproved")
+        : t("admin.success.appealDeclined"),
   };
 }

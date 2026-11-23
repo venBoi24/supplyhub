@@ -9,8 +9,10 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { forgotPasswordAction } from "@/features/identity/actions";
 import { initialFormState } from "@/features/identity/form-state";
+import { useT } from "@/i18n/client";
 
 export function ForgotPasswordForm() {
+  const t = useT();
   const [state, action] = useActionState(forgotPasswordAction, initialFormState);
   const emailError = state.fieldErrors?.email;
 
@@ -18,14 +20,12 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-5">
         <FormMessage state={state} />
-        <p className="text-sm leading-6 text-muted-foreground">
-          The link expires in one hour. Check your spam folder if it does not arrive.
-        </p>
+        <p className="text-sm leading-6 text-muted-foreground">{t("auth.linkExpires")}</p>
         <Link
           href="/sign-in"
           className="inline-flex rounded-sm text-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
         >
-          Back to sign in
+          {t("auth.backToSignIn")}
         </Link>
       </div>
     );
@@ -35,7 +35,7 @@ export function ForgotPasswordForm() {
     <form action={action} className="space-y-5">
       <FormMessage state={state} />
 
-      <Field label="Email" htmlFor="forgot-email" error={emailError}>
+      <Field label={t("auth.email")} htmlFor="forgot-email" error={emailError}>
         <Input
           id="forgot-email"
           name="email"
@@ -48,7 +48,7 @@ export function ForgotPasswordForm() {
         />
       </Field>
 
-      <SubmitButton pendingLabel="Sending link…">Send reset link</SubmitButton>
+      <SubmitButton pendingLabel={t("auth.sendingLink")}>{t("auth.sendResetLink")}</SubmitButton>
     </form>
   );
 }

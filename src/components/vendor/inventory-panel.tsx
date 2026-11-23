@@ -8,6 +8,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { adjustInventoryAction } from "@/features/catalog/vendor-actions";
+import { useT } from "@/i18n/client";
 import { initialFormState } from "@/features/identity/form-state";
 
 export interface StudioMovement {
@@ -20,11 +21,11 @@ export interface StudioMovement {
   actorName: string | null;
 }
 
-const reasonLabels: Record<string, string> = {
-  INITIAL: "Opening stock",
-  RESTOCK: "Restock",
-  CORRECTION: "Correction",
-  RETURN: "Return",
+const REASON_LABEL_KEYS: Record<string, string> = {
+  INITIAL: "studio.reasonInitial",
+  RESTOCK: "studio.reasonRestock",
+  CORRECTION: "studio.reasonCorrection",
+  RETURN: "studio.reasonReturn",
 };
 
 const timestampFormatter = new Intl.DateTimeFormat("en-US", {
@@ -45,6 +46,7 @@ export function InventoryPanel({
   canAdjust: boolean;
   adminVendorId?: string;
 }) {
+  const t = useT();
   const [state, action] = useActionState(adjustInventoryAction, initialFormState);
   const errors = state.fieldErrors;
 
@@ -52,15 +54,19 @@ export function InventoryPanel({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">Inventory</h2>
+          <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+            {t("studio.inventory")}
+          </h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Every change records a movement with its reason and author.
+            {t("studio.inventoryNote")}
           </p>
         </div>
         <p className="font-display text-3xl font-medium tracking-[-0.02em]">
           {stock}
           <span className="ml-1.5 font-sans text-xs font-normal text-muted-foreground">
-            {stock === 1 ? "unit on hand" : "units on hand"}
+            {t("studio.onHand", {
+              units: stock === 1 ? t("common.piece") : t("common.pieces"),
+            })}
           </span>
         </p>
       </div>
@@ -74,14 +80,18 @@ export function InventoryPanel({
           <FormMessage state={state} />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Change" htmlFor="inventory-mode" error={errors?.mode}>
+            <Field label={t("studio.change")} htmlFor="inventory-mode" error={errors?.mode}>
               <Select id="inventory-mode" name="mode" defaultValue="add">
-                <option value="add">Add units</option>
-                <option value="set">Set exact count</option>
+                <option value="add">{t("studio.addUnits")}</option>
+                <option value="set">{t("studio.setExactCount")}</option>
               </Select>
             </Field>
 
-            <Field label="Quantity" htmlFor="inventory-quantity" error={errors?.quantity}>
+            <Field
+              label={t("common.quantity")}
+              htmlFor="inventory-quantity"
+              error={errors?.quantity}
+            >
               <Input
                 id="inventory-quantity"
                 name="quantity"
@@ -98,41 +108,55 @@ export function InventoryPanel({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Reason" htmlFor="inventory-reason" error={errors?.reason}>
+            <Field
+              label={t("experience.protection.reason")}
+              htmlFor="inventory-reason"
+              error={errors?.reason}
+            >
               <Select id="inventory-reason" name="reason" defaultValue="RESTOCK">
-                <option value="RESTOCK">Restock</option>
-                <option value="CORRECTION">Correction</option>
-                <option value="RETURN">Return</option>
+                <option value="RESTOCK">{t("studio.reasonRestock")}</option>
+                <option value="CORRECTION">{t("studio.reasonCorrection")}</option>
+                <option value="RETURN">{t("studio.reasonReturn")}</option>
               </Select>
             </Field>
 
-            <Field label="Note" htmlFor="inventory-note" hint="Optional" error={errors?.note}>
+            <Field
+              label={t("studio.note")}
+              htmlFor="inventory-note"
+              hint={t("common.optional")}
+              error={errors?.note}
+            >
               <Input
                 id="inventory-note"
                 name="note"
                 maxLength={200}
-                placeholder="Firing batch 14"
+                placeholder={t("studio.notePlaceholder")}
                 aria-invalid={errors?.note ? true : undefined}
                 aria-describedby={errors?.note ? "inventory-note-error" : undefined}
               />
             </Field>
           </div>
 
-          <SubmitButton pendingLabel="Recording…" variant="secondary" className="w-auto" size="sm">
-            Record movement
+          <SubmitButton
+            pendingLabel={t("studio.recordingPending")}
+            variant="secondary"
+            className="w-auto"
+            size="sm"
+          >
+            {t("studio.recordMovement")}
           </SubmitButton>
         </form>
       ) : (
         <p className="border-t border-border pt-5 text-sm text-muted-foreground">
-          Archived objects cannot change stock.
+          {t("studio.archivedNoStock")}
         </p>
       )}
 
       <div className="border-t border-border pt-5">
-        <h3 className="eyebrow text-muted-foreground">Movement history</h3>
+        <h3 className="eyebrow text-muted-foreground">{t("studio.movementHistory")}</h3>
 
         {movements.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">No movements recorded yet.</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("studio.noMovements")}</p>
         ) : (
           <ol className="mt-4 space-y-3">
             {movements.map((movement) => (
@@ -144,7 +168,10 @@ export function InventoryPanel({
                   <p className="font-medium">
                     {movement.delta > 0 ? `+${movement.delta}` : movement.delta}{" "}
                     <span className="font-normal text-muted-foreground">
-                      {reasonLabels[movement.reason] ?? movement.reason}
+                      {(() => {
+                        const reasonKey = REASON_LABEL_KEYS[movement.reason];
+                        return reasonKey ? t(reasonKey) : movement.reason;
+                      })()}
                       {movement.note ? ` · ${movement.note}` : ""}
                     </span>
                   </p>
@@ -153,7 +180,7 @@ export function InventoryPanel({
                   </p>
                 </div>
                 <div className="text-right text-xs text-muted-foreground">
-                  <p>Ends at {movement.resultingStock}</p>
+                  <p>{t("studio.endsAt", { count: movement.resultingStock })}</p>
                   <p className="mt-0.5">{timestampFormatter.format(movement.createdAt)}</p>
                 </div>
               </li>

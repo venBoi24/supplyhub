@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import type { LucideIcon } from "lucide-react";
 
+import { getServerI18n } from "@/i18n/server";
+
 export interface StudioSetupPanelProps {
   hasProfile: boolean;
   hasLocation: boolean;
@@ -21,52 +23,51 @@ interface SetupStep {
   tone: string;
 }
 
-export function StudioSetupPanel({
+export async function StudioSetupPanel({
   hasProfile,
   hasLocation,
   objectCount,
   submittedCount,
 }: StudioSetupPanelProps) {
+  const { t } = await getServerI18n();
   const steps: SetupStep[] = [
     {
       key: "profile",
-      title: "Complete your studio profile",
-      description:
-        "Add your studio story and departments. Buyers see this on your public studio page.",
+      title: t("studio.setupProfileTitle"),
+      description: t("studio.setupProfileBody"),
       done: hasProfile,
       href: "/vendor/profile",
-      action: hasProfile ? "Review profile" : "Complete profile",
+      action: hasProfile ? t("studio.setupReviewProfile") : t("studio.setupCompleteProfile"),
       icon: UserRound,
       tone: "bg-mint/25 text-emerald-700 dark:text-emerald-300",
     },
     {
       key: "location",
-      title: "Confirm your pickup location",
-      description:
-        "Pin where orders are collected. Distance-based delivery pricing starts from this point.",
+      title: t("studio.setupLocationTitle"),
+      description: t("studio.setupLocationBody"),
       done: hasLocation,
       href: "/vendor/profile",
-      action: hasLocation ? "Review location" : "Set location",
+      action: hasLocation ? t("studio.setupReviewLocation") : t("studio.setupSetLocation"),
       icon: MapPin,
       tone: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
     },
     {
       key: "object",
-      title: "Add your first object",
-      description: "Add a cover photo, price, stock, and a short description. Save it as a draft.",
+      title: t("studio.setupObjectTitle"),
+      description: t("studio.setupObjectBody"),
       done: objectCount > 0,
       href: "/vendor/products/new",
-      action: objectCount > 0 ? "Add another object" : "New object",
+      action: objectCount > 0 ? t("studio.setupAddAnother") : t("studio.addObject"),
       icon: Package,
       tone: "bg-accent-soft text-accent",
     },
     {
       key: "submit",
-      title: "Submit it for review",
-      description: "Send a draft to an administrator so it can appear in the storefront catalog.",
+      title: t("studio.setupSubmitTitle"),
+      description: t("studio.setupSubmitBody"),
       done: submittedCount > 0,
       href: "/vendor",
-      action: "View objects",
+      action: t("studio.setupViewObjects"),
       icon: Send,
       tone: "bg-clay-soft text-clay",
     },
@@ -85,23 +86,23 @@ export function StudioSetupPanel({
     >
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border p-6 sm:px-8">
         <div>
-          <p className="eyebrow text-muted-foreground">Setup guide</p>
+          <p className="eyebrow text-muted-foreground">{t("studio.setupGuide")}</p>
           <h2
             id="studio-setup-heading"
             className="mt-2 font-display text-2xl font-medium tracking-[-0.02em]"
           >
-            Let&rsquo;s get your studio ready to sell.
+            {t("studio.setupHeading")}
           </h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          {complete} of {steps.length} complete
+          {t("studio.setupProgress", { done: complete, total: steps.length })}
         </p>
       </div>
 
       <div className="px-6 pt-5 sm:px-8">
         <div
           role="progressbar"
-          aria-label={`${complete} of ${steps.length} setup steps complete`}
+          aria-label={t("studio.setupProgressAria", { done: complete, total: steps.length })}
           aria-valuemin={0}
           aria-valuemax={steps.length}
           aria-valuenow={complete}
@@ -137,7 +138,7 @@ export function StudioSetupPanel({
                   {step.done ? (
                     <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-[0.6875rem] font-medium text-success">
                       <Check className="size-3" aria-hidden="true" />
-                      Done
+                      {t("studio.setupDone")}
                     </span>
                   ) : null}
                 </div>
@@ -165,8 +166,7 @@ export function StudioSetupPanel({
       </ul>
 
       <p className="border-t border-border px-6 py-4 text-xs leading-5 text-muted-foreground sm:px-8">
-        This guide disappears once all four steps are complete. It covers only what SupplyHub
-        supports — no custom domain, payment onboarding, or theme picker.
+        {t("studio.setupFootnote")}
       </p>
     </section>
   );

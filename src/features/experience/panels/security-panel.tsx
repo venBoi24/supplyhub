@@ -12,7 +12,7 @@ const input =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-[#0f766e] focus:outline-none";
 
 export function SecurityPanel() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { state, enableTwoFactor, disableTwoFactor, verifyPhone, recordLoginAlert } =
     useExperience();
   const { security } = state;
@@ -65,7 +65,7 @@ export function SecurityPanel() {
               type="button"
               role="switch"
               aria-checked={security.twoFactorEnabled}
-              aria-label="Toggle two-factor authentication"
+              aria-label={t("experience.security.toggleTwoFactor")}
               onClick={toggle2fa}
               className={cn(
                 "relative h-6 w-11 shrink-0 rounded-full transition",
@@ -83,10 +83,10 @@ export function SecurityPanel() {
           {security.twoFactorEnabled ? (
             <div className="mt-4 rounded-lg border border-[#0f766e]/30 bg-[#0f766e]/5 p-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-[#0f766e]">
-                <ShieldCheck className="size-4" /> Enabled
+                <ShieldCheck className="size-4" /> {t("experience.security.enabled")}
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                Add this setup key to your authenticator app:
+                {t("experience.security.setupKeyNote")}
               </p>
               <p className="mt-1 rounded bg-surface px-2 py-1 font-mono text-sm tracking-wider break-all">
                 {secret ?? security.twoFactorSecret}
@@ -94,7 +94,7 @@ export function SecurityPanel() {
             </div>
           ) : (
             <p className="mt-4 text-xs text-muted-foreground">
-              Currently off. Turn it on to protect your account and saved addresses.
+              {t("experience.security.currentlyOff")}
             </p>
           )}
         </section>
@@ -110,14 +110,14 @@ export function SecurityPanel() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+255 7XX XXX XXX"
-              aria-label="Phone number"
+              aria-label={t("experience.security.phoneNumber")}
             />
             <button
               type="submit"
               disabled={phone.trim().length < 6}
               className="shrink-0 rounded-lg bg-[#0f766e] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
-              {security.phoneVerified ? "Update" : t("experience.security.verify")}
+              {security.phoneVerified ? t("common.update") : t("experience.security.verify")}
             </button>
           </div>
           {security.phoneVerified ? (
@@ -141,12 +141,10 @@ export function SecurityPanel() {
             {t("experience.security.simulate")}
           </button>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          We notify you whenever your account is accessed from a new device or place.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("experience.security.alertsNote")}</p>
         {security.loginAlerts.length === 0 ? (
           <p className="mt-4 rounded-lg border border-border bg-surface-muted p-3 text-sm text-muted-foreground">
-            No sign-ins recorded yet on this device.
+            {t("experience.security.noSignIns")}
           </p>
         ) : (
           <ul className="mt-4 space-y-2">
@@ -160,7 +158,7 @@ export function SecurityPanel() {
                   <span className="block truncate text-xs text-muted-foreground">{a.location}</span>
                 </span>
                 <span className="shrink-0 text-xs text-muted-foreground">
-                  {new Date(a.at).toLocaleString("en-US", {
+                  {new Date(a.at).toLocaleString(locale, {
                     month: "short",
                     day: "numeric",
                     hour: "2-digit",
@@ -172,8 +170,7 @@ export function SecurityPanel() {
           </ul>
         )}
         <p className="mt-4 text-xs text-muted-foreground">
-          Didn&apos;t recognise a sign-in? Turn on two-factor authentication and change your
-          password.
+          {t("experience.security.unrecognized")}
         </p>
       </section>
     </div>

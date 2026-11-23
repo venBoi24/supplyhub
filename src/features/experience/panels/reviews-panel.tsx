@@ -65,7 +65,7 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
       rating,
       text: text.trim(),
       photo,
-      author: "Verified buyer",
+      author: t("experience.reviews.verifiedBuyer"),
     });
     setTarget("");
     setText("");
@@ -77,9 +77,7 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
     <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
       <form onSubmit={submit} className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-display text-lg font-medium">{t("experience.reviews.write")}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Only buyers who confirmed receipt can review — keeps ratings honest.
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("experience.reviews.honestNote")}</p>
         {reviewable.length === 0 ? (
           <p className="mt-4 rounded-lg border border-border bg-surface-muted p-3 text-sm text-muted-foreground">
             {t("experience.reviews.gate")}
@@ -90,9 +88,9 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
               className={input}
               value={target}
               onChange={(e) => setTarget(e.target.value)}
-              aria-label="Choose purchase to review"
+              aria-label={t("experience.reviews.choosePurchase")}
             >
-              <option value="">Choose a confirmed purchase…</option>
+              <option value="">{t("experience.reviews.choosePurchasePlaceholder")}</option>
               {reviewable.map((r) => (
                 <option key={r.key} value={r.key}>
                   {r.name} · {r.orderNumber}
@@ -111,7 +109,7 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
                   role="radio"
                   aria-checked={rating === s}
                   onClick={() => setRating(s)}
-                  aria-label={`${s} star`}
+                  aria-label={t("experience.reviews.starRating", { star: s })}
                 >
                   <Star
                     className={cn(
@@ -143,7 +141,7 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={photo}
-                alt="Review attachment"
+                alt={t("experience.reviews.photoAlt")}
                 className="size-20 rounded-lg object-cover"
               />
             ) : null}
@@ -194,14 +192,14 @@ export function ReviewsPanel({ products }: { products: ProductListing[] }) {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {r.author} · verified purchase {r.orderNumber}
+                  {r.author} · {t("experience.reviews.verifiedPurchase")} {r.orderNumber}
                 </p>
                 <p className="mt-2 text-sm">{r.text}</p>
                 {r.photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={r.photo}
-                    alt="Buyer photo"
+                    alt={t("experience.reviews.buyerPhotoAlt")}
                     className="mt-2 size-20 rounded-lg object-cover"
                   />
                 ) : null}

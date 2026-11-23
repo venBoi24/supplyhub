@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 import { PwaRegistration } from "@/components/storefront/pwa-registration";
+import { localeBootstrapScript } from "@/i18n/bootstrap";
 import { I18nProvider } from "@/i18n/client";
 
 const geistSans = Geist({
@@ -69,10 +70,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${displayFace.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* Stamps the real <html lang>/dir before first paint; see src/i18n/bootstrap.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: localeBootstrapScript }} />
+      </head>
       <body>
-        <I18nProvider>{children}</I18nProvider>
-        <PwaRegistration />
+        <I18nProvider>
+          {children}
+          {/* Inside the provider: it renders a translated install prompt via useT(). */}
+          <PwaRegistration />
+        </I18nProvider>
       </body>
     </html>
   );

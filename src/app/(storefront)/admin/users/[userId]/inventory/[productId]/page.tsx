@@ -13,18 +13,24 @@ import { MAX_PRODUCT_IMAGES } from "@/features/catalog/constants";
 import { centsToDecimalString } from "@/features/catalog/money";
 import { getVendorProduct, listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
 import { getDatabase } from "@/server/db/client";
+import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
-export const metadata: Metadata = {
-  title: "Manage product",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getServerI18n();
+
+  return {
+    title: t("admin.manageProduct"),
+    robots: { index: false, follow: false },
+  };
+}
 
 const uuidSchema = z.uuid();
 
 export default async function AdminManagedProductPage({
   params,
 }: PageProps<"/admin/users/[userId]/inventory/[productId]">) {
+  const { t } = await getServerI18n();
   await requireAdmin();
   const { userId, productId } = await params;
   if (!uuidSchema.safeParse(userId).success || !uuidSchema.safeParse(productId).success) notFound();
@@ -49,20 +55,20 @@ export default async function AdminManagedProductPage({
         href={`/admin/users/${user.id}/inventory`}
         className="text-sm text-accent underline underline-offset-4"
       >
-        Back to {user.vendor.name} inventory
+        {t("admin.backToStoreInventory", { store: user.vendor.name })}
       </Link>
       <div className="mt-6 flex flex-wrap items-center gap-3 border-b border-border pb-6">
         <h1 className="font-display text-4xl font-medium tracking-[-0.04em]">{product.name}</h1>
         <ProductStatusBadge status={product.status} />
       </div>
       <p className="mt-3 text-sm text-muted-foreground">
-        Managed for {user.name} · {user.email}
+        {t("admin.managedForLine", { name: user.name, email: user.email })}
       </p>
       <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_23rem]">
         <div className="space-y-8">
           {canEdit ? (
             <section className="rounded-xl border border-border bg-surface p-6 sm:p-8">
-              <h2 className="font-display text-2xl font-medium">Product details</h2>
+              <h2 className="font-display text-2xl font-medium">{t("admin.productDetails")}</h2>
               <div className="mt-6">
                 <StudioProductForm
                   categories={categories}
@@ -93,7 +99,7 @@ export default async function AdminManagedProductPage({
         </div>
         <aside className="space-y-6">
           <section className="rounded-xl border border-border bg-surface p-6">
-            <h2 className="font-display text-xl font-medium">Publishing</h2>
+            <h2 className="font-display text-xl font-medium">{t("admin.publishingHeading")}</h2>
             <div className="mt-4">
               <ProductLifecycleActions
                 productId={product.id}
@@ -118,3 +124,5 @@ export default async function AdminManagedProductPage({
     </PageShell>
   );
 }
+
+export const instant = false;

@@ -28,6 +28,8 @@ function parseTab(value: string | string[] | undefined): ExperienceTab {
   return TABS.includes(first as ExperienceTab) ? (first as ExperienceTab) : "shop";
 }
 
+export const instant = false;
+
 export default function ExperiencePage({ searchParams }: PageProps<"/experience">) {
   return (
     <Suspense fallback={<div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6" />}>

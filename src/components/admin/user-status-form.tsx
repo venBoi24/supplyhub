@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { updateUserStatusAction } from "@/features/admin/actions";
 import { initialFormState } from "@/features/identity/form-state";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n/client";
 
 export function UserStatusForm({
   userId,
@@ -13,6 +14,7 @@ export function UserStatusForm({
   userId: string;
   status: "ACTIVE" | "SUSPENDED";
 }) {
+  const t = useT();
   const [state, action, pending] = useActionState(updateUserStatusAction, initialFormState);
   const nextStatus = status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
 
@@ -21,10 +23,7 @@ export function UserStatusForm({
       action={action}
       className="flex flex-wrap items-center gap-2"
       onSubmit={(event) => {
-        if (
-          nextStatus === "SUSPENDED" &&
-          !window.confirm("Suspend this account? Their current sessions will be revoked.")
-        ) {
+        if (nextStatus === "SUSPENDED" && !window.confirm(t("admin.suspendConfirm"))) {
           event.preventDefault();
         }
       }}
@@ -32,7 +31,11 @@ export function UserStatusForm({
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={nextStatus} />
       <Button type="submit" variant="secondary" size="sm" disabled={pending}>
-        {pending ? "Saving…" : status === "ACTIVE" ? "Suspend" : "Reactivate"}
+        {pending
+          ? t("common.saving")
+          : status === "ACTIVE"
+            ? t("admin.suspendAccount")
+            : t("admin.reactivateAccount")}
       </Button>
       {state.message ? (
         <span
