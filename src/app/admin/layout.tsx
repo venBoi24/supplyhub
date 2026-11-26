@@ -6,7 +6,6 @@ import Link from "next/link";
 
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { AdminTopNav } from "@/components/admin/admin-top-nav";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/i18n/language-switcher";
 import { getServerI18n } from "@/i18n/server";
@@ -60,8 +59,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               />
             </div>
           </form>
-
-          <AdminTopNav />
 
           <div className="ml-auto flex items-center gap-2">
             <Link
