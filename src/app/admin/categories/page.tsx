@@ -139,7 +139,7 @@ async function AdminCategoriesContent({
                   </dl>
                   <Link
                     href={`/admin/categories/${category.id}`}
-                    className="max-w-full break-words rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="max-w-full rounded-md border border-border px-3 py-1.5 text-sm font-medium break-words transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   >
                     {t("studio.manage")}
                   </Link>

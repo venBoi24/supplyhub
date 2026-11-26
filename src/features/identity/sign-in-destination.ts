@@ -3,10 +3,15 @@ import { safeNextPath } from "@/lib/security/safe-redirect";
 
 export function getPostSignInDestination(
   nextPath: string | undefined,
+  role: "CUSTOMER" | "VENDOR" | "ADMIN" | null | undefined,
   vendorStatus: VendorStatus | null | undefined,
 ): string {
   if (nextPath) {
     return safeNextPath(nextPath, "/account");
+  }
+
+  if (role === "ADMIN") {
+    return "/admin";
   }
 
   if (vendorStatus === "REJECTED") {

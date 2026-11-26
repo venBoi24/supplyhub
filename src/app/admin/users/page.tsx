@@ -80,7 +80,13 @@ async function UsersContent({
             {t("admin.usersIntro", { count: formatNumber(total) })}
           </p>
         </div>
-        <Button asChild variant="secondary" size="sm" className="w-full" style={{ whiteSpace: "normal" }}>
+        <Button
+          asChild
+          variant="secondary"
+          size="sm"
+          className="w-full"
+          style={{ whiteSpace: "normal" }}
+        >
           <Link
             href={`/api/admin/users/export?${new URLSearchParams({ ...(role ? { role } : {}), ...(status ? { status } : {}), ...(search ? { q: search } : {}) }).toString()}`}
           >
@@ -128,11 +134,15 @@ async function UsersContent({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-medium">{user.name}</p>
-                <p className="mt-1 break-words text-xs text-muted-foreground">{user.email}</p>
+                <p className="mt-1 text-xs break-words text-muted-foreground">{user.email}</p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
-                <span className="rounded-md bg-surface-muted px-2 py-1">{t(roleLabelKeys[user.role])}</span>
-                <span className="rounded-md bg-surface-muted px-2 py-1">{t(statusLabelKeys[user.status])}</span>
+                <span className="rounded-md bg-surface-muted px-2 py-1">
+                  {t(roleLabelKeys[user.role])}
+                </span>
+                <span className="rounded-md bg-surface-muted px-2 py-1">
+                  {t(statusLabelKeys[user.status])}
+                </span>
               </div>
             </div>
             <dl className="mt-3 grid gap-2 text-xs">
@@ -152,13 +162,23 @@ async function UsersContent({
             ) : (
               <div className="mt-3 grid gap-3">
                 {user.vendor ? (
-                  <Button asChild variant="secondary" size="sm" className="w-full" style={{ whiteSpace: "normal" }}>
-                    <Link href={`/admin/users/${user.id}/inventory`}>{t("admin.manageStoreInventory")}</Link>
+                  <Button
+                    asChild
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    style={{ whiteSpace: "normal" }}
+                  >
+                    <Link href={`/admin/users/${user.id}/inventory`}>
+                      {t("admin.manageStoreInventory")}
+                    </Link>
                   </Button>
                 ) : null}
                 {user.vendor?.appealedAt && !user.vendor.appealReviewedAt ? (
                   <section className="w-full max-w-sm rounded-lg border border-warning/40 bg-warning/5 p-3">
-                    <p className="text-xs font-semibold text-warning">{t("admin.vendorAppealPending")}</p>
+                    <p className="text-xs font-semibold text-warning">
+                      {t("admin.vendorAppealPending")}
+                    </p>
                     <p className="mt-1 text-xs font-medium">{user.vendor.name}</p>
                     <p className="mt-2 text-xs whitespace-pre-wrap text-muted-foreground">
                       {user.vendor.appealReason}
@@ -203,7 +223,7 @@ async function UsersContent({
               <tr key={user.id}>
                 <td className="p-4">
                   <p className="font-medium">{user.name}</p>
-                  <p className="mt-1 break-words text-xs text-muted-foreground">{user.email}</p>
+                  <p className="mt-1 text-xs break-words text-muted-foreground">{user.email}</p>
                 </td>
                 <td className="p-4">{t(roleLabelKeys[user.role])}</td>
                 <td className="p-4">{t(statusLabelKeys[user.status])}</td>
@@ -217,7 +237,13 @@ async function UsersContent({
                   ) : (
                     <div className="grid gap-3">
                       {user.vendor ? (
-                        <Button asChild variant="secondary" size="sm" className="w-full min-w-0" style={{ whiteSpace: "normal" }}>
+                        <Button
+                          asChild
+                          variant="secondary"
+                          size="sm"
+                          className="w-full min-w-0"
+                          style={{ whiteSpace: "normal" }}
+                        >
                           <Link href={`/admin/users/${user.id}/inventory`}>
                             {t("admin.manageStoreInventory")}
                           </Link>

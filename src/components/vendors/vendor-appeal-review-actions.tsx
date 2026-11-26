@@ -20,7 +20,12 @@ export function VendorAppealReviewActions({ vendorId }: { vendorId: string }) {
         <input type="hidden" name="vendorId" value={vendorId} />
         <input type="hidden" name="decision" value="approve" />
         <FormMessage state={approveState} />
-        <SubmitButton size="sm" pendingLabel={t("studio.approvingPending")} className="w-full min-w-0" style={{ whiteSpace: "normal" }}>
+        <SubmitButton
+          size="sm"
+          pendingLabel={t("studio.approvingPending")}
+          className="w-full min-w-0"
+          style={{ whiteSpace: "normal" }}
+        >
           {t("studio.approveAppeal")}
         </SubmitButton>
       </form>
@@ -44,7 +49,13 @@ export function VendorAppealReviewActions({ vendorId }: { vendorId: string }) {
           <p className="text-sm text-danger">{rejectState.fieldErrors.note}</p>
         ) : null}
         <FormMessage state={rejectState} />
-        <SubmitButton size="sm" variant="secondary" pendingLabel={t("studio.decliningPending")} className="w-full min-w-0" style={{ whiteSpace: "normal" }}>
+        <SubmitButton
+          size="sm"
+          variant="secondary"
+          pendingLabel={t("studio.decliningPending")}
+          className="w-full min-w-0"
+          style={{ whiteSpace: "normal" }}
+        >
           {t("studio.declineAppeal")}
         </SubmitButton>
       </form>

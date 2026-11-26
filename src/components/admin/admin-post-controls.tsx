@@ -93,7 +93,12 @@ export function AdminPostControls({
           <form action={hideAction}>
             <input type="hidden" name="productId" value={productId} />
             <FormMessage state={hideState} />
-            <SubmitButton pendingLabel={t("common.saving")} variant="secondary" size="sm" className="w-auto">
+            <SubmitButton
+              pendingLabel={t("common.saving")}
+              variant="secondary"
+              size="sm"
+              className="w-auto"
+            >
               {t("admin.hidePost")}
             </SubmitButton>
           </form>
@@ -121,7 +126,12 @@ export function AdminPostControls({
         >
           <input type="hidden" name="productId" value={productId} />
           <FormMessage state={deleteState} />
-          <SubmitButton pendingLabel={t("common.deleting")} variant="secondary" size="sm" className="w-auto">
+          <SubmitButton
+            pendingLabel={t("common.deleting")}
+            variant="secondary"
+            size="sm"
+            className="w-auto"
+          >
             {t("admin.deletePost")}
           </SubmitButton>
         </form>

@@ -45,11 +45,15 @@ export default async function AdminReportsPage() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-6">
           <dt className="eyebrow text-muted-foreground">{t("admin.approvedVendors")}</dt>
-          <dd className="mt-3 font-display text-4xl font-medium">{formatNumber(metrics.vendors)}</dd>
+          <dd className="mt-3 font-display text-4xl font-medium">
+            {formatNumber(metrics.vendors)}
+          </dd>
         </div>
         <div className="rounded-xl border border-border bg-surface p-6">
           <dt className="eyebrow text-muted-foreground">{t("admin.publishedProducts")}</dt>
-          <dd className="mt-3 font-display text-4xl font-medium">{formatNumber(metrics.products)}</dd>
+          <dd className="mt-3 font-display text-4xl font-medium">
+            {formatNumber(metrics.products)}
+          </dd>
         </div>
         <div className="rounded-xl border border-border bg-surface p-6">
           <dt className="eyebrow text-muted-foreground">{t("admin.orders")}</dt>
@@ -57,11 +61,15 @@ export default async function AdminReportsPage() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-6">
           <dt className="eyebrow text-muted-foreground">{t("admin.paidOrFulfilling")}</dt>
-          <dd className="mt-3 font-display text-4xl font-medium">{formatNumber(metrics.paidOrders)}</dd>
+          <dd className="mt-3 font-display text-4xl font-medium">
+            {formatNumber(metrics.paidOrders)}
+          </dd>
         </div>
         <div className="rounded-xl border border-border bg-surface p-6">
           <dt className="eyebrow text-muted-foreground">{t("admin.applicationsToReview")}</dt>
-          <dd className="mt-3 font-display text-4xl font-medium">{formatNumber(metrics.pendingApplications)}</dd>
+          <dd className="mt-3 font-display text-4xl font-medium">
+            {formatNumber(metrics.pendingApplications)}
+          </dd>
         </div>
       </dl>
 
@@ -84,7 +92,8 @@ export default async function AdminReportsPage() {
             <li key={category.id} className="rounded-xl border border-border bg-surface p-4">
               <p className="font-medium">{category.name}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {formatNumber(category.publishedCount)} published · {formatNumber(category.productCount)} total
+                {formatNumber(category.publishedCount)} published ·{" "}
+                {formatNumber(category.productCount)} total
               </p>
             </li>
           ))}

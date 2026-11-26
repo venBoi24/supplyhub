@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { updateUserStatusAction } from "@/features/admin/actions";
 import { initialFormState } from "@/features/identity/form-state";
 import { Button } from "@/components/ui/button";
-import { useT } from "@/i18n/client";
+import { useI18n } from "@/i18n/client";
 
 export function UserStatusForm({
   userId,
@@ -14,7 +14,8 @@ export function UserStatusForm({
   userId: string;
   status: "ACTIVE" | "SUSPENDED";
 }) {
-  const t = useT();
+  const i18n = useI18n();
+  const t = i18n.t;
   const [state, action, pending] = useActionState(updateUserStatusAction, initialFormState);
   const nextStatus = status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
 
@@ -30,7 +31,14 @@ export function UserStatusForm({
     >
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={nextStatus} />
-      <Button type="submit" variant="secondary" size="sm" disabled={pending} className="w-full min-w-0" style={{ whiteSpace: "normal" }}>
+      <Button
+        type="submit"
+        variant="secondary"
+        size="sm"
+        disabled={pending}
+        className="w-full min-w-0"
+        style={{ whiteSpace: "normal" }}
+      >
         {pending
           ? t("common.saving")
           : status === "ACTIVE"

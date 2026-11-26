@@ -35,7 +35,10 @@ export function PayoutCreateForm({
   const payables = vendors.filter((vendor) => vendor.availableCents > 0);
 
   return (
-    <form action={action} className="w-full min-w-0 space-y-4 rounded-xl border border-border bg-surface p-6">
+    <form
+      action={action}
+      className="w-full min-w-0 space-y-4 rounded-xl border border-border bg-surface p-6"
+    >
       <div>
         <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
           {t("payments.payout.recordTitle")}
@@ -56,7 +59,12 @@ export function PayoutCreateForm({
             htmlFor="payout-vendor"
             error={state.fieldErrors?.vendorId}
           >
-            <Select id="payout-vendor" name="vendorId" defaultValue={payables[0]?.id} className="min-w-0">
+            <Select
+              id="payout-vendor"
+              name="vendorId"
+              defaultValue={payables[0]?.id}
+              className="min-w-0"
+            >
               {payables.map((vendor) => (
                 <option key={vendor.id} value={vendor.id}>
                   {t("payments.payout.availableOption", {

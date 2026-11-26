@@ -94,17 +94,34 @@ async function AdminPostsContent({
           {statuses.map((entry) => (
             <div key={entry}>
               <dt className="eyebrow text-muted-foreground">{entry}</dt>
-              <dd className="mt-1 font-display text-2xl font-medium">{formatNumber(counts[entry])}</dd>
+              <dd className="mt-1 font-display text-2xl font-medium">
+                {formatNumber(counts[entry])}
+              </dd>
             </div>
           ))}
         </dl>
       </div>
 
-      {hidden ? <Notice tone="success" className="mt-8">{t("admin.success.postHidden")}</Notice> : null}
-      {restored ? <Notice tone="success" className="mt-8">{t("admin.success.postRestored")}</Notice> : null}
-      {deleted ? <Notice tone="success" className="mt-8">{t("admin.success.postDeleted")}</Notice> : null}
+      {hidden ? (
+        <Notice tone="success" className="mt-8">
+          {t("admin.success.postHidden")}
+        </Notice>
+      ) : null}
+      {restored ? (
+        <Notice tone="success" className="mt-8">
+          {t("admin.success.postRestored")}
+        </Notice>
+      ) : null}
+      {deleted ? (
+        <Notice tone="success" className="mt-8">
+          {t("admin.success.postDeleted")}
+        </Notice>
+      ) : null}
 
-      <form action="/admin/posts" className="mt-8 grid gap-3 rounded-xl border border-border bg-surface p-4 md:grid-cols-2 lg:grid-cols-4">
+      <form
+        action="/admin/posts"
+        className="mt-8 grid gap-3 rounded-xl border border-border bg-surface p-4 md:grid-cols-2 lg:grid-cols-4"
+      >
         <label className="grid gap-2 text-sm">
           {t("common.search")}
           <Input name="q" defaultValue={search} maxLength={80} />
@@ -198,17 +215,24 @@ async function AdminPostsContent({
                     </div>
                     <p className="mt-1 font-mono text-[0.6875rem] tracking-[0.1em] text-muted-foreground">
                       {product.sku} · {product.categoryName} ·{" "}
-                      <Link href={`/vendors/${product.vendorSlug}`} className="underline-offset-4 hover:underline">
+                      <Link
+                        href={`/vendors/${product.vendorSlug}`}
+                        className="underline-offset-4 hover:underline"
+                      >
                         {product.vendorName}
                       </Link>
                     </p>
                     <p className="mt-3 text-sm text-muted-foreground">
-                      {formatMoney(product.priceCents, product.currency)} · {formatNumber(product.stock)}{" "}
+                      {formatMoney(product.priceCents, product.currency)} ·{" "}
+                      {formatNumber(product.stock)}{" "}
                       {product.stock === 1 ? t("common.unit") : t("common.units")}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {t("admin.postPublishedOn")}: {product.publishedAt ? formatDate(product.publishedAt) : t("admin.notVerified")} ·{" "}
-                      {t("admin.postUpdatedOn")}: {formatDate(product.updatedAt)}
+                      {t("admin.postPublishedOn")}:{" "}
+                      {product.publishedAt
+                        ? formatDate(product.publishedAt)
+                        : t("admin.notVerified")}{" "}
+                      · {t("admin.postUpdatedOn")}: {formatDate(product.updatedAt)}
                     </p>
                     {product.reviewNote ? (
                       <p className="mt-2 text-sm text-muted-foreground">
@@ -238,7 +262,14 @@ async function AdminPostsContent({
 
       <PagedNav
         pathname="/admin/posts"
-        params={{ status, q: search, category: categorySlug, vendor: vendorSlug, from: dateFrom, to: dateTo }}
+        params={{
+          status,
+          q: search,
+          category: categorySlug,
+          vendor: vendorSlug,
+          from: dateFrom,
+          to: dateTo,
+        }}
         page={currentPage}
         pageCount={pageCount(total)}
         label={t("common.pagination")}

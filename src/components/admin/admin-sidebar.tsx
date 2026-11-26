@@ -1,6 +1,17 @@
 "use client";
 
-import { LayoutDashboard, Package, Store, Users, FolderTree, ShoppingCart, CreditCard, Banknote, ClipboardList, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  Store,
+  Users,
+  FolderTree,
+  ShoppingCart,
+  CreditCard,
+  Banknote,
+  ClipboardList,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -30,7 +41,8 @@ function SidebarLinks({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label={t("admin.nav")} className="grid gap-1">
       {links.map((link) => {
-        const active = link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
+        const active =
+          link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
         const Icon = link.icon;
 
         return (
@@ -60,39 +72,19 @@ export function AdminSidebar() {
   const { t } = useI18n();
 
   return (
-    <>
-      <div className="border-b border-border bg-surface/70 lg:hidden">
-        <div className="mx-auto flex w-full max-w-[88rem] items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <p className="font-display text-lg font-semibold tracking-[-0.03em]">{t("admin.nav")}</p>
-          <Button type="button" variant="secondary" size="sm" onClick={() => setOpen(true)}>
-            {t("admin.nav")}
-          </Button>
-        </div>
+    <aside className="hidden w-64 shrink-0 border-r border-border bg-surface/40 p-4 lg:block">
+      <SidebarLinks />
+      <div className="mt-6 border-t border-border pt-4">
+        <Link
+          href="/"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+        >
+          <Store className="size-4 shrink-0" aria-hidden="true" />
+          {t("admin.viewMarketplace")}
+        </Link>
       </div>
-
-      {open ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            aria-label={t("common.close")}
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setOpen(false)}
-          />
-          <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto border-r border-border bg-background p-4 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="font-display text-lg font-semibold tracking-[-0.03em]">{t("admin.nav")}</p>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
-                {t("common.close")}
-              </Button>
-            </div>
-            <SidebarLinks onNavigate={() => setOpen(false)} />
-          </aside>
-        </div>
-      ) : null}
-
-      <aside className="hidden w-64 shrink-0 border-r border-border bg-surface/40 p-4 lg:block">
-        <SidebarLinks />
-      </aside>
-    </>
+    </aside>
   );
 }

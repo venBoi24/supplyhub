@@ -52,7 +52,7 @@ export default async function AdminSettingsPage() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-5">
           <dt className="eyebrow text-muted-foreground">Site URL</dt>
-          <dd className="mt-2 break-all font-medium">{env.NEXT_PUBLIC_SITE_URL}</dd>
+          <dd className="mt-2 font-medium break-all">{env.NEXT_PUBLIC_SITE_URL}</dd>
         </div>
       </dl>
     </PageShell>

@@ -78,14 +78,14 @@ export async function signInAction(
 
   const account = await getDatabase().user.findUnique({
     where: { email: parsed.data.email },
-    select: { id: true, vendor: { select: { status: true } } },
+    select: { id: true, role: true, vendor: { select: { status: true } } },
   });
 
   if (account) {
     await mergeGuestCartIntoUserCart(account.id);
   }
 
-  redirect(getPostSignInDestination(parsed.data.next, account?.vendor?.status));
+  redirect(getPostSignInDestination(parsed.data.next, account?.role, account?.vendor?.status));
 }
 
 export async function signUpAction(

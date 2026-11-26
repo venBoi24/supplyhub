@@ -27,9 +27,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function AdminPostDetailPage({
-  params,
-}: PageProps<"/admin/posts/[id]">) {
+export default async function AdminPostDetailPage({ params }: PageProps<"/admin/posts/[id]">) {
   const { t } = await getServerI18n();
   return (
     <Suspense fallback={<PageShell className="pt-12">{t("common.loading")}</PageShell>}>
@@ -38,7 +36,11 @@ export default async function AdminPostDetailPage({
   );
 }
 
-async function AdminPostDetailContent({ params }: { params: PageProps<"/admin/posts/[id]">["params"] }) {
+async function AdminPostDetailContent({
+  params,
+}: {
+  params: PageProps<"/admin/posts/[id]">["params"];
+}) {
   await requireAdmin();
   const { t, formatDate, formatNumber } = await getServerI18n();
   const { id } = await params;
@@ -52,8 +54,14 @@ async function AdminPostDetailContent({ params }: { params: PageProps<"/admin/po
 
   return (
     <PageShell className="pt-10 sm:pt-14">
-      <nav aria-label={t("common.breadcrumb")} className="flex flex-wrap items-center gap-2 text-xs">
-        <Link href="/admin/posts" className="text-muted-foreground transition-colors hover:text-foreground">
+      <nav
+        aria-label={t("common.breadcrumb")}
+        className="flex flex-wrap items-center gap-2 text-xs"
+      >
+        <Link
+          href="/admin/posts"
+          className="text-muted-foreground transition-colors hover:text-foreground"
+        >
           {t("admin.postManagement")}
         </Link>
         <span aria-hidden="true" className="text-border-strong">
@@ -90,7 +98,10 @@ async function AdminPostDetailContent({ params }: { params: PageProps<"/admin/po
           {product.images.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {product.images.map((image, index) => (
-                <div key={index} className="overflow-hidden rounded-xl border border-border bg-surface-muted">
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-xl border border-border bg-surface-muted"
+                >
                   <Image
                     src={image.src}
                     alt={image.alt}
@@ -112,7 +123,9 @@ async function AdminPostDetailContent({ params }: { params: PageProps<"/admin/po
 
         <div className="space-y-6">
           <section className="rounded-xl border border-border bg-surface p-5 sm:p-6">
-            <h2 className="font-display text-xl font-medium tracking-[-0.02em]">{t("admin.postDetail")}</h2>
+            <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
+              {t("admin.postDetail")}
+            </h2>
             <dl className="mt-4 grid gap-4 text-sm">
               <div>
                 <dt className="eyebrow text-muted-foreground">{t("common.price")}</dt>
@@ -145,7 +158,11 @@ async function AdminPostDetailContent({ params }: { params: PageProps<"/admin/po
             ) : null}
           </section>
 
-          <AdminPostControls productId={product.id} status={product.status} featured={product.featured} />
+          <AdminPostControls
+            productId={product.id}
+            status={product.status}
+            featured={product.featured}
+          />
 
           <section className="rounded-xl border border-border bg-surface p-5 sm:p-6">
             <h2 className="font-display text-xl font-medium tracking-[-0.02em]">
@@ -156,7 +173,10 @@ async function AdminPostDetailContent({ params }: { params: PageProps<"/admin/po
             ) : (
               <ul className="mt-4 space-y-3">
                 {events.map((event) => (
-                  <li key={event.id} className="rounded-lg border border-border bg-surface-muted/50 p-3">
+                  <li
+                    key={event.id}
+                    className="rounded-lg border border-border bg-surface-muted/50 p-3"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-medium">{event.action}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(event.createdAt)}</p>

@@ -113,26 +113,43 @@ async function AdminPayoutsContent() {
                 {overview.vendors.map((vendor) => (
                   <li key={vendor.id} className="rounded-xl border border-border bg-surface p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <Link href={`/vendors/${vendor.slug}`} className="font-medium underline-offset-4 hover:underline">
+                      <Link
+                        href={`/vendors/${vendor.slug}`}
+                        className="font-medium underline-offset-4 hover:underline"
+                      >
                         {vendor.name}
                       </Link>
                     </div>
                     <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                       <div>
                         <dt className="eyebrow text-muted-foreground">{t("admin.payoutEarned")}</dt>
-                        <dd className="mt-1 tabular-nums">{formatMoney(vendor.earningsCents, currency)}</dd>
+                        <dd className="mt-1 tabular-nums">
+                          {formatMoney(vendor.earningsCents, currency)}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="eyebrow text-muted-foreground">{t("admin.payoutReserved")}</dt>
-                        <dd className="mt-1 tabular-nums">{formatMoney(vendor.reservedCents, currency)}</dd>
+                        <dt className="eyebrow text-muted-foreground">
+                          {t("admin.payoutReserved")}
+                        </dt>
+                        <dd className="mt-1 tabular-nums">
+                          {formatMoney(vendor.reservedCents, currency)}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="eyebrow text-muted-foreground">{t("admin.payoutPaidOut")}</dt>
-                        <dd className="mt-1 tabular-nums">{formatMoney(vendor.paidOutCents, currency)}</dd>
+                        <dt className="eyebrow text-muted-foreground">
+                          {t("admin.payoutPaidOut")}
+                        </dt>
+                        <dd className="mt-1 tabular-nums">
+                          {formatMoney(vendor.paidOutCents, currency)}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="eyebrow text-muted-foreground">{t("admin.payoutAvailable")}</dt>
-                        <dd className="mt-1 font-medium tabular-nums">{formatMoney(vendor.availableCents, currency)}</dd>
+                        <dt className="eyebrow text-muted-foreground">
+                          {t("admin.payoutAvailable")}
+                        </dt>
+                        <dd className="mt-1 font-medium tabular-nums">
+                          {formatMoney(vendor.availableCents, currency)}
+                        </dd>
                       </div>
                     </dl>
                   </li>
@@ -140,53 +157,53 @@ async function AdminPayoutsContent() {
               </ul>
               <div className="mt-4 hidden rounded-xl border border-border bg-surface sm:block">
                 <table className="w-full table-fixed text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs text-muted-foreground">
-                    <th scope="col" className="px-5 py-3 font-medium">
-                      {t("products.studio")}
-                    </th>
-                    <th scope="col" className="px-5 py-3 text-right font-medium">
-                      {t("admin.payoutEarned")}
-                    </th>
-                    <th scope="col" className="px-5 py-3 text-right font-medium">
-                      {t("admin.payoutReserved")}
-                    </th>
-                    <th scope="col" className="px-5 py-3 text-right font-medium">
-                      {t("admin.payoutPaidOut")}
-                    </th>
-                    <th scope="col" className="px-5 py-3 text-right font-medium">
-                      {t("admin.payoutAvailable")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {overview.vendors.map((vendor) => (
-                    <tr key={vendor.id} className="border-b border-border last:border-b-0">
-                      <th scope="row" className="px-5 py-3.5 font-medium">
-                        <Link
-                          href={`/vendors/${vendor.slug}`}
-                          className="underline-offset-4 hover:underline"
-                        >
-                          {vendor.name}
-                        </Link>
+                  <thead>
+                    <tr className="border-b border-border text-xs text-muted-foreground">
+                      <th scope="col" className="px-5 py-3 font-medium">
+                        {t("products.studio")}
                       </th>
-                      <td className="px-5 py-3.5 text-right tabular-nums">
-                        {formatMoney(vendor.earningsCents, currency)}
-                      </td>
-                      <td className="px-5 py-3.5 text-right tabular-nums">
-                        {formatMoney(vendor.reservedCents, currency)}
-                      </td>
-                      <td className="px-5 py-3.5 text-right tabular-nums">
-                        {formatMoney(vendor.paidOutCents, currency)}
-                      </td>
-                      <td className="px-5 py-3.5 text-right font-medium tabular-nums">
-                        {formatMoney(vendor.availableCents, currency)}
-                      </td>
+                      <th scope="col" className="px-5 py-3 text-right font-medium">
+                        {t("admin.payoutEarned")}
+                      </th>
+                      <th scope="col" className="px-5 py-3 text-right font-medium">
+                        {t("admin.payoutReserved")}
+                      </th>
+                      <th scope="col" className="px-5 py-3 text-right font-medium">
+                        {t("admin.payoutPaidOut")}
+                      </th>
+                      <th scope="col" className="px-5 py-3 text-right font-medium">
+                        {t("admin.payoutAvailable")}
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {overview.vendors.map((vendor) => (
+                      <tr key={vendor.id} className="border-b border-border last:border-b-0">
+                        <th scope="row" className="px-5 py-3.5 font-medium">
+                          <Link
+                            href={`/vendors/${vendor.slug}`}
+                            className="underline-offset-4 hover:underline"
+                          >
+                            {vendor.name}
+                          </Link>
+                        </th>
+                        <td className="px-5 py-3.5 text-right tabular-nums">
+                          {formatMoney(vendor.earningsCents, currency)}
+                        </td>
+                        <td className="px-5 py-3.5 text-right tabular-nums">
+                          {formatMoney(vendor.reservedCents, currency)}
+                        </td>
+                        <td className="px-5 py-3.5 text-right tabular-nums">
+                          {formatMoney(vendor.paidOutCents, currency)}
+                        </td>
+                        <td className="px-5 py-3.5 text-right font-medium tabular-nums">
+                          {formatMoney(vendor.availableCents, currency)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
         </section>

@@ -458,7 +458,13 @@ export async function restoreAdminProductAction(
 
   const updated = await database.product.updateMany({
     where: { id: product.id, status: "ARCHIVED" },
-    data: { status: "PUBLISHED", publishedAt: new Date(), archivedAt: null, reviewedAt: new Date(), reviewedById: actor.id },
+    data: {
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+      archivedAt: null,
+      reviewedAt: new Date(),
+      reviewedById: actor.id,
+    },
   });
 
   if (updated.count !== 1) {
