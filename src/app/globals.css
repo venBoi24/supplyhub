@@ -129,9 +129,7 @@
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Guard against any stray horizontal overflow on small screens without creating a
-       scroll container (clip keeps sticky headers working). */
-    overflow-x: clip;
+    /* Horizontal overflow is handled by responsive component layout, not by clipping. */
   }
 
   ::selection {
