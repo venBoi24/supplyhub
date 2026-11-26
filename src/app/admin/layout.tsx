@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <div className="min-h-dvh bg-background">
       <header className="border-b border-border bg-surface/80 backdrop-blur">
-        <div className="flex w-full items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex w-full flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <Link
             href="/admin"
             className="inline-flex shrink-0 items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
@@ -78,7 +78,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <form action={signOutAction}>
               <Button type="submit" variant="secondary" size="sm">
                 <LogOut className="size-4" aria-hidden="true" />
-                {t("account.signOut")}
+                <span className="hidden sm:inline">{t("account.signOut")}</span>
               </Button>
             </form>
           </div>
