@@ -6,12 +6,18 @@ export function getPostSignInDestination(
   role: "CUSTOMER" | "VENDOR" | "ADMIN" | null | undefined,
   vendorStatus: VendorStatus | null | undefined,
 ): string {
-  if (nextPath) {
-    return safeNextPath(nextPath, "/account");
+  if (role === "ADMIN") {
+    if (nextPath) {
+      const safe = safeNextPath(nextPath, "/admin");
+      if (safe.startsWith("/admin")) {
+        return safe;
+      }
+    }
+    return "/admin";
   }
 
-  if (role === "ADMIN") {
-    return "/admin";
+  if (nextPath) {
+    return safeNextPath(nextPath, "/account");
   }
 
   if (vendorStatus === "REJECTED") {

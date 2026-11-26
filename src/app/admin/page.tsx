@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
+import { LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import {
-  Banknote,
-  ClipboardList,
-  CreditCard,
-  FolderTree,
-  Package,
-  Settings,
-  ShoppingCart,
-  Store,
-  Users,
-} from "lucide-react";
 
 import { PageShell } from "@/components/storefront/page-shell";
 import { AdminActivityTabs } from "@/components/admin/admin-activity-tabs";
@@ -127,6 +117,16 @@ export default async function AdminIndexPage() {
 
   return (
     <PageShell className="pt-10 sm:pt-14">
+      <div className="mb-6 flex items-center gap-3">
+        <span className="grid size-10 place-items-center rounded-lg bg-accent-soft text-accent">
+          <LayoutDashboard className="size-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h2 className="font-display text-2xl font-medium tracking-[-0.03em]">
+            {t("admin.dashboard")} / {t("admin.nav")}
+          </h2>
+        </div>
+      </div>
       <section className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
@@ -221,35 +221,6 @@ export default async function AdminIndexPage() {
         posts={recentPosts}
         applications={pendingApplications}
       />
-
-      <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { href: "/admin/users", labelKey: "admin.users", icon: Users },
-          { href: "/admin/vendors", labelKey: "admin.vendors", icon: Store },
-          { href: "/admin/posts", labelKey: "admin.posts", icon: Package },
-          { href: "/admin/categories", labelKey: "admin.departments", icon: FolderTree },
-          { href: "/admin/orders", labelKey: "admin.orders", icon: ShoppingCart },
-          { href: "/admin/payments", labelKey: "admin.payments", icon: CreditCard },
-          { href: "/admin/payouts", labelKey: "admin.payouts", icon: Banknote },
-          { href: "/admin/reports", labelKey: "admin.reports", icon: ClipboardList },
-          { href: "/admin/audit", labelKey: "admin.audit", icon: ClipboardList },
-          { href: "/admin/settings", labelKey: "admin.settings", icon: Settings },
-        ].map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:bg-surface-muted"
-            >
-              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <span className="font-medium">{t(item.labelKey)}</span>
-            </Link>
-          );
-        })}
-      </section>
     </PageShell>
   );
 }
