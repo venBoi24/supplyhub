@@ -36,19 +36,6 @@ const allLinks = [
   { href: "/admin/settings", labelKey: "admin.settings", icon: Settings },
 ] as const;
 
-const desktopLinks = allLinks.filter((link) =>
-  [
-    "/admin",
-    "/admin/users",
-    "/admin/vendors",
-    "/admin/posts",
-    "/admin/orders",
-    "/admin/payments",
-    "/admin/payouts",
-    "/admin/reports",
-  ].includes(link.href),
-);
-
 function isActive(pathname: string, href: string, exact?: boolean) {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -60,28 +47,6 @@ export function AdminTopNav() {
 
   return (
     <>
-      <nav aria-label={t("admin.nav")} className="hidden flex-wrap items-center gap-1 lg:flex">
-        {desktopLinks.map((link) => {
-          const active = isActive(pathname, link.href, "exact" in link ? link.exact : false);
-
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "inline-flex h-9 items-center rounded-md px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
-                active
-                  ? "bg-accent-soft text-accent"
-                  : "text-muted-foreground hover:bg-surface-muted hover:text-foreground",
-              )}
-            >
-              {t(link.labelKey)}
-            </Link>
-          );
-        })}
-      </nav>
-
       <Button
         type="button"
         variant="secondary"
@@ -123,12 +88,13 @@ export function AdminTopNav() {
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                       active
                         ? "bg-accent-soft text-accent"
                         : "text-muted-foreground hover:bg-surface-muted hover:text-foreground",
                     )}
                   >
+                    <link.icon className="size-4 shrink-0" aria-hidden="true" />
                     {t(link.labelKey)}
                   </Link>
                 );

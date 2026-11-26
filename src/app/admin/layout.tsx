@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
-import { Bell, LogOut, Search, ShieldCheck } from "lucide-react";
+import { Bell, LogOut, Search } from "lucide-react";
 import Link from "next/link";
 
 import { AdminSidebar } from "@/components/admin/admin-sidebar";

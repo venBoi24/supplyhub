@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { PageShell } from "@/components/storefront/page-shell";
-import { useI18n, useT } from "@/i18n/client";
+import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 export interface AdminRecentOrder {
@@ -51,7 +50,7 @@ export function AdminActivityTabs({
   posts: AdminRecentPost[];
   applications: AdminPendingApplication[];
 }) {
-  const t = useT();
+  const { t } = useI18n();
   const tabs = [
     { id: "orders", label: t("admin.recentOrders"), count: orders.length },
     { id: "vendors", label: t("admin.newVendors"), count: vendors.length },

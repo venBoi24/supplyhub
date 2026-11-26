@@ -91,17 +91,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // persisted preference is applied right after mount (no hydration mismatch).
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
   const [dict, setDict] = useState<Messages>(fallbackDictionary);
-  if (typeof window !== "undefined") {
-    console.info("I18N_DEBUG", {
-      fallbackHasRecentActivity: Object.keys(
-        (fallbackDictionary as { admin?: Record<string, unknown> })?.admin ?? {},
-      ).includes("recentActivity"),
-      fallbackTopKeys: Object.keys(fallbackDictionary ?? {}),
-      dictHasRecentActivity: Object.keys(
-        (dict as { admin?: Record<string, unknown> })?.admin ?? {},
-      ).includes("recentActivity"),
-    });
-  }
 
   const loadAndSet = useCallback((next: Locale) => {
     setLocaleState(next);

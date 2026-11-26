@@ -14,9 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
@@ -68,7 +66,6 @@ function SidebarLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AdminSidebar() {
-  const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
   return (
