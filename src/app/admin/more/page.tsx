@@ -3,15 +3,7 @@ import Link from "next/link";
 
 import { PageShell } from "@/components/storefront/page-shell";
 import { Button } from "@/components/ui/button";
-import {
-  Banknote,
-  ClipboardList,
-  CreditCard,
-  FolderTree,
-  Package,
-  Settings,
-  Store,
-} from "lucide-react";
+import { Banknote, ClipboardList, CreditCard, FolderTree, Package, Settings } from "lucide-react";
 import { getServerI18n } from "@/i18n/server";
 import { requireAdmin } from "@/server/auth/guards";
 
@@ -28,7 +20,6 @@ export default async function AdminMorePage() {
   await requireAdmin();
 
   const items = [
-    { href: "/admin/applications", labelKey: "admin.vendorApplications", icon: Store },
     { href: "/admin/posts", labelKey: "admin.posts", icon: Package },
     { href: "/admin/categories", labelKey: "admin.departments", icon: FolderTree },
     { href: "/admin/payments", labelKey: "admin.payments", icon: CreditCard },

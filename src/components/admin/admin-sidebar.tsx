@@ -38,12 +38,6 @@ const links = [
     active: (p: string) => p.startsWith("/admin/vendors"),
   },
   {
-    href: "/admin/applications",
-    labelKey: "admin.vendorApplications",
-    icon: Store,
-    active: (p: string) => p.startsWith("/admin/applications"),
-  },
-  {
     href: "/admin/posts",
     labelKey: "admin.posts",
     icon: Package,

@@ -1062,7 +1062,6 @@
   "admin": {
     "nav": "Administration",
     "vendors": "Vendors",
-    "vendorApplications": "Vendor applications",
     "more": "More",
     "orders": "Orders",
     "users": "Users",

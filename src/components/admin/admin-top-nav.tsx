@@ -26,7 +26,6 @@ const allLinks = [
   { href: "/admin", labelKey: "admin.dashboard", exact: true, icon: LayoutDashboard },
   { href: "/admin/users", labelKey: "admin.users", icon: Users },
   { href: "/admin/vendors", labelKey: "admin.vendors", icon: Store },
-  { href: "/admin/applications", labelKey: "admin.vendorApplications", icon: Store },
   { href: "/admin/posts", labelKey: "admin.posts", icon: Package },
   { href: "/admin/categories", labelKey: "admin.departments", icon: FolderTree },
   { href: "/admin/orders", labelKey: "admin.orders", icon: ShoppingCart },
