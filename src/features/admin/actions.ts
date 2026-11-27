@@ -253,31 +253,43 @@ export async function deleteAdminUserAction(
     await getDatabase().$transaction(async (transaction) => {
       const target = await transaction.user.findUnique({
         where: { id: parsed.data.userId },
-        select: {
-          id: true,
-          role: true,
-          vendor: {
-            select: {
-              id: true,
-              _count: {
-                select: {
-                  products: true,
-                  vendorOrders: true,
-                  payouts: true,
-                  commissionEntries: true,
-                },
-              },
-            },
-          },
-          _count: { select: { orders: true } },
-        },
+        select: { id: true, role: true, vendor: { select: { id: true } } },
       });
       if (!target || target.role === "ADMIN") throw new Error("protected-user");
-      if (
-        target._count.orders > 0 ||
-        (target.vendor && Object.values(target.vendor._count).some((count) => count > 0))
-      ) {
-        throw new Error("account-has-records");
+
+      // Cascade-delete dependent records so accounts with history can be removed.
+      const vendorId = target.vendor?.id;
+      if (vendorId) {
+        await transaction.productImage.deleteMany({
+          where: { product: { vendorId } },
+        });
+        await transaction.inventoryMovement.deleteMany({
+          where: { product: { vendorId } },
+        });
+        await transaction.cartItem.deleteMany({
+          where: { product: { vendorId } },
+        });
+        await transaction.commissionLedger.deleteMany({ where: { vendorId } });
+        await transaction.payout.deleteMany({ where: { vendorId } });
+        await transaction.vendorOrder.deleteMany({ where: { vendorId } });
+        await transaction.product.deleteMany({ where: { vendorId } });
+        await transaction.vendorDepartment.deleteMany({ where: { vendorId } });
+        await transaction.vendor.delete({ where: { id: vendorId } });
+      }
+
+      // Customer order chain.
+      const orders = await transaction.order.findMany({
+        where: { customerId: target.id },
+        select: { id: true },
+      });
+      const orderIds = orders.map((order) => order.id);
+      if (orderIds.length > 0) {
+        await transaction.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
+        await transaction.vendorOrder.deleteMany({ where: { orderId: { in: orderIds } } });
+        await transaction.commissionLedger.deleteMany({ where: { orderId: { in: orderIds } } });
+        await transaction.refund.deleteMany({ where: { orderId: { in: orderIds } } });
+        await transaction.payment.deleteMany({ where: { orderId: { in: orderIds } } });
+        await transaction.order.deleteMany({ where: { id: { in: orderIds } } });
       }
 
       await recordAuditEvent(transaction, {
@@ -287,9 +299,6 @@ export async function deleteAdminUserAction(
         targetId: target.id,
         metadata: { role: target.role },
       });
-      if (target.vendor) {
-        await transaction.vendor.delete({ where: { id: target.vendor.id } });
-      }
       await transaction.user.delete({ where: { id: target.id } });
     });
     revalidatePath("/admin/users");
